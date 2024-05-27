@@ -4,6 +4,31 @@ const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Colors = React.lazy(() => import('./views/theme/colors/Colors'))
 const Typography = React.lazy(() => import('./views/theme/typography/Typography'))
 
+//products
+const Products = React.lazy(() => import('./views/products/products/CreateProducts'))
+const Categories = React.lazy(() => import('./views/products/categories/CreateCategories'))
+
+//order
+const AllOrders = React.lazy(() => import('./views/orders/orders/AllOrders'))
+const Refund = React.lazy(() => import('./views/orders/refund/Refund'))
+
+//customer
+const CustomerInquiry = React.lazy(() => import('./views/customers/inquiry/CustomerInquiry'))
+const CustomerList = React.lazy(() => import('./views/customers/customerList/CustomerList'))
+
+
+//vendor
+const VendorList = React.lazy(() => import('./views/vendors/vendorList/VendorList'))
+
+
+
+//help-center
+const Faqs = React.lazy(() => import('./views/helpCenter/faqs/Faqs'))
+const ContactAdmin = React.lazy(() => import('./views/helpCenter/contactAdmin/ContactAdmin'))
+
+
+
+
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
 const Breadcrumbs = React.lazy(() => import('./views/base/breadcrumbs/Breadcrumbs'))
@@ -95,6 +120,15 @@ const routes = [
   { path: '/notifications/modals', name: 'Modals', element: Modals },
   { path: '/notifications/toasts', name: 'Toasts', element: Toasts },
   { path: '/widgets', name: 'Widgets', element: Widgets },
+  { path: '/products/products-create', name: 'Create Products', element: Products },
+  { path: '/products/categories-create', name: 'Create Categories', element: Categories },
+  { path: '/orders/all-orders', name: 'All Orders', element: AllOrders },
+  { path: '/orders/refund', name: 'Refund', element: Refund },
+  { path: '/customers/inquiries', name: 'Inquires', element: CustomerInquiry },
+  { path: '/customers/list', name: 'customer-list', element: CustomerList },
+  { path: '/faqs', name: 'Help Center', element: Faqs },
+  { path: '/contact', name: 'Contact Admin', element: ContactAdmin },
+  { path: '/vendor/list', name: 'vendors-list', element: VendorList },
 ]
 
 export default routes
