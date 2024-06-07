@@ -15,7 +15,7 @@ import {
     CTableBody,
     CTableDataCell,
     CFormSelect,
-    CSpinner
+    CSpinner, CBadge, CRow, CCol, CFormCheck
 
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
@@ -36,6 +36,8 @@ import { startLoading, stopLoading } from '../../../store';
 const Products = () => {
     const dispatch = useDispatch()
     const isLoading = useSelector((state) => state.loading)
+    const user = useSelector((state) => state.user)
+    const vendor = user._id
     const [products, setProducts] = useState([])
     const [modal, setModal] = useState(false)
     const [editingProduct, setEditingProduct] = useState(null)
@@ -45,9 +47,46 @@ const Products = () => {
         description: '',
         images: [],
         discount: '',
-        category: ''
+        category: '',
+        vendor,
+        availableLocalities: []
+
     });
+    console.log("form--->>", form)
     const [categories, setCategories] = useState([]);
+    const [pincode, setPincode] = useState('');
+    const [pincodes, setPincodes] = useState([]);
+    const [isAllSelected, setIsAllSelected] = useState(false);
+
+
+    //pincode
+    const handleAddPincode = () => {
+        if (pincode && !pincodes.includes(pincode)) {
+            setPincodes([...pincodes, pincode]);
+            setPincode('');
+            setForm({ ...form, availableLocalities: [...pincodes, pincode] });
+
+        }
+    };
+
+    const handleRemovePincode = (code) => {
+        setPincodes(pincodes.filter(p => p !== code));
+        setForm({ ...form, availableLocalities: form.availableLocalities.filter(p => p !== code) });
+    };
+
+    const handleAllChange = () => {
+        setIsAllSelected(!isAllSelected);
+        if (!isAllSelected) {
+            setPincodes(['all']); // Clear pincodes if "all" is selected
+            setForm({ ...form, availableLocalities: ['all'] });
+        }
+    };
+
+
+
+
+
+
     // Fetch categories 
     const fetchCategories = async () => {
         try {
@@ -81,7 +120,9 @@ const Products = () => {
 
     const toggleModal = () => {
         if (editingProduct !== null) {
-            setForm({ name: '', price: '', images: [], description: '', discount: '', category: '' })
+            setForm({ name: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
+            setPincodes([])
+            setIsAllSelected(false)
             setEditingProduct(null)
         }
         setModal(!modal)
@@ -104,11 +145,8 @@ const Products = () => {
             dispatch(startLoading())
 
             if (editingProduct !== null) {
-                const updatedProducts = products.map((product, index) =>
-                    index === editingProduct ? form : product
-                )
-                // setProducts(updatedProducts)
-                // await updateProduct(productId, { ...form, category: typeof form.category === 'string' ? form.category : form.category._id });
+
+
                 await updateProduct(productId, form);
 
                 await fetchProducts()
@@ -122,7 +160,9 @@ const Products = () => {
 
                 // setProducts([...products, form])
             }
-            setForm({ name: '', price: '', images: [], description: '', discount: '', category: '' })
+            setForm({ name: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
+            setPincodes([])
+            setIsAllSelected(false)
             setEditingProduct(null)
             toggleModal()
 
@@ -136,9 +176,16 @@ const Products = () => {
 
     const handleEdit = async (index, id) => {
         let singProduct = await getProductById(id)
+        console.log("singProduct--->>", singProduct)
         setEditingProduct(index)
-        // setForm(products[index])
         setForm(singProduct.product)
+        if (singProduct.product.availableLocalities[0] === 'all') {
+            setIsAllSelected(true)
+        } else {
+            setPincodes(singProduct.product.availableLocalities)
+
+        }
+
         toggleModal()
     }
 
@@ -170,7 +217,7 @@ const Products = () => {
     };
 
 
-    
+
 
     return (
         <div>
@@ -258,6 +305,53 @@ const Products = () => {
                                     <button type="button" className="close-button" onClick={() => removeImage(index)}>✖</button>
                                 </div>
                             ))}
+                        </div>
+                        <div>
+                            <CFormCheck
+                                type="checkbox"
+                                id="selectAll"
+                                label="All Locations"
+                                checked={isAllSelected}
+                                onChange={handleAllChange}
+                            />
+
+                            {!isAllSelected && (
+                                <>
+                                    <CRow>
+                                        <CCol xs={8}>
+                                            <CFormInput
+                                                type="text"
+                                                value={pincode}
+                                                onChange={(e) => setPincode(e.target.value)}
+                                                placeholder="Enter pincode"
+                                                disabled={isAllSelected}
+                                            />
+                                        </CCol>
+                                        <CCol xs={4}>
+                                            <CButton color="primary" onClick={handleAddPincode} disabled={isAllSelected}>
+                                                Add Pincode
+                                            </CButton>
+                                        </CCol>
+                                    </CRow>
+
+                                    <div style={{ marginTop: '1rem' }}>
+                                        {pincodes.map((code, index) => (
+                                            <CBadge key={index} color="secondary" className="pincode-badge">
+                                                {code}
+                                                <CButton
+                                                    color="danger"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleRemovePincode(code)}
+                                                    style={{ marginLeft: '0.5rem' }}
+                                                >
+                                                    &times;
+                                                </CButton>
+                                            </CBadge>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
                         {/* Dropdown to select category */}
                         <CFormSelect

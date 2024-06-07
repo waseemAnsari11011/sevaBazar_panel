@@ -28,7 +28,6 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
-  const [availableLocalities, setAvailableLocalities] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertColor, setAlertColor] = useState('primary');
@@ -56,7 +55,6 @@ const Register = () => {
           contactNumber,
           businessName
         },
-        availableLocalities:[availableLocalities]
       });
 
       if (response.status === 201) {
@@ -103,12 +101,12 @@ const Register = () => {
                 <CForm>
                   <h1>Register</h1>
                   <p className="text-body-secondary">Create your account</p>
-                  {/* <CInputGroup className="mb-3">
+                  <CInputGroup className="mb-3">
                     <CInputGroupText>
                       <CIcon icon={cilUser} />
                     </CInputGroupText>
                     <CFormInput placeholder="Name" autoComplete="name" onChange={(e) => setName(e.target.value)} />
-                  </CInputGroup> */}
+                  </CInputGroup>
                   <CInputGroup className="mb-3">
                     <CInputGroupText>@</CInputGroupText>
                     <CFormInput placeholder="Email" autoComplete="email" onChange={(e) => setEmail(e.target.value)} />
@@ -121,10 +119,10 @@ const Register = () => {
                     <CInputGroupText> <CIcon icon={cilBuilding} /></CInputGroupText>
                     <CFormInput placeholder="Business Name" autoComplete="businessName" onChange={(e) => setBusinessName(e.target.value)} />
                   </CInputGroup> */}
-                  <CInputGroup className="mb-3">
+                  {/* <CInputGroup className="mb-3">
                     <CInputGroupText>  <CIcon icon={cilLocationPin} /></CInputGroupText>
                     <CFormInput placeholder="Available Locations (pin code)" autoComplete="availableLocalities" onChange={(e) => setAvailableLocalities(e.target.value)} />
-                  </CInputGroup>
+                  </CInputGroup> */}
                   <CInputGroup className="mb-3">
                     <CInputGroupText>
                       <CIcon icon={cilLockLocked} />

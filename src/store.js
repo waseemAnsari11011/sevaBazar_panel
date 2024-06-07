@@ -5,7 +5,8 @@ const initialState = {
   theme: 'light',
   isAuthenticated: localStorage.getItem('isAuthenticated') === 'true', // Retrieve from localStorage,
   loading: false,
-  user: JSON.parse(localStorage.getItem('user')) || {} // Retrieve user details from localStorage
+  user: JSON.parse(localStorage.getItem('user')) || {}, // Retrieve user details from localStorage
+  token: localStorage.getItem('token')
 };
 
 // Define action types
@@ -23,6 +24,10 @@ const changeState = (state = initialState, { type, ...rest }) => {
       // Save isAuthenticated to localStorage
       localStorage.setItem('isAuthenticated', rest.isAuthenticated);
       return { ...state, isAuthenticated: rest.isAuthenticated };
+    case 'setToken':
+      // Save isAuthenticated to localStorage
+      localStorage.setItem('token', rest.token);
+      return { ...state, token: rest.token };
     case START_LOADING:
       return { ...state, loading: true }; // Set loading to true
     case STOP_LOADING:
@@ -30,9 +35,11 @@ const changeState = (state = initialState, { type, ...rest }) => {
     case SET_USER:
       // Save user details to localStorage
       localStorage.setItem('user', JSON.stringify(rest.user));
+      localStorage.setItem('token', JSON.stringify(rest.user));
       return { ...state, user: rest.user };
     case LOGOUT_USER:
       // Remove user details from localStorage
+      localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.setItem('isAuthenticated', 'false');
       return { ...state, user: {}, isAuthenticated: false };

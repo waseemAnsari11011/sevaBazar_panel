@@ -63,6 +63,7 @@ const Login = () => {
         // Dispatch the setUser action to store user details in Redux and local storage
         dispatch(setUser(user));
         dispatch({ type: 'setIsAuthenticated', isAuthenticated: true });
+        dispatch({ type: 'setToken', token: response.data.token });
       }
     } catch (error) {
       if (error.response) {
