@@ -114,9 +114,9 @@ const CustomerList = () => {
                   </CButton> : <CButton style={{ margin: '0.25rem' }} color="warning" onClick={() => handleUnRestrict(customer._id)}>
                     <CIcon icon={cilLockUnlocked} />
                   </CButton>}
-                  {customer.isRestricted?<CButton style={{ margin: '0.25rem' }} disabled color="danger" onClick={() => handleRestrict(customer._id)}>
+                  {customer.isRestricted ? <CButton style={{ margin: '0.25rem' }} disabled color="danger" onClick={() => handleRestrict(customer._id)}>
                     <CIcon icon={cilBan} />
-                  </CButton>:<CButton style={{ margin: '0.25rem' }}  color="danger" onClick={() => handleRestrict(customer._id)}>
+                  </CButton> : <CButton style={{ margin: '0.25rem' }} color="danger" onClick={() => handleRestrict(customer._id)}>
                     <CIcon icon={cilBan} />
                   </CButton>}
                 </div>

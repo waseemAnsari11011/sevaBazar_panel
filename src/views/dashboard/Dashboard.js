@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import classNames from 'classnames'
 
 import {
@@ -18,6 +18,7 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
+  CBadge
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -41,6 +42,7 @@ import {
   cilPeople,
   cilUser,
   cilUserFemale,
+  
 } from '@coreui/icons'
 
 import avatar1 from 'src/assets/images/avatars/1.jpg'
@@ -53,187 +55,172 @@ import avatar6 from 'src/assets/images/avatars/6.jpg'
 import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
+import { getRecentOrdersByVendor, getProductsLowQuantity } from '../../api/orders/getOrdersByVendor'
+import { startLoading, stopLoading } from '../../store'
+import { useDispatch, useSelector } from 'react-redux'
+import axiosInstance, { baseURL } from '../../utils/axiosConfig'
+import '../products/Products.css' // Import custom CSS file
+import getAllInquiries from '../../api/Inquiry/getAllInquiries'
+
 
 const Dashboard = () => {
-  const progressExample = [
-    { title: 'Visits', value: '29.703 Users', percent: 40, color: 'success' },
-    { title: 'Unique', value: '24.093 Users', percent: 20, color: 'info' },
-    { title: 'Pageviews', value: '78.706 Views', percent: 60, color: 'warning' },
-    { title: 'New Users', value: '22.123 Users', percent: 80, color: 'danger' },
-    { title: 'Bounce Rate', value: 'Average Rate', percent: 40.15, color: 'primary' },
-  ]
+  const dispatch = useDispatch()
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([])
+  const [inquiries, setInquiries] = useState([]);
 
-  const progressGroupExample1 = [
-    { title: 'Monday', value1: 34, value2: 78 },
-    { title: 'Tuesday', value1: 56, value2: 94 },
-    { title: 'Wednesday', value1: 12, value2: 67 },
-    { title: 'Thursday', value1: 43, value2: 91 },
-    { title: 'Friday', value1: 22, value2: 73 },
-    { title: 'Saturday', value1: 53, value2: 82 },
-    { title: 'Sunday', value1: 9, value2: 69 },
-  ]
+  const user = useSelector((state) => state.user)
+  const userRole = user ? user.role : null;
+  const vendorId = user._id
 
-  const progressGroupExample2 = [
-    { title: 'Male', icon: cilUser, value: 53 },
-    { title: 'Female', icon: cilUserFemale, value: 43 },
-  ]
+  const fetchRecentOrders = async () => {
+    try {
+      dispatch(startLoading());
+      const recentOrdersData = await getRecentOrdersByVendor(vendorId);
 
-  const progressGroupExample3 = [
-    { title: 'Organic Search', icon: cibGoogle, percent: 56, value: '191,235' },
-    { title: 'Facebook', icon: cibFacebook, percent: 15, value: '51,223' },
-    { title: 'Twitter', icon: cibTwitter, percent: 11, value: '37,564' },
-    { title: 'LinkedIn', icon: cibLinkedin, percent: 8, value: '27,319' },
-  ]
+      console.log("recentOrdersData-->>", recentOrdersData)
+      setOrders(recentOrdersData);
+      dispatch(stopLoading());
+    } catch (error) {
+      dispatch(stopLoading());
+      console.error('Failed to fetch orders:', error);
+    }
+  };
 
-  const tableExample = [
-    {
-      avatar: { src: avatar1, status: 'success' },
-      user: {
-        name: 'Yiorgos Avraamu',
-        new: true,
-        registered: 'Jan 1, 2023',
-      },
-      country: { name: 'USA', flag: cifUs },
-      usage: {
-        value: 50,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'success',
-      },
-      payment: { name: 'Mastercard', icon: cibCcMastercard },
-      activity: '10 sec ago',
-    },
-    {
-      avatar: { src: avatar2, status: 'danger' },
-      user: {
-        name: 'Avram Tarasios',
-        new: false,
-        registered: 'Jan 1, 2023',
-      },
-      country: { name: 'Brazil', flag: cifBr },
-      usage: {
-        value: 22,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'info',
-      },
-      payment: { name: 'Visa', icon: cibCcVisa },
-      activity: '5 minutes ago',
-    },
-    {
-      avatar: { src: avatar3, status: 'warning' },
-      user: { name: 'Quintin Ed', new: true, registered: 'Jan 1, 2023' },
-      country: { name: 'India', flag: cifIn },
-      usage: {
-        value: 74,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'warning',
-      },
-      payment: { name: 'Stripe', icon: cibCcStripe },
-      activity: '1 hour ago',
-    },
-    {
-      avatar: { src: avatar4, status: 'secondary' },
-      user: { name: 'Enéas Kwadwo', new: true, registered: 'Jan 1, 2023' },
-      country: { name: 'France', flag: cifFr },
-      usage: {
-        value: 98,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'danger',
-      },
-      payment: { name: 'PayPal', icon: cibCcPaypal },
-      activity: 'Last month',
-    },
-    {
-      avatar: { src: avatar5, status: 'success' },
-      user: {
-        name: 'Agapetus Tadeáš',
-        new: true,
-        registered: 'Jan 1, 2023',
-      },
-      country: { name: 'Spain', flag: cifEs },
-      usage: {
-        value: 22,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'primary',
-      },
-      payment: { name: 'Google Wallet', icon: cibCcApplePay },
-      activity: 'Last week',
-    },
-    {
-      avatar: { src: avatar6, status: 'danger' },
-      user: {
-        name: 'Friderik Dávid',
-        new: true,
-        registered: 'Jan 1, 2023',
-      },
-      country: { name: 'Poland', flag: cifPl },
-      usage: {
-        value: 43,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'success',
-      },
-      payment: { name: 'Amex', icon: cibCcAmex },
-      activity: 'Last week',
-    },
-  ]
+  const fetchInquiries = async () => {
+    dispatch(startLoading());
+    try {
+      const response = await getAllInquiries();
+      setInquiries(response);
+      dispatch(stopLoading());
+    } catch (error) {
+      console.error('Failed to get inquiries:', error);
+      setError(error.message);
+      dispatch(stopLoading());
+    }
+  };
+
+  useEffect(() => {
+    fetchInquiries();
+  }, []);
+
+  useEffect(() => {
+    fetchRecentOrders();
+  }, [vendorId]);
+
+  const fetchLowQuantityProducts = async () => {
+    try {
+      dispatch(startLoading());
+      const lowQuantityProducts = await getProductsLowQuantity(vendorId);
+
+      console.log("lowQuantityProducts-->>", lowQuantityProducts)
+      setProducts(lowQuantityProducts);
+      dispatch(stopLoading());
+    } catch (error) {
+      dispatch(stopLoading());
+      console.error('Failed to fetch orders:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLowQuantityProducts();
+  }, [vendorId]);
+
+
+  const handleStockUpdate = async (productId, product) => {
+    console.log("product--->>>", product)
+    try {
+      const response = await axiosInstance.put(`/products/${productId}`, product);
+
+      if (response.status === 200) {
+        console.log('Stock updated successfully:', response.data.product);
+        // Optionally, update the product state to reflect the new quantity in the UI
+      } else {
+        console.error('Failed to update stock:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error updating stock:', error);
+    }
+  };
+
+  const getBadgeColor = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'warning';
+      case 'responded':
+        return 'success';
+      case 'closed':
+        return 'secondary';
+      default:
+        return 'primary';
+    }
+  };
+
+
+
+
+
 
   return (
     <>
       <WidgetsDropdown className="mb-4" />
-     
+
       <CRow>
         <CCol xs>
           <CCard className="mb-4">
             <CCardHeader>Recent Orders</CCardHeader>
             <CCardBody>
-              <CTable align="middle" className="mb-0 border" hover responsive>
-                <CTableHead className="text-nowrap">
+              <CTable striped hover responsive>
+                <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      <CIcon icon={cilPeople} />
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">customer</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                    order ID
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">order date</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                    status
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">total amount</CTableHeaderCell>
+                    <CTableHeaderCell>Order ID</CTableHeaderCell>
+                    <CTableHeaderCell>Customer</CTableHeaderCell>
+                    <CTableHeaderCell>Shipping Address</CTableHeaderCell>
+                    <CTableHeaderCell>Products</CTableHeaderCell>
+                    <CTableHeaderCell>Breakdown</CTableHeaderCell>
+                    <CTableHeaderCell>Total</CTableHeaderCell>
+
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {tableExample.map((item, index) => (
-                    <CTableRow v-for="item in tableItems" key={index}>
-                      <CTableDataCell className="text-center">
-                        <CAvatar size="md" src={item.avatar.src} status={item.avatar.status} />
-                      </CTableDataCell>
+                  {orders?.map((order, index) => (
+                    <CTableRow key={index}>
+                      <CTableDataCell>{order.orderId}</CTableDataCell>
+                      <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
+                      <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
                       <CTableDataCell>
-                        <div>{item.user.name}</div>
-                        <div className="small text-body-secondary text-nowrap">
-                          <span>{item.user.new ? 'New' : 'Recurring'}</span> | Registered:{' '}
-                          {item.user.registered}
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.country.flag} title={item.country.name} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">{item.usage.value}%</div>
-                          <div className="ms-3">
-                            <small className="text-body-secondary">{item.usage.period}</small>
+                        {order.vendors.products.map((product, idx) => (
+                          <div key={idx}>
+                            {product.product.name}
                           </div>
-                        </div>
-                        <CProgress thin color={item.usage.color} value={item.usage.value} />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.payment.icon} />
+                        ))}
                       </CTableDataCell>
                       <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">Last login</div>
-                        <div className="fw-semibold text-nowrap">{item.activity}</div>
+                        {order.vendors.products.map((product, idx) => {
+                          const actualPrice = product.price;
+                          const discountPercentage = product.discount;
+                          const discountAmount = (actualPrice * discountPercentage) / 100;
+                          const discountedPrice = (actualPrice - discountAmount) * product.quantity;
+
+                          return (
+                            <div key={idx}>
+                              {product.quantity} x ₹{actualPrice.toFixed(2)} - {discountPercentage}% = ₹{discountedPrice.toFixed(2)}
+                            </div>
+                          );
+                        })}
                       </CTableDataCell>
+                      <CTableDataCell>
+                        ₹{order.vendors.products.reduce((total, product) => {
+                          const actualPrice = product.price;
+                          const discountPercentage = product.discount;
+                          const discountAmount = (actualPrice * discountPercentage) / 100;
+                          const discountedPrice = (actualPrice - discountAmount) * product.quantity;
+
+                          return total + discountedPrice;
+                        }, 0).toFixed(2)}
+                      </CTableDataCell>
+                      {/* <CTableDataCell>{order.isPaymentVerified ? "Paid" : "UnPaid"}</CTableDataCell> */}
+
                     </CTableRow>
                   ))}
                 </CTableBody>
@@ -243,123 +230,81 @@ const Dashboard = () => {
           <CCard className="mb-4">
             <CCardHeader>Low Stock Inventory</CCardHeader>
             <CCardBody>
-              <CTable align="middle" className="mb-0 border" hover responsive>
-                <CTableHead className="text-nowrap">
+              <CTable striped>
+                <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      <CIcon icon={cilPeople} />
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Product ID</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                    Product Name
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Category</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                    Current Stock
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                     Threshold
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Update</CTableHeaderCell>
+                    <CTableHeaderCell>Photo</CTableHeaderCell>
+                    <CTableHeaderCell>Name</CTableHeaderCell>
+                    <CTableHeaderCell>Description</CTableHeaderCell>
+                    <CTableHeaderCell>Price</CTableHeaderCell>
+                    <CTableHeaderCell>Discount</CTableHeaderCell>
+                    <CTableHeaderCell>Stock</CTableHeaderCell>
+                    <CTableHeaderCell>Update Stock</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {tableExample.map((item, index) => (
-                    <CTableRow v-for="item in tableItems" key={index}>
-                      <CTableDataCell className="text-center">
-                        <CAvatar size="md" src={item.avatar.src} status={item.avatar.status} />
-                      </CTableDataCell>
+                  {products.map((product, index) => (
+                    <CTableRow key={index}>
                       <CTableDataCell>
-                        <div>{item.user.name}</div>
-                        <div className="small text-body-secondary text-nowrap">
-                          <span>{item.user.new ? 'New' : 'Recurring'}</span> | Registered:{' '}
-                          {item.user.registered}
-                        </div>
+                        {product.images.slice(0, 2).map((file, imgIndex) => (
+                          <img
+                            key={imgIndex}
+                            src={`${baseURL}/${file}`}
+                            alt={`Product Image ${imgIndex + 1}`}
+                            className="table-img"
+                          />
+                        ))}
                       </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.country.flag} title={item.country.name} />
-                      </CTableDataCell>
+                      <CTableDataCell>{product.name}</CTableDataCell>
+                      <CTableDataCell>{product.description}</CTableDataCell>
+                      <CTableDataCell>{product.price}</CTableDataCell>
+                      <CTableDataCell>{product.discount}</CTableDataCell>
+                      <CTableDataCell>{product.quantity}</CTableDataCell>
                       <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">{item.usage.value}%</div>
-                          <div className="ms-3">
-                            <small className="text-body-secondary">{item.usage.period}</small>
-                          </div>
-                        </div>
-                        <CProgress thin color={item.usage.color} value={item.usage.value} />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.payment.icon} />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.payment.icon} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">Last login</div>
-                        <div className="fw-semibold text-nowrap">{item.activity}</div>
+                        <input
+                          type="number"
+                          defaultValue={product.quantity}
+                          onChange={(e) => handleStockUpdate(product._id, { ...product, existingImages: product.images, quantity: e.target.value })}
+                        />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
                 </CTableBody>
               </CTable>
+
             </CCardBody>
           </CCard>
-          <CCard className="mb-4">
+          {userRole !== 'vendor'&&<CCard className="mb-4">
             <CCardHeader>Customer Messages</CCardHeader>
             <CCardBody>
-              <CTable align="middle" className="mb-0 border" hover responsive>
-                <CTableHead className="text-nowrap">
+              <CTable responsive="sm" striped>
+                <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      <CIcon icon={cilPeople} />
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">customer</CTableHeaderCell>
-                    
-                    <CTableHeaderCell className="bg-body-tertiary">message preview</CTableHeaderCell>
-                    
-                    <CTableHeaderCell className="bg-body-tertiary">timestamp</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                    Reply
-                    </CTableHeaderCell>
+                    <CTableHeaderCell>#</CTableHeaderCell>
+                    <CTableHeaderCell>Subject</CTableHeaderCell>
+                    <CTableHeaderCell>Message</CTableHeaderCell>
+                    <CTableHeaderCell>Response</CTableHeaderCell>
+                    <CTableHeaderCell>Status</CTableHeaderCell>
+                    {/* <CTableHeaderCell>Actions</CTableHeaderCell> */}
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {tableExample.map((item, index) => (
-                    <CTableRow v-for="item in tableItems" key={index}>
-                      <CTableDataCell className="text-center">
-                        <CAvatar size="md" src={item.avatar.src} status={item.avatar.status} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div>{item.user.name}</div>
-                        <div className="small text-body-secondary text-nowrap">
-                          <span>{item.user.new ? 'New' : 'Recurring'}</span> | Registered:{' '}
-                          {item.user.registered}
-                        </div>
-                      </CTableDataCell>
-                     
-                      <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">{item.usage.value}%</div>
-                          <div className="ms-3">
-                            <small className="text-body-secondary">{item.usage.period}</small>
-                          </div>
-                        </div>
-                        <CProgress thin color={item.usage.color} value={item.usage.value} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">Last login</div>
-                        <div className="fw-semibold text-nowrap">{item.activity}</div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.payment.icon} />
-                      </CTableDataCell>
-                      
+                  {inquiries.map((inquiry, index) => (
+                    <CTableRow key={inquiry._id}>
+                      <CTableDataCell>{index + 1}</CTableDataCell>
+                      <CTableDataCell>{inquiry.subject}</CTableDataCell>
+                      <CTableDataCell>{inquiry.message}</CTableDataCell>
+                      <CTableDataCell>{inquiry.response}</CTableDataCell>
+                      <CTableDataCell> <CBadge color={getBadgeColor(inquiry.status)}>{inquiry.status}</CBadge></CTableDataCell>
+                      {/* <CTableDataCell>
+                        <CButton color="primary" onClick={() => toggleModal(inquiry._id)}>Send Response</CButton>
+                      </CTableDataCell> */}
                     </CTableRow>
                   ))}
                 </CTableBody>
               </CTable>
             </CCardBody>
-          </CCard>
+          </CCard>}
         </CCol>
       </CRow>
     </>

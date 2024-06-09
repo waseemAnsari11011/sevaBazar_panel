@@ -68,11 +68,11 @@ const _nav = [
         name: 'Orders',
         to: '/orders/all-orders',
       },
-      {
-        component: CNavItem,
-        name: 'Refunds',
-        to: '/orders/refund',
-      }
+      // {
+      //   component: CNavItem,
+      //   name: 'Refunds',
+      //   to: '/orders/refund',
+      // }
       
     ],
   },

@@ -49,7 +49,8 @@ const Products = () => {
         discount: '',
         category: '',
         vendor,
-        availableLocalities: []
+        availableLocalities: [],
+        quantity: ''
 
     });
     console.log("form--->>", form)
@@ -120,7 +121,7 @@ const Products = () => {
 
     const toggleModal = () => {
         if (editingProduct !== null) {
-            setForm({ name: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
+            setForm({ name: '',quantity:'', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
             setPincodes([])
             setIsAllSelected(false)
             setEditingProduct(null)
@@ -160,7 +161,7 @@ const Products = () => {
 
                 // setProducts([...products, form])
             }
-            setForm({ name: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
+            setForm({ name: '', quantity:'', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
             setPincodes([])
             setIsAllSelected(false)
             setEditingProduct(null)
@@ -283,6 +284,12 @@ const Products = () => {
                             name="name"
                             label="Product Name"
                             value={form.name}
+                            onChange={handleChange}
+                        />
+                        <CFormInput
+                            name="quantity"
+                            label="Available Stock"
+                            value={form.quantity}
                             onChange={handleChange}
                         />
                         {/* Dropzone for multi-image upload */}

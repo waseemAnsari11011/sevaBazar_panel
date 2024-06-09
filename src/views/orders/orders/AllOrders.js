@@ -15,8 +15,8 @@ import {
   CFormSelect,
   CAlert
 } from '@coreui/react';
-import getOrdersByVendor from '../../../api/orders/getOrdersByVendor';
-import updateOrderStatus from '../../../api/orders/updateOrderStatus';
+import {getOrdersByVendor} from '../../../api/orders/getOrdersByVendor';
+import { updateOrderPaymentStatus, updateOrderStatus } from '../../../api/orders/updateOrderStatus';
 
 const AllOrders = () => {
   const dispatch = useDispatch();
@@ -68,6 +68,17 @@ const AllOrders = () => {
     }
   };
 
+  const handlePaymentStatusChange = async (orderId, newStatus) => {
+    try {
+      await updateOrderPaymentStatus(orderId, newStatus);
+      setAlertMessage('Order status updated successfully');
+      setAlertVisible(true);
+      fetchOrders();
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+    }
+  };
+
   return (
     <div>
       {alertVisible && (
@@ -75,7 +86,7 @@ const AllOrders = () => {
           {alertMessage}
         </CAlert>
       )}
-      <CTable striped hover responsive>
+      <CTable striped hover responsive="sm">
         <CTableHead>
           <CTableRow>
             <CTableHeaderCell>Order ID</CTableHeaderCell>
@@ -84,6 +95,7 @@ const AllOrders = () => {
             <CTableHeaderCell>Products</CTableHeaderCell>
             <CTableHeaderCell>Breakdown</CTableHeaderCell>
             <CTableHeaderCell>Total</CTableHeaderCell>
+            <CTableHeaderCell>Payment Status</CTableHeaderCell>
             <CTableHeaderCell>Status</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
@@ -123,6 +135,27 @@ const AllOrders = () => {
 
                   return total + discountedPrice;
                 }, 0).toFixed(2)}
+              </CTableDataCell>
+              {/* <CTableDataCell>{order.isPaymentVerified ? "Paid" : "UnPaid"}</CTableDataCell> */}
+              <CTableDataCell>
+                {order.razorpay_payment_id ? (
+                  <CFormSelect
+                    value={order.paymentStatus}
+                    onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
+                    disabled
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                  </CFormSelect>
+                ) : (
+                  <CFormSelect
+                    value={order.paymentStatus}
+                    onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                  </CFormSelect>
+                )}
               </CTableDataCell>
               <CTableDataCell>
                 <CFormSelect
