@@ -127,7 +127,7 @@ const routes = [
   { path: '/customer-inquiries', name: 'Inquires', element: CustomerInquiry },
   { path: '/customer/list', name: 'customer-list', element: CustomerList },
   { path: '/faqs', name: 'Help Center', element: Faqs },
-  { path: '/contact', name: 'Contact Admin', element: ContactAdmin },
+  { path: '/contact', name: 'Contact', element: ContactAdmin },
   { path: '/vendor/list', name: 'vendors-list', element: VendorList },
 ]
 

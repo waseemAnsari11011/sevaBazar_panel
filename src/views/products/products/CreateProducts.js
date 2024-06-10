@@ -53,7 +53,6 @@ const Products = () => {
         quantity: ''
 
     });
-    console.log("form--->>", form)
     const [categories, setCategories] = useState([]);
     const [pincode, setPincode] = useState('');
     const [pincodes, setPincodes] = useState([]);
@@ -121,7 +120,7 @@ const Products = () => {
 
     const toggleModal = () => {
         if (editingProduct !== null) {
-            setForm({ name: '',quantity:'', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
+            setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
             setPincodes([])
             setIsAllSelected(false)
             setEditingProduct(null)
@@ -161,7 +160,7 @@ const Products = () => {
 
                 // setProducts([...products, form])
             }
-            setForm({ name: '', quantity:'', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
+            setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
             setPincodes([])
             setIsAllSelected(false)
             setEditingProduct(null)

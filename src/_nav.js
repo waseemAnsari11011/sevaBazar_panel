@@ -121,7 +121,7 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Contact Admin',
+    name: 'Contact',
     to: '/contact',
     icon: <CIcon icon={cilPhone} customClassName="nav-icon" />,
   },
