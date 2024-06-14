@@ -2,47 +2,56 @@ import React, { useCallback, useState, useEffect } from 'react'
 import {
   CButton,
   CModal,
+  CTable,
   CModalHeader,
   CModalTitle,
   CModalBody,
   CModalFooter,
-  CForm,
-  CFormInput,
-  CTable,
   CTableHead,
   CTableRow,
   CTableHeaderCell,
   CTableBody,
   CTableDataCell,
+  CForm,
+  CFormInput,
   CSpinner,
+  CFormSwitch,
 } from '@coreui/react'
-import { useDropzone } from 'react-dropzone'
-import CIcon from '@coreui/icons-react'
-import { cilPencil, cilTrash, cilCloudUpload } from '@coreui/icons'
-import '../Products.css' // Import custom CSS file
-import axiosInstance, { baseURL } from '../../../utils/axiosConfig'
-import getCategoryById from '../../../api/category/categoryapi'
-import updateCategory from '../../../api/category/updateCategory'
-import deleteCategory from '../../../api/category/deleteCategory'
-import { useDispatch, useSelector } from 'react-redux'
-import { startLoading, stopLoading } from '../../../store'
 
-const Categories = () => {
+import CIcon from '@coreui/icons-react'
+import { useDropzone } from 'react-dropzone'
+import { cilPencil, cilTrash, cilCloudUpload } from '@coreui/icons'
+import './Banner.css'
+import axiosInstance, { baseURL } from '../../utils/axiosConfig'
+import getBannerById from '../../api/banner/bannerapi'
+import deleteBanner from '../../api/banner/deleteBanner'
+// import getAllBanner from '../../api/banner/getAllBanner'
+import updateBanner from '../../api/banner/updateBanner'
+import activebannerapi from '../../api/banner/activebannerapi'
+import { useDispatch, useSelector } from 'react-redux'
+import { startLoading, stopLoading } from '../../store'
+
+const Banner = ({ banner }) => {
+  const [visible, setVisible] = useState(false)
   const dispatch = useDispatch()
   const isLoading = useSelector((state) => state.loading)
-  const [categories, setCategories] = useState([])
+  const [banners, setBanners] = useState([])
   const [modal, setModal] = useState(false)
-  const [editingCategory, setEditingCategory] = useState(null)
+  const [editingBanner, setEditingBanner] = useState(null)
   const [form, setForm] = useState({ name: '', images: [] })
+  const [isActive, setIsActive] = useState(false);
+  const [labelId, setLabelId] = useState('formSwitchCheckDefault');
+
+  console.log("banners--->", banners)
 
   useEffect(() => {
-    fetchCategories()
+    fetchBanners()
   }, [])
 
   const toggleModal = () => {
-    if (editingCategory !== null) {
+    if (editingBanner !== null) {
       setForm({ name: '', images: [] })
-      setEditingCategory(null)
+      setEditingBanner(null)
     }
     setModal(!modal)
   }
@@ -52,37 +61,56 @@ const Categories = () => {
     setForm({ ...form, [name]: value })
   }
 
-  const handleSubmit = async (categoryId) => {
+  const handleSubmit = async (bannerId) => {
     try {
       dispatch(startLoading())
-      if (editingCategory !== null) {
-        const updatedcategories = categories.map((category, index) =>
-          index === editingCategory ? form : category,
+      if (editingBanner !== null) {
+        const updatedCategories = banners.map((banner, index) =>
+          index === editingBanner ? form : banner,
         )
-        // setCategories(updatedCategories);
-        await updateCategory(categoryId, form)
-        await fetchCategories()
+        await updateBanner(bannerId, form)
+        await fetchBanners()
         dispatch(stopLoading())
       } else {
         await saveToDb()
         dispatch(stopLoading())
-        // setCategories([...categories, form]);
       }
       setForm({ name: '', images: [] })
-      setEditingCategory(null)
+      setEditingBanner(null)
       toggleModal()
+      setVisible(false) // Close the popup after successful submission
     } catch (error) {
       dispatch(stopLoading())
       console.log('error', error)
+      setVisible(false) // Close the popup even if there is an error
     }
   }
 
+  const getactionapi = async (id, isActive, setLabelId) => {
+    try {
+      // dispatch(startLoading());
+      const response = await activebannerapi(id, isActive);
+      console.log(response);
+      if (isActive) {
+        console.log("true");
+        // setLabelId('formSwitchCheckActive');
+        // dispatch(stopLoading());
+      } else {
+        // console.log("false");
+        // setLabelId('formSwitchCheckInactive');
+      }
+    } catch (error) {
+      // dispatch(stopLoading());
+      console.log('error', error);
+    }
+  };
+
   const handleDelete = async (id) => {
     try {
-      await deleteCategory(id)
-      fetchCategories()
+      await deleteBanner(id)
+      fetchBanners()
     } catch (error) {
-      console.error('Failed to delete category:', error)
+      console.error('Failed to delete banner:', error)
     }
   }
 
@@ -112,12 +140,12 @@ const Categories = () => {
     })
 
     try {
-      const response = await axiosInstance.post('category', formData, {
+      const response = await axiosInstance.post('banner', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       })
-      await fetchCategories()
+      await fetchBanners()
       dispatch(stopLoading())
     } catch (error) {
       dispatch(stopLoading())
@@ -125,36 +153,36 @@ const Categories = () => {
     }
   }
 
-  const fetchCategories = async () => {
+  const fetchBanners = async () => {
     try {
       dispatch(startLoading())
-      const response = await axiosInstance.get('category') // Adjust the URL as necessary
-      // const data = await response.json();
+      const response = await axiosInstance.get('/banner')
       if (response.status === 200) {
-        console.log('response.categories====>>', response.data.categories)
-        setCategories(response.data.categories)
+        const fetchedBanners = response.data.banners.map(banner => ({
+          ...banner,
+          isActive: banner.isActive || false,
+        }))
+        setBanners(fetchedBanners)
         dispatch(stopLoading())
-      } else {
-        // console.error(data.message);
       }
     } catch (error) {
       dispatch(stopLoading())
-      console.error('Failed to fetch categories', error)
+      console.error('Failed to fetch banners', error)
     }
   }
 
   const handleEdit = async (index, id) => {
-    let singCategory = await fetchCategoryById(id)
-    console.log('single category--->>>', singCategory)
-    setEditingCategory(index)
+    let singleBanner = await fetchBannerById(id)
+    console.log('single category--->>>', singleBanner)
+    setEditingBanner(index)
     // setForm(categories[index]);
-    setForm(singCategory.category)
+    setForm(singleBanner.banner)
     toggleModal()
   }
 
-  const fetchCategoryById = async (categoryId) => {
+  const fetchBannerById = async (bannerId) => {
     try {
-      const data = await getCategoryById(categoryId)
+      const data = await getBannerById(bannerId)
       console.log('Category retrieved successfully:', data)
       return data
       // Handle the retrieved category data as needed
@@ -163,12 +191,24 @@ const Categories = () => {
     }
   }
 
+  const handleSwitchToggle = async (bannerId) => {
+    try {
+      const updatedBanners = banners.map((banner) =>
+        banner._id === bannerId ? { ...banner, isActive: !banner.isActive } : banner
+      )
+      setBanners(updatedBanners)
+      await getactionapi(bannerId, !banners.find(b => b._id === bannerId).isActive)
+    } catch (error) {
+      console.error('Failed to toggle switch:', error)
+    }
+  }
+
   return (
     <div>
-      <h2>Manage Product Categories</h2>
+      <h2>Manage Product Banners</h2>
       <div className="mb-4">
         <CButton color="primary" onClick={toggleModal}>
-          Add Category
+          Add Banner
         </CButton>
       </div>
       {isLoading ? (
@@ -179,16 +219,16 @@ const Categories = () => {
         <CTable striped>
           <CTableHead>
             <CTableRow>
-              <CTableHeaderCell>Category Photo</CTableHeaderCell>
-              <CTableHeaderCell>Category Name</CTableHeaderCell>
+              <CTableHeaderCell>Banner Photo</CTableHeaderCell>
+              <CTableHeaderCell>Banner Name</CTableHeaderCell>
               <CTableHeaderCell>Actions</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {categories?.map((category, index) => (
+            {banners?.map((banner, index) => (
               <CTableRow key={index}>
                 <CTableDataCell>
-                  {category.images.map((file, imgIndex) => (
+                  {banner.images.map((file, imgIndex) => (
                     <img
                       key={imgIndex}
                       src={`${baseURL}/${file}`}
@@ -197,13 +237,19 @@ const Categories = () => {
                     />
                   ))}
                 </CTableDataCell>
-                <CTableDataCell>{category?.name}</CTableDataCell>
+                <CTableDataCell>{banner?.name}</CTableDataCell>
                 <CTableDataCell>
                   <div className="actions-cell">
-                    <CButton color="warning" onClick={() => handleEdit(index, category?._id)}>
+                    <CFormSwitch
+                      label=""
+                      id={`formSwitch-${banner._id}`}
+                      checked={banner.isActive}
+                      onChange={() => handleSwitchToggle(banner._id)}
+                    />
+                    <CButton color="warning" onClick={() => handleEdit(index, banner?._id)}>
                       <CIcon icon={cilPencil} />
                     </CButton>{' '}
-                    <CButton color="danger" onClick={() => handleDelete(category?._id)}>
+                    <CButton color="danger" onClick={() => handleDelete(banner?._id)}>
                       <CIcon icon={cilTrash} />
                     </CButton>
                   </div>
@@ -216,16 +262,11 @@ const Categories = () => {
 
       <CModal visible={modal} onClose={toggleModal}>
         <CModalHeader>
-          <CModalTitle>{editingCategory !== null ? 'Edit Category' : 'Add Category'}</CModalTitle>
+          <CModalTitle>{editingBanner !== null ? 'Edit Banner' : 'Add Banner'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
-            <CFormInput
-              name="name"
-              label="Category Name"
-              value={form.name}
-              onChange={handleChange}
-            />
+            <CFormInput name="name" label="Banner Name" value={form.name} onChange={handleChange} />
             {/* Dropzone for multi-image upload */}
             <div {...getRootProps()} className="upload-container">
               <input {...getInputProps()} />
@@ -256,12 +297,12 @@ const Categories = () => {
         <CModalFooter>
           {isLoading ? (
             <CButton color="primary">
-              {editingCategory !== null ? 'Updating Category' : 'Creating Category'}{' '}
+              {editingBanner !== null ? 'Updating Banner' : 'Creating Banner'}{' '}
               <CSpinner size="sm" color="white" />
             </CButton>
           ) : (
             <CButton color="primary" onClick={() => handleSubmit(form._id)}>
-              {editingCategory !== null ? 'Save Changes' : 'Add Category'}
+              {editingBanner !== null ? 'Save Changes' : 'Add Banners'}
             </CButton>
           )}
         </CModalFooter>
@@ -270,4 +311,4 @@ const Categories = () => {
   )
 }
 
-export default Categories
+export default Banner

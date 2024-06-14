@@ -16,7 +16,7 @@ export const AppSidebarNav = ({ items }) => {
   useEffect(() => {
     // Filter out "Vendors" if userRole is 'vendor'
     const filtered = userRole === 'vendor'
-      ? filterMenu(items, ['Customers', 'Vendors', 'Customer Inquiries', 'Help Center', 'Contact', 'Support'])
+      ? filterMenu(items, ['Customers', 'Vendors', 'Customer Inquiries', 'Help Center', 'Contact', 'Support', 'Banner'])
       : items;
 
     setFilteredItems(filtered)

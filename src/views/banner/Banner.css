@@ -1,0 +1,70 @@
+.actions-cell {
+    display: flex;
+    flex-wrap: wrap; /* Allow items to wrap to next line if necessary */
+    gap: 0.5rem;
+    /* background-color: pink; */
+
+  }
+
+  .table-img {
+    width: 50px; /* Set the desired width */
+    height: 50px; /* Set the desired height */
+    border-radius: 50%; /* Make the images round */
+    object-fit: cover; /* Ensure the image covers the container */
+    margin-right: 1px; /* Add some space between images */
+  }
+  
+  
+  
+  .img {
+    max-width: 100px; /* Set maximum width for the images */
+    max-height: 100px; /* Set maximum height for the images */
+    object-fit: cover; /* Ensure images maintain aspect ratio and cover their container */
+    border: 1px solid #ccc; /* Add border to images for better separation */
+    border-radius: 5px; /* Add border-radius for rounded corners */
+  }
+
+  .image-wrapper {
+    position: relative; /* Position relative for the close button positioning */
+  }
+  
+
+  .close-button {
+    position: absolute; /* Position absolute to place it on top-right of the image */
+    top: 5px; /* Adjust as needed */
+    right: 5px; /* Adjust as needed */
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+    border: none; /* Remove default button border */
+    border-radius: 50%; /* Make it round */
+    cursor: pointer; /* Pointer cursor on hover */
+  }
+
+  .upload-container {
+    margin-top: 1rem;
+    margin-bottom: 1rem; /* Add some space between the upload section and the images */
+  }
+  
+
+  .spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%; /* Full height of the parent container */
+    width: 100%; /* Full width of the parent container */
+    position: fixed; /* Fixed position to cover the entire viewport */
+    top: 0; /* Align with the top of the viewport */
+    left: 0; /* Align with the left of the viewport */
+    background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent background */
+    z-index: 1000; /* Ensure it appears above other content */
+  }
+
+
+  .pincode-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+  }
+  
+  

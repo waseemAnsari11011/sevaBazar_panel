@@ -38,6 +38,7 @@ const Products = () => {
     const isLoading = useSelector((state) => state.loading)
     const user = useSelector((state) => state.user)
     const vendor = user._id
+    
     const [products, setProducts] = useState([])
     const [modal, setModal] = useState(false)
     const [editingProduct, setEditingProduct] = useState(null)
@@ -103,7 +104,7 @@ const Products = () => {
     const fetchProducts = async () => {
         try {
             dispatch(startLoading())
-            const productsData = await getAllProducts();
+            const productsData = await getAllProducts(vendor);
             setProducts(productsData);
             dispatch(stopLoading())
         } catch (error) {

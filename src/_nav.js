@@ -102,7 +102,19 @@ const _nav = [
       },
     ],
   },
- 
+  {
+    component: CNavGroup,
+    name: 'Banner',
+    to: '/banner',
+    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
+    items: [
+      {
+        component: CNavItem,
+        name: 'Add Banner',
+        to: '/banner/add-banner',
+      },
+    ],
+  },
   {
     component: CNavTitle,
     name: 'Support',

@@ -27,6 +27,10 @@ const Faqs = React.lazy(() => import('./views/helpCenter/faqs/Faqs'))
 const ContactAdmin = React.lazy(() => import('./views/helpCenter/contactAdmin/ContactAdmin'))
 
 
+//Banner
+const Banner = React.lazy(() => import('./views/banner/Banner'))
+
+
 
 
 // Base
@@ -129,6 +133,7 @@ const routes = [
   { path: '/faqs', name: 'Help Center', element: Faqs },
   { path: '/contact', name: 'Contact', element: ContactAdmin },
   { path: '/vendor/list', name: 'vendors-list', element: VendorList },
+  { path: '/banner/add-banner', name: 'Add Banner', element: Banner },
 ]
 
 export default routes
