@@ -38,26 +38,27 @@ const Products = () => {
     const isLoading = useSelector((state) => state.loading)
     const user = useSelector((state) => state.user)
     const vendor = user._id
-    
+
     const [products, setProducts] = useState([])
     const [modal, setModal] = useState(false)
     const [editingProduct, setEditingProduct] = useState(null)
     const [form, setForm] = useState({
         name: '',
-        price: '',
         description: '',
         images: [],
-        discount: '',
         category: '',
         vendor,
         availableLocalities: [],
-        quantity: ''
-
     });
     const [categories, setCategories] = useState([]);
     const [pincode, setPincode] = useState('');
     const [pincodes, setPincodes] = useState([]);
     const [isAllSelected, setIsAllSelected] = useState(false);
+    const [variations, setVariations] = useState([
+        { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '' }
+    ]);
+
+
 
 
     //pincode
@@ -143,52 +144,80 @@ const Products = () => {
 
     const handleSubmit = async (productId) => {
         try {
-            dispatch(startLoading())
+            dispatch(startLoading());
+
+            const productData = {
+                ...form,
+                variations
+            };
 
             if (editingProduct !== null) {
-
-
-                await updateProduct(productId, form);
-
-                await fetchProducts()
-                dispatch(stopLoading())
-
+                await updateProduct(products[editingProduct]._id, productData); // Pass productId for update
+                await fetchProducts(); // Fetch updated products
+                dispatch(stopLoading());
             } else {
-                await createProduct(form)
-                await fetchProducts()
-                dispatch(stopLoading())
-
-
-                // setProducts([...products, form])
+                await createProduct(productData); // Create new product
+                await fetchProducts(); // Fetch updated products
+                dispatch(stopLoading());
             }
-            setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
-            setPincodes([])
-            setIsAllSelected(false)
-            setEditingProduct(null)
-            toggleModal()
 
+            // Reset form fields and state after successful operation
+            setForm({
+                name: '',
+                quantity: '',
+                price: '',
+                images: [],
+                description: '',
+                discount: '',
+                category: '',
+                vendor,
+                availableLocalities: []
+            });
+            setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '' }]);
+            setPincodes([]);
+            setIsAllSelected(false);
+            setEditingProduct(null);
+            toggleModal(); // Close modal after operation
         } catch (error) {
-            dispatch(stopLoading())
-
-            console.log("error--->", error)
+            dispatch(stopLoading());
+            console.log("error--->", error);
         }
+    };
 
-    }
+
 
     const handleEdit = async (index, id) => {
-        let singProduct = await getProductById(id)
-        console.log("singProduct--->>", singProduct)
-        setEditingProduct(index)
-        setForm(singProduct.product)
-        if (singProduct.product.availableLocalities[0] === 'all') {
-            setIsAllSelected(true)
-        } else {
-            setPincodes(singProduct.product.availableLocalities)
+        try {
+            let singProduct = await getProductById(id);
+            console.log("singProduct--->>", singProduct);
+            setEditingProduct(index);
 
+            // Set form state with product details
+            setForm({
+                name: singProduct.product.name,
+                description: singProduct.product.description,
+                images: singProduct.product.images,
+                category: singProduct.product.category,
+                vendor: singProduct.product.vendor,
+                availableLocalities: singProduct.product.availableLocalities
+            });
+
+            // Set variations state with product variations
+            setVariations(singProduct.product.variations);
+
+            // Check if all locations are selected
+            if (singProduct.product.availableLocalities[0] === 'all') {
+                setIsAllSelected(true);
+            } else {
+                setPincodes(singProduct.product.availableLocalities);
+            }
+
+            toggleModal();
+        } catch (error) {
+            console.error('Failed to fetch product details:', error);
         }
+    };
 
-        toggleModal()
-    }
 
 
 
@@ -216,6 +245,32 @@ const Products = () => {
             console.error('Failed to delete category:', error);
         }
     };
+
+    const handleVariationChange = (index, field, subField, value) => {
+        const newVariations = [...variations];
+        if (subField) {
+            newVariations[index][field][subField] = value;
+        } else {
+            newVariations[index][field] = value;
+        }
+        setVariations(newVariations);
+    };
+
+    const handleAttributeChange = (index, attribute) => {
+        const newVariations = [...variations];
+        newVariations[index].attributes.selected = attribute;
+        setVariations(newVariations);
+    };
+
+
+    const addVariation = () => {
+        setVariations([...variations, { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '' }]);
+    };
+
+    const removeVariation = (index) => {
+        setVariations(variations.filter((_, i) => i !== index));
+    };
+
 
 
 
@@ -286,12 +341,7 @@ const Products = () => {
                             value={form.name}
                             onChange={handleChange}
                         />
-                        <CFormInput
-                            name="quantity"
-                            label="Available Stock"
-                            value={form.quantity}
-                            onChange={handleChange}
-                        />
+
                         {/* Dropzone for multi-image upload */}
                         <div {...getRootProps()} className="upload-container">
                             <input {...getInputProps()} />
@@ -374,18 +424,76 @@ const Products = () => {
                                 </option>
                             ))}
                         </CFormSelect>
-                        <CFormInput
-                            name="price"
-                            label="Product Price"
-                            value={form.price}
-                            onChange={handleChange}
-                        />
-                        <CFormInput
-                            name="discount"
-                            label="Product Discount"
-                            value={form.discount}
-                            onChange={handleChange}
-                        />
+                        {/* // Add input fields for variations */}
+                        <div>
+                            {variations.map((variation, index) => (
+                                <div key={index}>
+                                    <div>
+                                        <CFormCheck
+                                            type="radio"
+                                            id={`size-${index}`}
+                                            name={`attribute-${index}`}
+                                            label="Size"
+                                            checked={variation.attributes.selected === 'size'}
+                                            onChange={() => handleAttributeChange(index, 'size')}
+                                        />
+                                        <CFormCheck
+                                            type="radio"
+                                            id={`color-${index}`}
+                                            name={`attribute-${index}`}
+                                            label="Color"
+                                            checked={variation.attributes.selected === 'color'}
+                                            onChange={() => handleAttributeChange(index, 'color')}
+                                        />
+                                        <CFormCheck
+                                            type="radio"
+                                            id={`weight-${index}`}
+                                            name={`attribute-${index}`}
+                                            label="Weight"
+                                            checked={variation.attributes.selected === 'weight'}
+                                            onChange={() => handleAttributeChange(index, 'weight')}
+                                        />
+                                        <CFormCheck
+                                            type="radio"
+                                            id={`packet-${index}`}
+                                            name={`attribute-${index}`}
+                                            label="Packet"
+                                            checked={variation.attributes.selected === 'packet'}
+                                            onChange={() => handleAttributeChange(index, 'packet')}
+                                        />
+                                    </div>
+                                    <CFormInput
+                                        name="attributeValue"
+                                        label="Attribute Value"
+                                        value={variation.attributes.value}
+                                        onChange={(e) => handleVariationChange(index, 'attributes', 'value', e.target.value)}
+                                    />
+                                    <CFormInput
+                                        name="price"
+                                        label="Price"
+                                        value={variation.price}
+                                        onChange={(e) => handleVariationChange(index, 'price', undefined, e.target.value)}
+                                    />
+                                    <CFormInput
+                                        name="discount"
+                                        label="Discount"
+                                        value={variation.discount}
+                                        onChange={(e) => handleVariationChange(index, 'discount', undefined, e.target.value)}
+                                    />
+                                    <CFormInput
+                                        name="quantity"
+                                        label="Quantity"
+                                        value={variation.quantity}
+                                        onChange={(e) => handleVariationChange(index, 'quantity', undefined, e.target.value)}
+                                    />
+                                    <CButton color="danger" onClick={() => removeVariation(index)}>Remove Variation</CButton>
+                                </div>
+                            ))}
+                            <CButton color="primary" onClick={addVariation}>Add Variation</CButton>
+                        </div>
+
+
+
                         <CFormInput
                             name="description"
                             label="Product Description"

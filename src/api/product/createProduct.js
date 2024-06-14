@@ -1,7 +1,7 @@
 import axiosInstance from "../../utils/axiosConfig";
 
 // Create a new product
- const createProduct = async (productData) => {
+const createProduct = async (productData) => {
     const formData = new FormData();
     formData.append('name', productData.name);
     formData.append('quantity', productData.quantity);
@@ -10,7 +10,6 @@ import axiosInstance from "../../utils/axiosConfig";
     formData.append('description', productData.description);
     formData.append('category', productData.category);
     formData.append('vendor', productData.vendor);
-    
 
     productData.availableLocalities.forEach(location => {
         formData.append('availableLocalities', location);
@@ -19,6 +18,9 @@ import axiosInstance from "../../utils/axiosConfig";
     productData.images.forEach(image => {
         formData.append('images', image);
     });
+
+    // Append variations as a JSON string
+    formData.append('variations', JSON.stringify(productData.variations));
 
     try {
         const response = await axiosInstance.post('/products', formData, {
@@ -33,4 +35,4 @@ import axiosInstance from "../../utils/axiosConfig";
     }
 };
 
-export default createProduct
+export default createProduct;
