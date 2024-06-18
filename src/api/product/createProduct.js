@@ -19,7 +19,6 @@ const createProduct = async (productData) => {
         formData.append('images', image);
     });
 
-    // Append variations as a JSON string
     formData.append('variations', JSON.stringify(productData.variations));
 
     try {

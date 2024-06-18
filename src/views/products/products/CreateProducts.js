@@ -55,7 +55,7 @@ const Products = () => {
     const [pincodes, setPincodes] = useState([]);
     const [isAllSelected, setIsAllSelected] = useState(false);
     const [variations, setVariations] = useState([
-        { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '' }
+        { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }
     ]);
 
 
@@ -123,6 +123,7 @@ const Products = () => {
     const toggleModal = () => {
         if (editingProduct !== null) {
             setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
+            setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '',parentVariation: null }]);
             setPincodes([])
             setIsAllSelected(false)
             setEditingProduct(null)
@@ -142,7 +143,7 @@ const Products = () => {
 
     const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
-    const handleSubmit = async (productId) => {
+    const handleSubmit = async () => {
         try {
             dispatch(startLoading());
 
@@ -152,12 +153,13 @@ const Products = () => {
             };
 
             if (editingProduct !== null) {
-                await updateProduct(products[editingProduct]._id, productData); // Pass productId for update
-                await fetchProducts(); // Fetch updated products
+                await updateProduct(products[editingProduct]._id, productData);
+                await fetchProducts();
                 dispatch(stopLoading());
             } else {
-                await createProduct(productData); // Create new product
-                await fetchProducts(); // Fetch updated products
+              let res =  await createProduct(productData);
+              console.log("res-->>", res)
+                await fetchProducts();
                 dispatch(stopLoading());
             }
 
@@ -173,14 +175,16 @@ const Products = () => {
                 vendor,
                 availableLocalities: []
             });
-            setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '' }]);
+            setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '',parentVariation: null }]);
             setPincodes([]);
             setIsAllSelected(false);
             setEditingProduct(null);
-            toggleModal(); // Close modal after operation
+            toggleModal();
         } catch (error) {
             dispatch(stopLoading());
-            console.log("error--->", error);
+            console.log("error-->>", error?.response?.data?.message)
+            alert(error?.response?.data?.message)
+
         }
     };
 
@@ -221,6 +225,7 @@ const Products = () => {
 
 
 
+
     const removeImage = (index) => {
         setForm({
             ...form,
@@ -246,6 +251,8 @@ const Products = () => {
         }
     };
 
+    console.log("variations-->>", variations)
+
     const handleVariationChange = (index, field, subField, value) => {
         const newVariations = [...variations];
         if (subField) {
@@ -262,17 +269,13 @@ const Products = () => {
         setVariations(newVariations);
     };
 
-
     const addVariation = () => {
-        setVariations([...variations, { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '' }]);
+        setVariations([...variations, { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }]);
     };
 
     const removeVariation = (index) => {
         setVariations(variations.filter((_, i) => i !== index));
     };
-
-
-
 
 
     return (
@@ -339,6 +342,12 @@ const Products = () => {
                             name="name"
                             label="Product Name"
                             value={form.name}
+                            onChange={handleChange}
+                        />
+                        <CFormInput
+                            name="description"
+                            label="Product Description"
+                            value={form.description}
                             onChange={handleChange}
                         />
 
@@ -486,6 +495,19 @@ const Products = () => {
                                         value={variation.quantity}
                                         onChange={(e) => handleVariationChange(index, 'quantity', undefined, e.target.value)}
                                     />
+                                    <CFormSelect
+                                        name="parentVariation"
+                                        label="Parent Variation"
+                                        value={variation.parentVariation || ''}
+                                        onChange={(e) => handleVariationChange(index, 'parentVariation', undefined, e.target.value)}
+                                    >
+                                        <option value="">None</option>
+                                        {variations.map((v, i) => (
+                                            <option key={i} value={v._id} disabled={i === index}>
+                                                {`Variation ${i + 1} - ${v.attributes.selected}: ${v.attributes.value}`}
+                                            </option>
+                                        ))}
+                                    </CFormSelect>
                                     <CButton color="danger" onClick={() => removeVariation(index)}>Remove Variation</CButton>
                                 </div>
                             ))}
@@ -494,12 +516,8 @@ const Products = () => {
 
 
 
-                        <CFormInput
-                            name="description"
-                            label="Product Description"
-                            value={form.description}
-                            onChange={handleChange}
-                        />
+
+
 
 
                     </CForm>

@@ -18,7 +18,8 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
-  CBadge
+  CBadge,
+  CAlert
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -42,7 +43,7 @@ import {
   cilPeople,
   cilUser,
   cilUserFemale,
-  
+
 } from '@coreui/icons'
 
 import avatar1 from 'src/assets/images/avatars/1.jpg'
@@ -68,10 +69,25 @@ const Dashboard = () => {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([])
   const [inquiries, setInquiries] = useState([]);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertColor, setAlertColor] = useState(''); // New state for alert color
+
+  useEffect(() => {
+    let timeout;
+    if (alertVisible) {
+      timeout = setTimeout(() => {
+        setAlertVisible(false);
+      }, 1000); // Hide alert after 5 seconds (adjust as needed)
+    }
+    return () => clearTimeout(timeout);
+  }, [alertVisible]);
 
   const user = useSelector((state) => state.user)
   const userRole = user ? user.role : null;
   const vendorId = user._id
+
+  console.log("products-->>", products)
 
   const fetchRecentOrders = async () => {
     try {
@@ -127,21 +143,30 @@ const Dashboard = () => {
   }, [vendorId]);
 
 
-  const handleStockUpdate = async (productId, product) => {
-    console.log("product--->>>", product)
+  const handleStockUpdate = async (productId, variationId, quantity) => {
     try {
-      const response = await axiosInstance.put(`/products/${productId}`, product);
+      const response = await axiosInstance.put(`/products/${productId}/variations/${variationId}`, { quantity });
 
       if (response.status === 200) {
         console.log('Stock updated successfully:', response.data.product);
+        setAlertMessage('Stock updated successfully');
+        setAlertColor('success'); // Set alert color to success
+        setAlertVisible(true);
         // Optionally, update the product state to reflect the new quantity in the UI
       } else {
         console.error('Failed to update stock:', response.data.message);
+        setAlertMessage(response.data.message || 'Failed to update stock');
+        setAlertColor('danger'); // Set alert color to danger
+        setAlertVisible(true);
       }
     } catch (error) {
       console.error('Error updating stock:', error);
+      setAlertMessage(error.response?.data?.message || 'Error updating stock');
+      setAlertColor('danger'); // Set alert color to danger
+      setAlertVisible(true);
     }
   };
+
 
   const getBadgeColor = (status) => {
     switch (status) {
@@ -228,6 +253,11 @@ const Dashboard = () => {
             </CCardBody>
           </CCard>
           <CCard className="mb-4">
+            {alertVisible && (
+              <CAlert color={alertColor} onClose={() => setAlertVisible(false)} dismissible>
+                {alertMessage}
+              </CAlert>
+            )}
             <CCardHeader>Low Stock Inventory</CCardHeader>
             <CCardBody>
               <CTable striped>
@@ -236,9 +266,6 @@ const Dashboard = () => {
                     <CTableHeaderCell>Photo</CTableHeaderCell>
                     <CTableHeaderCell>Name</CTableHeaderCell>
                     <CTableHeaderCell>Description</CTableHeaderCell>
-                    <CTableHeaderCell>Price</CTableHeaderCell>
-                    <CTableHeaderCell>Discount</CTableHeaderCell>
-                    <CTableHeaderCell>Stock</CTableHeaderCell>
                     <CTableHeaderCell>Update Stock</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
@@ -257,24 +284,35 @@ const Dashboard = () => {
                       </CTableDataCell>
                       <CTableDataCell>{product.name}</CTableDataCell>
                       <CTableDataCell>{product.description}</CTableDataCell>
-                      <CTableDataCell>{product.price}</CTableDataCell>
-                      <CTableDataCell>{product.discount}</CTableDataCell>
-                      <CTableDataCell>{product.quantity}</CTableDataCell>
                       <CTableDataCell>
-                        <input
-                          type="number"
-                          defaultValue={product.quantity}
-                          onChange={(e) => handleStockUpdate(product._id, { ...product, existingImages: product.images, quantity: e.target.value })}
-                        />
+                        <div className="variations-container">
+                          {product.variations.map((variation, varIndex) => (
+                            <div key={variation._id} className="variation-item">
+                              <div>{` ${variation.attributes.selected} - ${variation.attributes.value}`}</div>
+                              <div>{`Price: ${variation.price}`}</div>
+                              <div>{`Discount: ${variation.discount}`}</div>
+                              <div>{`Quantity: ${variation.quantity}`}</div>
+                              <input
+                                type="number"
+                                defaultValue={variation.quantity}
+                                onChange={(e) =>
+                                  handleStockUpdate(product._id, variation._id, e.target.value)
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
                       </CTableDataCell>
                     </CTableRow>
                   ))}
+
+
                 </CTableBody>
               </CTable>
 
             </CCardBody>
           </CCard>
-          {userRole !== 'vendor'&&<CCard className="mb-4">
+          {userRole !== 'vendor' && <CCard className="mb-4">
             <CCardHeader>Customer Messages</CCardHeader>
             <CCardBody>
               <CTable responsive="sm" striped>

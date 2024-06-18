@@ -15,7 +15,7 @@ import {
   CFormSelect,
   CAlert
 } from '@coreui/react';
-import {getOrdersByVendor} from '../../../api/orders/getOrdersByVendor';
+import { getOrdersByVendor } from '../../../api/orders/getOrdersByVendor';
 import { updateOrderPaymentStatus, updateOrderStatus } from '../../../api/orders/updateOrderStatus';
 
 const AllOrders = () => {
@@ -109,9 +109,15 @@ const AllOrders = () => {
                 {order.vendors.products.map((product, idx) => (
                   <div key={idx}>
                     {product.product.name}
+                    {product.orderedVariations?.map((variation, varIdx) => (
+                      <div key={varIdx}>
+                       {variation.attributes.selected} : {variation.attributes.value}
+                      </div>
+                    ))}
                   </div>
                 ))}
               </CTableDataCell>
+
               <CTableDataCell>
                 {order.vendors.products.map((product, idx) => {
                   const actualPrice = product.price;
@@ -128,13 +134,15 @@ const AllOrders = () => {
               </CTableDataCell>
               <CTableDataCell>
                 ₹{order.vendors.products.reduce((total, product) => {
-                  const actualPrice = product.price;
-                  const discountPercentage = product.discount;
-                  const discountAmount = (actualPrice * discountPercentage) / 100;
-                  const discountedPrice = (actualPrice - discountAmount) * product.quantity;
+                  const totalAmount = product.totalAmount
+                  
+                  // const actualPrice = product.price;
+                  // const discountPercentage = product.discount;
+                  // const discountAmount = (actualPrice * discountPercentage) / 100;
+                  // const discountedPrice = (actualPrice - discountAmount) * product.quantity;
 
-                  return total + discountedPrice;
-                }, 0).toFixed(2)}
+                  return total + totalAmount;
+                }, 0).toFixed(2) }+ ₹20
               </CTableDataCell>
               {/* <CTableDataCell>{order.isPaymentVerified ? "Paid" : "UnPaid"}</CTableDataCell> */}
               <CTableDataCell>
