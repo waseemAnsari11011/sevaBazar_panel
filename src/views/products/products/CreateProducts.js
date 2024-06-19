@@ -183,7 +183,7 @@ const Products = () => {
         } catch (error) {
             dispatch(stopLoading());
             console.log("error-->>", error?.response?.data?.message)
-            alert(error?.response?.data?.message)
+            // alert(error?.response?.data?.message)
 
         }
     };
