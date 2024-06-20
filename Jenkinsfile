@@ -11,7 +11,7 @@ pipeline {
             steps {
                 script {
                     // Checkout using the credentials stored in Jenkins
-                    git branch: 'main', url: 'https://github.com/waseemAnsari11011/sevaBazar_panel.git', credentialsId: 'b51d9fa8-595c-4d12-abcc-4b22263b10bf'
+                    git branch: 'main', url: 'https://github.com/waseemAnsari11011/sevaBazar_panel.git', credentialsId: 'github-ssh-key'
                 }
             }
         }
