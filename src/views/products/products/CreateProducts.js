@@ -55,7 +55,7 @@ const Products = () => {
     const [pincodes, setPincodes] = useState([]);
     const [isAllSelected, setIsAllSelected] = useState(false);
     const [variations, setVariations] = useState([
-        { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }
+        { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', image: '', parentVariation: null }
     ]);
 
 
@@ -123,7 +123,7 @@ const Products = () => {
     const toggleModal = () => {
         if (editingProduct !== null) {
             setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
-            setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '',parentVariation: null }]);
+            setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }]);
             setPincodes([])
             setIsAllSelected(false)
             setEditingProduct(null)
@@ -136,9 +136,11 @@ const Products = () => {
         setForm({ ...form, [name]: value })
     }
 
-    const onDrop = useCallback(acceptedFiles => {
+    const onDrop = useCallback((acceptedFiles) => {
+
         // Update form state with the uploaded images
         setForm({ ...form, images: form.images.concat(acceptedFiles) });
+       
     }, [form]);
 
     const { getRootProps, getInputProps } = useDropzone({ onDrop });
@@ -157,8 +159,8 @@ const Products = () => {
                 await fetchProducts();
                 dispatch(stopLoading());
             } else {
-              let res =  await createProduct(productData);
-              console.log("res-->>", res)
+                let res = await createProduct(productData);
+                // console.log("res-->>", res)
                 await fetchProducts();
                 dispatch(stopLoading());
             }
@@ -175,7 +177,7 @@ const Products = () => {
                 vendor,
                 availableLocalities: []
             });
-            setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '',parentVariation: null }]);
+            setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }]);
             setPincodes([]);
             setIsAllSelected(false);
             setEditingProduct(null);
@@ -183,7 +185,7 @@ const Products = () => {
         } catch (error) {
             dispatch(stopLoading());
             console.log("error-->>", error?.response?.data?.message)
-            // alert(error?.response?.data?.message)
+            alert(error?.response?.data?.message)
 
         }
     };
@@ -250,6 +252,7 @@ const Products = () => {
             console.error('Failed to delete category:', error);
         }
     };
+    console.log("form-->>", form)
 
     console.log("variations-->>", variations)
 
@@ -277,6 +280,22 @@ const Products = () => {
         setVariations(variations.filter((_, i) => i !== index));
     };
 
+    const onFileChange = (e, index) => {
+        console.log("onFileChange index--->>>", index)
+        const file = e.target.files[0]; // Assuming single file upload
+    
+        // Update the image property of the specific variation
+        setVariations(prevVariations => {
+            const updatedVariations = [...prevVariations];
+            updatedVariations[index] = {
+                ...updatedVariations[index],
+                image: file
+            };
+            return updatedVariations;
+        });
+    };
+    
+
 
     return (
         <div>
@@ -302,7 +321,7 @@ const Products = () => {
                         {products.map((product, index) => (
                             <CTableRow key={index}>
                                 <CTableDataCell>
-                                    {product.images.slice(0, 2).map((file, imgIndex) => (
+                                    {product.images?.slice(0, 2).map((file, imgIndex) => (
                                         <img
                                             key={imgIndex}
                                             src={`${baseURL}/${file}`}
@@ -470,6 +489,27 @@ const Products = () => {
                                             checked={variation.attributes.selected === 'packet'}
                                             onChange={() => handleAttributeChange(index, 'packet')}
                                         />
+                                    </div>
+                                    {/* Single file upload */}
+                                    <div className="upload-container">
+                                        <input
+                                            type="file"
+                                            onChange={e => onFileChange(e, index)}
+                                        />
+                                    </div>
+
+                                    {/* Display uploaded image for this variation */}
+                                    <div className="actions-cell">
+                                        {variation.image && (
+                                            <div className="image-wrapper">
+                                                <img
+                                                    className="img"
+                                                    src={typeof variation.image === 'string' ? `${baseURL}/${variation.image}` : URL.createObjectURL(variation.image)}
+                                                    alt={`Product Variation Image ${index + 1}`}
+                                                />
+                                                <button type="button" className="close-button" onClick={() => clearImage(index)}>✖</button>
+                                            </div>
+                                        )}
                                     </div>
                                     <CFormInput
                                         name="attributeValue"
