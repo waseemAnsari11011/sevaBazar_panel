@@ -35,34 +35,17 @@ const updateProduct = async (id, productData) => {
 
   // Append variation data and images
   if (variations) {
-    variations.forEach((variation, index) => {
-      // Extract the image file from the variation object
-      const imageFile = variation.image;
+    variations.forEach((variation, variationIndex) => {
+      const { images, ...variationWithoutImages } = variation;
+      newVariations.push(variationWithoutImages);
 
-      // Remove the image file from the variation object
-      const { image, ...variationWithoutImage } = variation;
-
-      // Create a new variation object without the image
-      const newVariation = {
-        ...variationWithoutImage,
-        image: null // Or you can omit the image field altogether
-      };
-
-      // Add the new variation to the newVariations array
-      newVariations.push(newVariation);
-
-      if (imageFile) {
-        if (typeof imageFile === 'string') {
-          formData.append(`existingVariationImages[${index}]`, imageFile);
+      images.forEach((image, imageIndex) => {
+        if (typeof image === 'string') {
+          formData.append(`existingVariationImages[${variationIndex}][${imageIndex}]`, image);
         } else {
-          formData.append(`variationImage_${index}`, imageFile);
+          formData.append(`variationImage_${variationIndex}_${imageIndex}`, image);
         }
-      }
-
-      // Append the image file separately to FormData with a unique key
-      // if (imageFile) {
-      //   formData.append(`variationImage_${index}`, imageFile);
-      // }
+      });
     });
   }
 

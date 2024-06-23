@@ -15,8 +15,8 @@ import {
     CTableBody,
     CTableDataCell,
     CFormSelect,
-    CSpinner, CBadge, CRow, CCol, CFormCheck
-
+    CSpinner, CBadge, CRow, CCol, CFormCheck,
+    CAlert
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPencil, cilTrash, cilCloudUpload } from '@coreui/icons'
@@ -31,6 +31,7 @@ import updateProduct from '../../../api/product/updateProduct';
 import deleteProduct from '../../../api/product/deleteProduct';
 import { useDispatch, useSelector } from 'react-redux';
 import { startLoading, stopLoading } from '../../../store';
+import VariationsComponent from './VariationsComponent';
 
 
 const Products = () => {
@@ -55,11 +56,20 @@ const Products = () => {
     const [pincodes, setPincodes] = useState([]);
     const [isAllSelected, setIsAllSelected] = useState(false);
     const [variations, setVariations] = useState([
-        { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', image: '', parentVariation: null }
+        { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', images: [], parentVariation: null }
     ]);
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertVisible, setAlertVisible] = useState(false);
 
-
-
+    useEffect(() => {
+        let timeout;
+        if (alertVisible) {
+            timeout = setTimeout(() => {
+                setAlertVisible(false);
+            }, 3000); // Hide alert after 5 seconds (adjust as needed)
+        }
+        return () => clearTimeout(timeout);
+    }, [alertVisible]);
 
     //pincode
     const handleAddPincode = () => {
@@ -136,14 +146,22 @@ const Products = () => {
         setForm({ ...form, [name]: value })
     }
 
-    const onDrop = useCallback((acceptedFiles) => {
+    const onDropProductImages = useCallback((acceptedFiles) => {
 
         // Update form state with the uploaded images
         setForm({ ...form, images: form.images.concat(acceptedFiles) });
-       
+
     }, [form]);
 
-    const { getRootProps, getInputProps } = useDropzone({ onDrop });
+    const { getRootProps: getRootPropsProduct, getInputProps: getInputPropsProduct } = useDropzone({
+        onDrop: onDropProductImages,
+        accept: 'image/*',
+        multiple: true
+    });
+
+
+
+
 
     const handleSubmit = async () => {
         try {
@@ -155,12 +173,17 @@ const Products = () => {
             };
 
             if (editingProduct !== null) {
-                await updateProduct(products[editingProduct]._id, productData);
+                let res =  await updateProduct(products[editingProduct]._id, productData);
+                setAlertMessage(res?.message)
+                setAlertVisible(true)
                 await fetchProducts();
                 dispatch(stopLoading());
             } else {
                 let res = await createProduct(productData);
-                // console.log("res-->>", res)
+                console.log("res-->>", res)
+                // alert(res?.message)
+                setAlertMessage(res?.message)
+                setAlertVisible(true)
                 await fetchProducts();
                 dispatch(stopLoading());
             }
@@ -184,7 +207,7 @@ const Products = () => {
             toggleModal();
         } catch (error) {
             dispatch(stopLoading());
-            console.log("error-->>", error?.response?.data?.message)
+            console.log("error-->>", error)
             alert(error?.response?.data?.message)
 
         }
@@ -252,53 +275,18 @@ const Products = () => {
             console.error('Failed to delete category:', error);
         }
     };
-    console.log("form-->>", form)
 
-    console.log("variations-->>", variations)
 
-    const handleVariationChange = (index, field, subField, value) => {
-        const newVariations = [...variations];
-        if (subField) {
-            newVariations[index][field][subField] = value;
-        } else {
-            newVariations[index][field] = value;
-        }
-        setVariations(newVariations);
-    };
 
-    const handleAttributeChange = (index, attribute) => {
-        const newVariations = [...variations];
-        newVariations[index].attributes.selected = attribute;
-        setVariations(newVariations);
-    };
-
-    const addVariation = () => {
-        setVariations([...variations, { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }]);
-    };
-
-    const removeVariation = (index) => {
-        setVariations(variations.filter((_, i) => i !== index));
-    };
-
-    const onFileChange = (e, index) => {
-        console.log("onFileChange index--->>>", index)
-        const file = e.target.files[0]; // Assuming single file upload
-    
-        // Update the image property of the specific variation
-        setVariations(prevVariations => {
-            const updatedVariations = [...prevVariations];
-            updatedVariations[index] = {
-                ...updatedVariations[index],
-                image: file
-            };
-            return updatedVariations;
-        });
-    };
-    
 
 
     return (
         <div>
+            {alertVisible && (
+                <CAlert color={'success'} onClose={() => setAlertVisible(false)} dismissible>
+                    {alertMessage}
+                </CAlert>
+            )}
             <h2>Manage Products</h2>
             <div className="mb-4">
                 <CButton color="primary" onClick={toggleModal}>Add Product</CButton>
@@ -351,7 +339,7 @@ const Products = () => {
                 </CTable>
             </div>}
 
-            <CModal visible={modal} onClose={toggleModal}>
+            <CModal visible={modal} onClose={toggleModal} className="custom-modal">
                 <CModalHeader>
                     <CModalTitle>{editingProduct !== null ? 'Edit Product' : 'Add Product'}</CModalTitle>
                 </CModalHeader>
@@ -371,8 +359,8 @@ const Products = () => {
                         />
 
                         {/* Dropzone for multi-image upload */}
-                        <div {...getRootProps()} className="upload-container">
-                            <input {...getInputProps()} />
+                        <div {...getRootPropsProduct()} className="upload-container">
+                            <input {...getInputPropsProduct()} />
                             <CButton color="primary" variant="outline">
                                 <CIcon icon={cilCloudUpload} size="lg" className="me-2" />
                                 Upload Images
@@ -453,113 +441,7 @@ const Products = () => {
                             ))}
                         </CFormSelect>
                         {/* // Add input fields for variations */}
-                        <div>
-                            {variations.map((variation, index) => (
-                                <div key={index}>
-                                    <div>
-                                        <CFormCheck
-                                            type="radio"
-                                            id={`size-${index}`}
-                                            name={`attribute-${index}`}
-                                            label="Size"
-                                            checked={variation.attributes.selected === 'size'}
-                                            onChange={() => handleAttributeChange(index, 'size')}
-                                        />
-                                        <CFormCheck
-                                            type="radio"
-                                            id={`color-${index}`}
-                                            name={`attribute-${index}`}
-                                            label="Color"
-                                            checked={variation.attributes.selected === 'color'}
-                                            onChange={() => handleAttributeChange(index, 'color')}
-                                        />
-                                        <CFormCheck
-                                            type="radio"
-                                            id={`weight-${index}`}
-                                            name={`attribute-${index}`}
-                                            label="Weight"
-                                            checked={variation.attributes.selected === 'weight'}
-                                            onChange={() => handleAttributeChange(index, 'weight')}
-                                        />
-                                        <CFormCheck
-                                            type="radio"
-                                            id={`packet-${index}`}
-                                            name={`attribute-${index}`}
-                                            label="Packet"
-                                            checked={variation.attributes.selected === 'packet'}
-                                            onChange={() => handleAttributeChange(index, 'packet')}
-                                        />
-                                    </div>
-                                    {/* Single file upload */}
-                                    <div className="upload-container">
-                                        <input
-                                            type="file"
-                                            onChange={e => onFileChange(e, index)}
-                                        />
-                                    </div>
-
-                                    {/* Display uploaded image for this variation */}
-                                    <div className="actions-cell">
-                                        {variation.image && (
-                                            <div className="image-wrapper">
-                                                <img
-                                                    className="img"
-                                                    src={typeof variation.image === 'string' ? `${baseURL}/${variation.image}` : URL.createObjectURL(variation.image)}
-                                                    alt={`Product Variation Image ${index + 1}`}
-                                                />
-                                                <button type="button" className="close-button" onClick={() => clearImage(index)}>✖</button>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <CFormInput
-                                        name="attributeValue"
-                                        label="Attribute Value"
-                                        value={variation.attributes.value}
-                                        onChange={(e) => handleVariationChange(index, 'attributes', 'value', e.target.value)}
-                                    />
-                                    <CFormInput
-                                        name="price"
-                                        label="Price"
-                                        value={variation.price}
-                                        onChange={(e) => handleVariationChange(index, 'price', undefined, e.target.value)}
-                                    />
-                                    <CFormInput
-                                        name="discount"
-                                        label="Discount"
-                                        value={variation.discount}
-                                        onChange={(e) => handleVariationChange(index, 'discount', undefined, e.target.value)}
-                                    />
-                                    <CFormInput
-                                        name="quantity"
-                                        label="Quantity"
-                                        value={variation.quantity}
-                                        onChange={(e) => handleVariationChange(index, 'quantity', undefined, e.target.value)}
-                                    />
-                                    <CFormSelect
-                                        name="parentVariation"
-                                        label="Parent Variation"
-                                        value={variation.parentVariation || ''}
-                                        onChange={(e) => handleVariationChange(index, 'parentVariation', undefined, e.target.value)}
-                                    >
-                                        <option value="">None</option>
-                                        {variations.map((v, i) => (
-                                            <option key={i} value={v._id} disabled={i === index}>
-                                                {`Variation ${i + 1} - ${v.attributes.selected}: ${v.attributes.value}`}
-                                            </option>
-                                        ))}
-                                    </CFormSelect>
-                                    <CButton color="danger" onClick={() => removeVariation(index)}>Remove Variation</CButton>
-                                </div>
-                            ))}
-                            <CButton color="primary" onClick={addVariation}>Add Variation</CButton>
-                        </div>
-
-
-
-
-
-
-
+                        <VariationsComponent variations={variations} setVariations={setVariations} />
                     </CForm>
                 </CModalBody>
                 <CModalFooter>
