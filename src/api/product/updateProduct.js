@@ -11,6 +11,7 @@ const updateProduct = async (id, productData) => {
   formData.append('description', productData.description || '');
   formData.append('category', productData.category || '');
   formData.append('vendor', productData.vendor || '');
+  formData.append('isReturnAllowed', productData.isReturnAllowed);
 
   // Append available localities
   if (productData.availableLocalities) {
@@ -19,6 +20,11 @@ const updateProduct = async (id, productData) => {
     });
   }
 
+  console.log("productData.tags-->>", productData.tags)
+
+  productData.tags?.forEach(tag => {
+    formData.append('tags', tag);
+  });
   // Append product images
   if (productData.images) {
     productData.images.forEach((image, index) => {

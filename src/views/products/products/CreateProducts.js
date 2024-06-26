@@ -16,7 +16,8 @@ import {
     CTableDataCell,
     CFormSelect,
     CSpinner, CBadge, CRow, CCol, CFormCheck,
-    CAlert
+    CAlert,
+    CFormSwitch
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPencil, cilTrash, cilCloudUpload } from '@coreui/icons'
@@ -32,6 +33,7 @@ import deleteProduct from '../../../api/product/deleteProduct';
 import { useDispatch, useSelector } from 'react-redux';
 import { startLoading, stopLoading } from '../../../store';
 import VariationsComponent from './VariationsComponent';
+import { Tags } from './tags';
 
 
 const Products = () => {
@@ -50,6 +52,8 @@ const Products = () => {
         category: '',
         vendor,
         availableLocalities: [],
+        tags: [],
+        isReturnAllowed: false
     });
     const [categories, setCategories] = useState([]);
     const [pincode, setPincode] = useState('');
@@ -60,6 +64,8 @@ const Products = () => {
     ]);
     const [alertMessage, setAlertMessage] = useState('');
     const [alertVisible, setAlertVisible] = useState(false);
+    const [tag, setTag] = useState('');
+    const [tags, setTags] = useState([]);
 
     useEffect(() => {
         let timeout;
@@ -132,9 +138,10 @@ const Products = () => {
 
     const toggleModal = () => {
         if (editingProduct !== null) {
-            setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [] })
+            setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [], tags: [], isReturnAllowed:false })
             setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }]);
             setPincodes([])
+            setTags([])
             setIsAllSelected(false)
             setEditingProduct(null)
         }
@@ -144,6 +151,10 @@ const Products = () => {
     const handleChange = (e) => {
         const { name, value } = e.target
         setForm({ ...form, [name]: value })
+    }
+
+    const toggleReturn = () => {
+        setForm({ ...form, isReturnAllowed: !form.isReturnAllowed })
     }
 
     const onDropProductImages = useCallback((acceptedFiles) => {
@@ -172,8 +183,10 @@ const Products = () => {
                 variations
             };
 
+            console.log("productData-->>", productData)
+
             if (editingProduct !== null) {
-                let res =  await updateProduct(products[editingProduct]._id, productData);
+                let res = await updateProduct(products[editingProduct]._id, productData);
                 setAlertMessage(res?.message)
                 setAlertVisible(true)
                 await fetchProducts();
@@ -198,10 +211,13 @@ const Products = () => {
                 discount: '',
                 category: '',
                 vendor,
-                availableLocalities: []
+                availableLocalities: [],
+                tags: [],
+                isReturnAllowed:false 
             });
             setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }]);
             setPincodes([]);
+            setTags([])
             setIsAllSelected(false);
             setEditingProduct(null);
             toggleModal();
@@ -228,11 +244,16 @@ const Products = () => {
                 images: singProduct.product.images,
                 category: singProduct.product.category,
                 vendor: singProduct.product.vendor,
-                availableLocalities: singProduct.product.availableLocalities
+                availableLocalities: singProduct.product.availableLocalities,
+                tags: singProduct.product.tags,
+                isReturnAllowed:singProduct.product.isReturnAllowed,
             });
 
             // Set variations state with product variations
             setVariations(singProduct.product.variations);
+
+            setTags(singProduct.product.tags);
+
 
             // Check if all locations are selected
             if (singProduct.product.availableLocalities[0] === 'all') {
@@ -347,13 +368,29 @@ const Products = () => {
                     <CForm>
                         <CFormInput
                             name="name"
-                            label="Product Name"
+                            // label="Product Name"
+                            placeholder='Product Name'
                             value={form.name}
                             onChange={handleChange}
                         />
+
+
+                        <Tags tag={tag} tags={tags} setForm={setForm} setTag={setTag} setTags={setTags} form={form} />
+                        <div style={{ marginBottom: '1rem' }}>
+                            <CFormSwitch
+                                label="Hand-to-Hand Return"
+                                // id={`formSwitch-${form.name}`}
+                                name='isReturnAllowed'
+                                value={form.isReturnAllowed}
+                                checked={form.isReturnAllowed}
+                                onChange={toggleReturn}
+                            />
+                        </div>
+
                         <CFormInput
                             name="description"
-                            label="Product Description"
+                            // label="Product Description"
+                            placeholder='Product Description'
                             value={form.description}
                             onChange={handleChange}
                         />

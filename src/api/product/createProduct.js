@@ -10,9 +10,14 @@ const createProduct = async (productData) => {
     formData.append('description', productData.description);
     formData.append('category', productData.category);
     formData.append('vendor', productData.vendor);
+    formData.append('isReturnAllowed', productData.isReturnAllowed);
 
     productData.availableLocalities?.forEach(location => {
         formData.append('availableLocalities', location);
+    });
+
+    productData.tags?.forEach(tag => {
+        formData.append('tags', tag);
     });
 
     productData.images?.forEach((image, index) => {
