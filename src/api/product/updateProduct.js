@@ -35,11 +35,11 @@ const updateProduct = async (id, productData) => {
 
   // Append variation data and images
   if (variations) {
-    variations.forEach((variation, variationIndex) => {
+    variations?.forEach((variation, variationIndex) => {
       const { images, ...variationWithoutImages } = variation;
       newVariations.push(variationWithoutImages);
 
-      images.forEach((image, imageIndex) => {
+      images?.forEach((image, imageIndex) => {
         if (typeof image === 'string') {
           formData.append(`existingVariationImages[${variationIndex}][${imageIndex}]`, image);
         } else {

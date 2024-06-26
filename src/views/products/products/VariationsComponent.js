@@ -5,7 +5,7 @@ import CIcon from '@coreui/icons-react';
 import { cilCloudUpload } from '@coreui/icons';
 import { baseURL } from '../../../utils/axiosConfig';
 
-const Dropzone = ({ onDrop, }) => {
+const Dropzone = ({ onDrop }) => {
     const { getRootProps, getInputProps } = useDropzone({
         onDrop,
         accept: 'image/*',
@@ -24,22 +24,18 @@ const Dropzone = ({ onDrop, }) => {
 };
 
 const VariationsComponent = ({ variations, setVariations }) => {
-    // const [variations, setVariations] = useState([
-    //     { attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', images: [], parentVariation: null },
-    // ]);
-
     const handleDropVariationImages = useCallback((index, acceptedFiles) => {
-        const newImages = acceptedFiles.map(file => file);
+        const newImages = acceptedFiles?.map(file => file);
         setVariations(prevVariations => prevVariations.map((variation, i) => {
             if (i === index) {
                 return {
                     ...variation,
-                    images: [...variation?.images, ...newImages],
+                    images: [...(variation.images || []), ...newImages],
                 };
             }
             return variation;
         }));
-    }, []);
+    }, [setVariations]);
 
     const handleAttributeChange = (index, attribute) => {
         setVariations(prevVariations => prevVariations.map((variation, i) => {
@@ -77,7 +73,7 @@ const VariationsComponent = ({ variations, setVariations }) => {
             if (i === variationIndex) {
                 return {
                     ...variation,
-                    images: variation?.images?.filter((_, imgIndex) => imgIndex !== imageIndex),
+                    images: variation.images.filter((_, imgIndex) => imgIndex !== imageIndex),
                 };
             }
             return variation;
@@ -97,7 +93,7 @@ const VariationsComponent = ({ variations, setVariations }) => {
 
     return (
         <div>
-            {variations.map((variation, index) => (
+            {variations?.map((variation, index) => (
                 <div key={index}>
                     <div>
                         <CFormCheck
@@ -147,8 +143,6 @@ const VariationsComponent = ({ variations, setVariations }) => {
                                 <button type="button" className="close-button" onClick={() => removeImageVariation(index, imgIndex)}>✖</button>
                             </div>
                         ))}
-
-                       
                     </div>
                     <CFormInput
                         name="attributeValue"
@@ -181,7 +175,7 @@ const VariationsComponent = ({ variations, setVariations }) => {
                         onChange={(e) => handleVariationChange(index, 'parentVariation', undefined, e.target.value)}
                     >
                         <option value="">None</option>
-                        {variations.map((v, i) => (
+                        {variations?.map((v, i) => (
                             <option key={i} value={v._id} disabled={i === index}>
                                 {`Variation ${i + 1} - ${v.attributes.selected}: ${v.attributes.value}`}
                             </option>
