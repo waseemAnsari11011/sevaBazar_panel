@@ -1,3 +1,5 @@
+// src/components/Categories.js
+
 import React, { useCallback, useState, useEffect } from 'react'
 import {
   CButton,
@@ -26,11 +28,13 @@ import updateCategory from '../../../api/category/updateCategory'
 import deleteCategory from '../../../api/category/deleteCategory'
 import { useDispatch, useSelector } from 'react-redux'
 import { startLoading, stopLoading } from '../../../store'
+import SearchComponent from '../../components/Search'
 
 const Categories = () => {
   const dispatch = useDispatch()
   const isLoading = useSelector((state) => state.loading)
   const [categories, setCategories] = useState([])
+  const [filteredCategories, setFilteredCategories] = useState([])
   const [modal, setModal] = useState(false)
   const [editingCategory, setEditingCategory] = useState(null)
   const [form, setForm] = useState({ name: '', images: [] })
@@ -59,14 +63,12 @@ const Categories = () => {
         const updatedcategories = categories.map((category, index) =>
           index === editingCategory ? form : category,
         )
-        // setCategories(updatedCategories);
         await updateCategory(categoryId, form)
         await fetchCategories()
         dispatch(stopLoading())
       } else {
         await saveToDb()
         dispatch(stopLoading())
-        // setCategories([...categories, form]);
       }
       setForm({ name: '', images: [] })
       setEditingCategory(null)
@@ -88,7 +90,6 @@ const Categories = () => {
 
   const onDrop = useCallback(
     (acceptedFiles) => {
-      // Update form state with the uploaded images
       setForm({ ...form, images: form.images.concat(acceptedFiles) })
     },
     [form],
@@ -129,13 +130,10 @@ const Categories = () => {
     try {
       dispatch(startLoading())
       const response = await axiosInstance.get('category') // Adjust the URL as necessary
-      // const data = await response.json();
       if (response.status === 200) {
-        console.log('response.categories====>>', response.data.categories)
         setCategories(response.data.categories)
+        setFilteredCategories(response.data.categories)
         dispatch(stopLoading())
-      } else {
-        // console.error(data.message);
       }
     } catch (error) {
       dispatch(stopLoading())
@@ -145,9 +143,7 @@ const Categories = () => {
 
   const handleEdit = async (index, id) => {
     let singCategory = await fetchCategoryById(id)
-    console.log('single category--->>>', singCategory)
     setEditingCategory(index)
-    // setForm(categories[index]);
     setForm(singCategory.category)
     toggleModal()
   }
@@ -155,9 +151,7 @@ const Categories = () => {
   const fetchCategoryById = async (categoryId) => {
     try {
       const data = await getCategoryById(categoryId)
-      console.log('Category retrieved successfully:', data)
       return data
-      // Handle the retrieved category data as needed
     } catch (error) {
       console.error('Error fetching category:', error)
     }
@@ -171,6 +165,11 @@ const Categories = () => {
           Add Category
         </CButton>
       </div>
+      <SearchComponent
+        items={categories}
+        searchKey="name"
+        onFilteredItems={setFilteredCategories}
+      />
       {isLoading ? (
         <div className="spinner-container">
           <CSpinner size="sm" color="blue" />
@@ -185,7 +184,7 @@ const Categories = () => {
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {categories?.map((category, index) => (
+            {filteredCategories?.map((category, index) => (
               <CTableRow key={index}>
                 <CTableDataCell>
                   {category.images.map((file, imgIndex) => (
@@ -226,7 +225,6 @@ const Categories = () => {
               value={form.name}
               onChange={handleChange}
             />
-            {/* Dropzone for multi-image upload */}
             <div {...getRootProps()} className="upload-container">
               <input {...getInputProps()} />
               <CButton color="primary" variant="outline">
@@ -234,7 +232,6 @@ const Categories = () => {
                 Upload Images
               </CButton>
             </div>
-            {/* Display uploaded images */}
             <div className="actions-cell">
               {form?.images?.map((file, index) => (
                 <div key={index} className="image-wrapper">

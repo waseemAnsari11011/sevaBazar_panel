@@ -34,6 +34,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { startLoading, stopLoading } from '../../../store';
 import VariationsComponent from './VariationsComponent';
 import { Tags } from './tags';
+import SearchComponent from '../../components/Search';
 
 
 const Products = () => {
@@ -43,6 +44,8 @@ const Products = () => {
     const vendor = user._id
 
     const [products, setProducts] = useState([])
+    const [filteredProducts, setFilteredProducts] = useState([])
+
     const [modal, setModal] = useState(false)
     const [editingProduct, setEditingProduct] = useState(null)
     const [form, setForm] = useState({
@@ -123,6 +126,7 @@ const Products = () => {
             dispatch(startLoading())
             const productsData = await getAllProducts(vendor);
             setProducts(productsData);
+            setFilteredProducts(productsData)
             dispatch(stopLoading())
         } catch (error) {
             dispatch(stopLoading())
@@ -138,7 +142,7 @@ const Products = () => {
 
     const toggleModal = () => {
         if (editingProduct !== null) {
-            setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [], tags: [], isReturnAllowed:false })
+            setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [], tags: [], isReturnAllowed: false })
             setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }]);
             setPincodes([])
             setTags([])
@@ -213,7 +217,7 @@ const Products = () => {
                 vendor,
                 availableLocalities: [],
                 tags: [],
-                isReturnAllowed:false 
+                isReturnAllowed: false
             });
             setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }]);
             setPincodes([]);
@@ -246,7 +250,7 @@ const Products = () => {
                 vendor: singProduct.product.vendor,
                 availableLocalities: singProduct.product.availableLocalities,
                 tags: singProduct.product.tags,
-                isReturnAllowed:singProduct.product.isReturnAllowed,
+                isReturnAllowed: singProduct.product.isReturnAllowed,
             });
 
             // Set variations state with product variations
@@ -298,8 +302,25 @@ const Products = () => {
     };
 
 
+const getProductVariants = (variations) => {
+    return variations?.map(variation => `${variation.attributes.selected}: "${variation.attributes.value}"`).join('\n');
+  };
+
+  console.log("getProductVariants[0]-->>", getProductVariants(products[0]?.variations))
 
 
+  const getVariantsPrice = (variations) => {
+    return variations?.map(variation => `₹${variation.price}, `).join('\n');
+  };
+
+  const getVariantsQuantity = (variations) => {
+    return variations?.map(variation => `${variation.quantity}, `).join('\n');
+  };
+
+  const getVariantsDiscount = (variations) => {
+    return variations?.map(variation => `${variation.discount}, `).join('\n');
+  };
+  
 
     return (
         <div>
@@ -312,6 +333,11 @@ const Products = () => {
             <div className="mb-4">
                 <CButton color="primary" onClick={toggleModal}>Add Product</CButton>
             </div>
+            <SearchComponent
+                items={products}
+                searchKey="name"
+                onFilteredItems={setFilteredProducts}
+            />
             {isLoading ? <div className="spinner-container">
                 <CSpinner size="sm" color="blue" />
             </div> : <div style={{ overflowX: 'auto' }}>
@@ -320,14 +346,15 @@ const Products = () => {
                         <CTableRow>
                             <CTableHeaderCell>Photo</CTableHeaderCell>
                             <CTableHeaderCell>Name</CTableHeaderCell>
-                            <CTableHeaderCell>Description</CTableHeaderCell>
+                            <CTableHeaderCell>Variants</CTableHeaderCell>
                             <CTableHeaderCell>Price</CTableHeaderCell>
+                            <CTableHeaderCell>Quantity</CTableHeaderCell>
                             <CTableHeaderCell>Discount</CTableHeaderCell>
                             <CTableHeaderCell>Actions</CTableHeaderCell>
                         </CTableRow>
                     </CTableHead>
                     <CTableBody>
-                        {products.map((product, index) => (
+                        {filteredProducts.map((product, index) => (
                             <CTableRow key={index}>
                                 <CTableDataCell>
                                     {product.images?.slice(0, 2).map((file, imgIndex) => (
@@ -340,9 +367,10 @@ const Products = () => {
                                     ))}
                                 </CTableDataCell>
                                 <CTableDataCell>{product.name}</CTableDataCell>
-                                <CTableDataCell>{product.description}</CTableDataCell>
-                                <CTableDataCell>{product.price}</CTableDataCell>
-                                <CTableDataCell>{product.discount}</CTableDataCell>
+                                <CTableDataCell>{getProductVariants(product.variations)}</CTableDataCell>
+                                <CTableDataCell>{getVariantsPrice(product.variations)}</CTableDataCell>
+                                <CTableDataCell>{getVariantsQuantity(product.variations)}</CTableDataCell>
+                                <CTableDataCell>{getVariantsDiscount(product.variations)}</CTableDataCell>
                                 <CTableDataCell >
                                     <div className='actions-cell'>
                                         <CButton color="warning" onClick={() => handleEdit(index, product._id)}>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import './order.css' // Import custom CSS file
 
 
 import { startLoading, stopLoading } from '../../../store';
@@ -17,6 +18,8 @@ import {
 } from '@coreui/react';
 import { getOrdersByVendor } from '../../../api/orders/getOrdersByVendor';
 import { updateOrderPaymentStatus, updateOrderStatus } from '../../../api/orders/updateOrderStatus';
+import DateTimeFilter from '../../components/DateTimeFilter';
+import SearchComponent from '../../components/Search';
 
 const AllOrders = () => {
   const dispatch = useDispatch();
@@ -26,6 +29,7 @@ const AllOrders = () => {
   console.log("vendorId-->>", vendorId)
 
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
 
@@ -44,14 +48,16 @@ const AllOrders = () => {
       dispatch(startLoading());
       const ordersData = await getOrdersByVendor(vendorId);
 
-      console.log("ordersData-->>", ordersData)
+      console.log("ordersData-->>", ordersData);
       setOrders(ordersData);
+      setFilteredOrders(ordersData);
       dispatch(stopLoading());
     } catch (error) {
       dispatch(stopLoading());
       console.error('Failed to fetch orders:', error);
     }
   };
+
 
   useEffect(() => {
     fetchOrders();
@@ -78,6 +84,14 @@ const AllOrders = () => {
       console.error('Failed to update order status:', error);
     }
   };
+  const getFormattedDate = (dateTime) => {
+    const createdAtDate = new Date(dateTime);
+    const formattedCreatedDate = `${createdAtDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} ${createdAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+    return formattedCreatedDate
+
+  }
+
+
 
   return (
     <div>
@@ -86,102 +100,106 @@ const AllOrders = () => {
           {alertMessage}
         </CAlert>
       )}
-      <CTable striped hover responsive="sm">
-        <CTableHead>
-          <CTableRow>
-            <CTableHeaderCell>Order ID</CTableHeaderCell>
-            <CTableHeaderCell>Customer</CTableHeaderCell>
-            <CTableHeaderCell>Shipping Address</CTableHeaderCell>
-            <CTableHeaderCell>Products</CTableHeaderCell>
-            <CTableHeaderCell>Breakdown</CTableHeaderCell>
-            <CTableHeaderCell>Total</CTableHeaderCell>
-            <CTableHeaderCell>Payment Status</CTableHeaderCell>
-            <CTableHeaderCell>Status</CTableHeaderCell>
-          </CTableRow>
-        </CTableHead>
-        <CTableBody>
-          {orders?.map((order, index) => (
-            <CTableRow key={index}>
-              <CTableDataCell>{order.orderId}</CTableDataCell>
-              <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
-              <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
-              <CTableDataCell>
-                {order.vendors.products.map((product, idx) => (
-                  <div key={idx}>
-                    {product.product.name}
-                    {product.orderedVariations?.map((variation, varIdx) => (
-                      <div key={varIdx}>
-                       {variation.attributes.selected} : {variation.attributes.value}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </CTableDataCell>
-
-              <CTableDataCell>
-                {order.vendors.products.map((product, idx) => {
-                  const actualPrice = product.price;
-                  const discountPercentage = product.discount;
-                  const discountAmount = (actualPrice * discountPercentage) / 100;
-                  const discountedPrice = (actualPrice - discountAmount) * product.quantity;
-
-                  return (
-                    <div key={idx}>
-                      {product.quantity} x ₹{actualPrice.toFixed(2)} - {discountPercentage}% = ₹{discountedPrice.toFixed(2)}
-                    </div>
-                  );
-                })}
-              </CTableDataCell>
-              <CTableDataCell>
-                ₹{order.vendors.products.reduce((total, product) => {
-                  const totalAmount = product.totalAmount
-                  
-                  // const actualPrice = product.price;
-                  // const discountPercentage = product.discount;
-                  // const discountAmount = (actualPrice * discountPercentage) / 100;
-                  // const discountedPrice = (actualPrice - discountAmount) * product.quantity;
-
-                  return total + totalAmount;
-                }, 0).toFixed(2) }+ ₹20
-              </CTableDataCell>
-              {/* <CTableDataCell>{order.isPaymentVerified ? "Paid" : "UnPaid"}</CTableDataCell> */}
-              <CTableDataCell>
-                {order.razorpay_payment_id ? (
-                  <CFormSelect
-                    value={order.paymentStatus}
-                    onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
-                    disabled
-                  >
-                    <option value="Paid">Paid</option>
-                    <option value="Unpaid">Unpaid</option>
-                  </CFormSelect>
-                ) : (
-                  <CFormSelect
-                    value={order.paymentStatus}
-                    onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
-                  >
-                    <option value="Paid">Paid</option>
-                    <option value="Unpaid">Unpaid</option>
-                  </CFormSelect>
-                )}
-              </CTableDataCell>
-              <CTableDataCell>
-                <CFormSelect
-                  value={order.vendors.orderStatus}
-                  onChange={(e) => handleStatusChange(order.orderId, order.vendors.vendor._id, e.target.value)}
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Processing">Processing</option>
-                  <option value="Shipped">Shipped</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                </CFormSelect>
-              </CTableDataCell>
+      <div>
+        <DateTimeFilter orders={orders} setFilteredOrders={setFilteredOrders} />
+      </div>
+      <div style={{ position: 'relative', overflowX: 'auto' }}>
+        <CTable striped hover>
+          <CTableHead>
+            <CTableRow>
+              <CTableHeaderCell style={{ minWidth: '100px' }}>Order ID</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '200px' }}>Date & Time</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '50px' }}>Name</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '120px' }}>Number</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '200px' }}>Shipping Address</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '130px' }}>Products</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '200px' }}>Breakdown</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '120px' }}>Total</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '150px' }}>Status</CTableHeaderCell>
             </CTableRow>
-          ))}
-        </CTableBody>
-      </CTable>
+          </CTableHead>
+          <CTableBody>
+            {filteredOrders?.map((order, index) => (
+              <CTableRow key={index}>
+                <CTableDataCell>{order.orderId}</CTableDataCell>
+                <CTableDataCell>{getFormattedDate(order.createdAt)}</CTableDataCell>
+                <CTableDataCell>{order.customer.name}</CTableDataCell>
+                <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
+                <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
+                <CTableDataCell>
+                  {order.vendors.products.map((product, idx) => (
+                    <div key={idx}>
+                      {product.product.name}
+                      {product.orderedVariations?.map((variation, varIdx) => (
+                        <div key={varIdx}>
+                          {variation.attributes.selected} : {variation.attributes.value}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </CTableDataCell>
 
+                <CTableDataCell>
+                  {order.vendors.products.map((product, idx) => {
+                    const actualPrice = product.price;
+                    const discountPercentage = product.discount;
+                    const discountAmount = (actualPrice * discountPercentage) / 100;
+                    const discountedPrice = (actualPrice - discountAmount) * product.quantity;
+
+                    return (
+                      <div key={idx}>
+                        {product.quantity} x ₹{actualPrice.toFixed(2)} - {discountPercentage}% = ₹{discountedPrice.toFixed(2)}
+                      </div>
+                    );
+                  })}
+                </CTableDataCell>
+                <CTableDataCell>
+                  ₹{order.vendors.products.reduce((total, product) => {
+                    const totalAmount = product.totalAmount;
+                    return total + totalAmount;
+                  }, 0).toFixed(2)}+ ₹20
+                </CTableDataCell>
+                <CTableDataCell>
+                  {order.razorpay_payment_id ? (
+                    <CFormSelect
+                      value={order.paymentStatus}
+                      onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
+                      disabled
+                    >
+                      <option value="Paid">Paid</option>
+                      <option value="Unpaid">Unpaid</option>
+                    </CFormSelect>
+                  ) : (
+                    <CFormSelect
+                      value={order.paymentStatus}
+                      onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
+                    >
+                      <option value="Paid">Paid</option>
+                      <option value="Unpaid">Unpaid</option>
+                    </CFormSelect>
+                  )}
+                </CTableDataCell>
+                <CTableDataCell>
+                  <CFormSelect
+                    value={order.vendors.orderStatus}
+                    onChange={(e) => handleStatusChange(order.orderId, order.vendors.vendor._id, e.target.value)}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </CFormSelect>
+                </CTableDataCell>
+              </CTableRow>
+            ))}
+          </CTableBody>
+        </CTable>
+        <div style={{ textAlign: 'center', marginTop: '10px' }}>
+          <p style={{ fontSize: '14px', color: '#888' }}>Scroll &gt;&gt; to see more</p>
+        </div>
+      </div>
     </div>
   );
 };
