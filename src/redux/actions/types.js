@@ -1,0 +1,27 @@
+
+// src/redux/actionTypes.js
+
+export const START_LOADING = 'START_LOADING';
+export const STOP_LOADING = 'STOP_LOADING';
+export const SET_USER = 'SET_USER';
+export const LOGOUT_USER = 'LOGOUT_USER';
+export const SET_IS_AUTHENTICATED = 'SET_IS_AUTHENTICATED';
+export const SET_TOKEN = 'SET_TOKEN';
+export const SET_SIDEBAR_SHOW = 'SET_SIDEBAR_SHOW';
+export const SET_THEME = 'SET_THEME';
+
+
+// src/redux/orderActionTypes.js
+
+export const FETCH_VENDOR_ORDERS_REQUEST = 'FETCH_VENDOR_ORDERS_REQUEST';
+export const FETCH_VENDOR_ORDERS_SUCCESS = 'FETCH_VENDOR_ORDERS_SUCCESS';
+export const FETCH_VENDOR_ORDERS_FAILURE = 'FETCH_VENDOR_ORDERS_FAILURE';
+
+
+// src/redux/mark order as viewed actionTypes.js
+
+export const MARK_ORDERS_VIEWED_REQUEST = 'MARK_ORDERS_VIEWED_REQUEST';
+export const MARK_ORDERS_VIEWED_SUCCESS = 'MARK_ORDERS_VIEWED_SUCCESS';
+export const MARK_ORDERS_VIEWED_FAILURE = 'MARK_ORDERS_VIEWED_FAILURE';
+
+

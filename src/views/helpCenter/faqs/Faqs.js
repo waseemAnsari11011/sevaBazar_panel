@@ -8,16 +8,17 @@ import '@coreui/coreui/dist/css/coreui.min.css';
 import { cilPencil, cilTrash } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { startLoading, stopLoading } from '../../../store';
+// import { startLoading, stopLoading } from '../../../store';
 import addFaq from '../../../api/helpCenter/addFaq';
 import getFAQs from '../../../api/helpCenter/getFaqs';
 import getFaqById from '../../../api/helpCenter/getFaqById';
 import updateFAQ from '../../../api/helpCenter/updateFaq';
 import deleteFAQ from '../../../api/helpCenter/deleteFaq';
+import { startLoading, stopLoading } from '../../../redux/actions/defaultActions';
 
 const Faqs = () => {
   const dispatch = useDispatch();
-  const isLoading = useSelector((state) => state.loading);
+  const isLoading = useSelector((state) => state.app.loading);
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({

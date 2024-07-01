@@ -21,7 +21,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../../utils/axiosConfig'
 import { useDispatch } from 'react-redux'
-import { setUser } from '../../../store'
+import { setIsAuthenticated, setToken, setUser } from '../../../redux/actions/defaultActions'
 
 
 const Login = () => {
@@ -62,8 +62,10 @@ const Login = () => {
 
         // Dispatch the setUser action to store user details in Redux and local storage
         dispatch(setUser(user));
-        dispatch({ type: 'setIsAuthenticated', isAuthenticated: true });
-        dispatch({ type: 'setToken', token: response.data.token });
+        dispatch(setIsAuthenticated(true))   
+        // dispatch({ type: 'setIsAuthenticated', isAuthenticated: true });
+        console.log('dispatching set token')
+        dispatch(setToken(response.data.token));
       }
     } catch (error) {
       if (error.response) {

@@ -27,12 +27,17 @@ import getCategoryById from '../../../api/category/categoryapi'
 import updateCategory from '../../../api/category/updateCategory'
 import deleteCategory from '../../../api/category/deleteCategory'
 import { useDispatch, useSelector } from 'react-redux'
-import { startLoading, stopLoading } from '../../../store'
+// import { startLoading, stopLoading } from '../../../store'
+
 import SearchComponent from '../../components/Search'
+import { startLoading, stopLoading  } from '../../../redux/actions/defaultActions'
+const token = localStorage.getItem('token');
 
 const Categories = () => {
+  const user = useSelector(state => state.user);
+  const userRole = user ? user.role : null;
   const dispatch = useDispatch()
-  const isLoading = useSelector((state) => state.loading)
+  const isLoading = useSelector((state) => state.app.loading)
   const [categories, setCategories] = useState([])
   const [filteredCategories, setFilteredCategories] = useState([])
   const [modal, setModal] = useState(false)
@@ -40,7 +45,7 @@ const Categories = () => {
   const [form, setForm] = useState({ name: '', images: [] })
 
   useEffect(() => {
-    fetchCategories()
+    fetchCategories(token)
   }, [])
 
   const toggleModal = () => {
@@ -129,7 +134,12 @@ const Categories = () => {
   const fetchCategories = async () => {
     try {
       dispatch(startLoading())
-      const response = await axiosInstance.get('category') // Adjust the URL as necessary
+      const response = await axiosInstance.get('/category', {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });// Adjust the URL as necessary
       if (response.status === 200) {
         setCategories(response.data.categories)
         setFilteredCategories(response.data.categories)
@@ -160,11 +170,11 @@ const Categories = () => {
   return (
     <div>
       <h2>Manage Product Categories</h2>
-      <div className="mb-4">
+     {userRole === 'admin' && <div className="mb-4">
         <CButton color="primary" onClick={toggleModal}>
           Add Category
         </CButton>
-      </div>
+      </div>}
       <SearchComponent
         items={categories}
         searchKey="name"
@@ -180,7 +190,7 @@ const Categories = () => {
             <CTableRow>
               <CTableHeaderCell>Category Photo</CTableHeaderCell>
               <CTableHeaderCell>Category Name</CTableHeaderCell>
-              <CTableHeaderCell>Actions</CTableHeaderCell>
+             { userRole === 'admin' && <CTableHeaderCell>Actions</CTableHeaderCell>}
             </CTableRow>
           </CTableHead>
           <CTableBody>
@@ -197,7 +207,7 @@ const Categories = () => {
                   ))}
                 </CTableDataCell>
                 <CTableDataCell>{category?.name}</CTableDataCell>
-                <CTableDataCell>
+                {userRole === 'admin' &&<CTableDataCell>
                   <div className="actions-cell">
                     <CButton color="warning" onClick={() => handleEdit(index, category?._id)}>
                       <CIcon icon={cilPencil} />
@@ -206,7 +216,7 @@ const Categories = () => {
                       <CIcon icon={cilTrash} />
                     </CButton>
                   </div>
-                </CTableDataCell>
+                </CTableDataCell>}
               </CTableRow>
             ))}
           </CTableBody>

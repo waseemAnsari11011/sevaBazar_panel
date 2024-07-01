@@ -31,16 +31,18 @@ import getProductById from '../../../api/product/getSingleProduct';
 import updateProduct from '../../../api/product/updateProduct';
 import deleteProduct from '../../../api/product/deleteProduct';
 import { useDispatch, useSelector } from 'react-redux';
-import { startLoading, stopLoading } from '../../../store';
+// import { startLoading, stopLoading } from '../../../store';
+
 import VariationsComponent from './VariationsComponent';
 import { Tags } from './tags';
 import SearchComponent from '../../components/Search';
+import { startLoading, stopLoading  } from '../../../redux/actions/defaultActions';
 
 
 const Products = () => {
     const dispatch = useDispatch()
-    const isLoading = useSelector((state) => state.loading)
-    const user = useSelector((state) => state.user)
+    const isLoading = useSelector((state) => state.app.loading)
+    const user = useSelector((state) => state.app.user)
     const vendor = user._id
 
     const [products, setProducts] = useState([])
@@ -111,6 +113,7 @@ const Products = () => {
     // Fetch categories 
     const fetchCategories = async () => {
         try {
+            
             dispatch(startLoading())
             const categoriesData = await getAllCategories();
             setCategories(categoriesData);

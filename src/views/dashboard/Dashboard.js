@@ -46,22 +46,17 @@ import {
 
 } from '@coreui/icons'
 
-import avatar1 from 'src/assets/images/avatars/1.jpg'
-import avatar2 from 'src/assets/images/avatars/2.jpg'
-import avatar3 from 'src/assets/images/avatars/3.jpg'
-import avatar4 from 'src/assets/images/avatars/4.jpg'
-import avatar5 from 'src/assets/images/avatars/5.jpg'
-import avatar6 from 'src/assets/images/avatars/6.jpg'
+
 
 import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
 import { getRecentOrdersByVendor, getProductsLowQuantity } from '../../api/orders/getOrdersByVendor'
-import { startLoading, stopLoading } from '../../store'
 import { useDispatch, useSelector } from 'react-redux'
 import axiosInstance, { baseURL } from '../../utils/axiosConfig'
 import '../products/Products.css' // Import custom CSS file
 import getAllInquiries from '../../api/Inquiry/getAllInquiries'
+import { startLoading, stopLoading } from '../../redux/actions/defaultActions'
 
 
 const Dashboard = () => {
@@ -83,7 +78,7 @@ const Dashboard = () => {
     return () => clearTimeout(timeout);
   }, [alertVisible]);
 
-  const user = useSelector((state) => state.user)
+  const user = useSelector((state) => state.app.user)
   const userRole = user ? user.role : null;
   const vendorId = user._id
 
@@ -111,7 +106,6 @@ const Dashboard = () => {
       dispatch(stopLoading());
     } catch (error) {
       console.error('Failed to get inquiries:', error);
-      setError(error.message);
       dispatch(stopLoading());
     }
   };

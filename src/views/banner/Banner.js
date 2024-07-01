@@ -29,12 +29,13 @@ import deleteBanner from '../../api/banner/deleteBanner'
 import updateBanner from '../../api/banner/updateBanner'
 import activebannerapi from '../../api/banner/activebannerapi'
 import { useDispatch, useSelector } from 'react-redux'
-import { startLoading, stopLoading } from '../../store'
+import { startLoading, stopLoading } from '../../redux/actions/defaultActions'
+// import { startLoading, stopLoading } from '../../store'
 
 const Banner = ({ banner }) => {
   const [visible, setVisible] = useState(false)
   const dispatch = useDispatch()
-  const isLoading = useSelector((state) => state.loading)
+  const isLoading = useSelector((state) => state.app.loading)
   const [banners, setBanners] = useState([])
   const [modal, setModal] = useState(false)
   const [editingBanner, setEditingBanner] = useState(null)

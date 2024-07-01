@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from 'react';
 import getAllVendors from '../../../api/vendor/getAllVendor';
-import { startLoading, stopLoading } from '../../../store';
+// import { startLoading, stopLoading } from '../../../store';
+
 import { useDispatch } from 'react-redux';
 import {
   CButton,
@@ -25,6 +26,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilPencil, cilTrash, cilCloudUpload, cilBan, cilLockUnlocked } from '@coreui/icons'
 import { restrictVendor, unRestrictVendor } from '../../../api/vendor/restrictUnrestrict';
+import { startLoading, stopLoading  } from '../../../redux/actions/defaultActions';
 
 const VendorList = () => {
   const dispatch = useDispatch()

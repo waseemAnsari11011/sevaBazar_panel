@@ -15,9 +15,13 @@ import { CChartBar, CChartLine } from '@coreui/react-chartjs'
 import CIcon from '@coreui/icons-react'
 import { cilArrowBottom, cilArrowTop, cilOptions } from '@coreui/icons'
 import { getTotalSales, getMonthlySales, getOrdersCount , getMonthlyOrderCounts} from '../../api/report/salesReports'
+import { useSelector } from 'react-redux'
 
 
 const WidgetsDropdown = (props) => {
+  const user = useSelector((state) => state.app.user)
+  const vendorId = user._id
+
   const widgetChartRef1 = useRef(null)
   const widgetChartRef2 = useRef(null)
   const [salesData, setSalesData] = useState({
@@ -51,7 +55,7 @@ const WidgetsDropdown = (props) => {
   useEffect(() => {
     const fetchOrdersCount = async () => {
       try {
-        const data = await getOrdersCount();
+        const data = await getOrdersCount(vendorId);
         setOrderCountData(data);
         setDisplayedOrdersCount(data.ordersToday);
       } catch (error) {
@@ -66,7 +70,7 @@ const WidgetsDropdown = (props) => {
   useEffect(() => {
     const fetchSalesData = async () => {
       try {
-        const data = await getMonthlySales();
+        const data = await getMonthlySales(vendorId);
         setMonthlySalesData(data);
       } catch (error) {
         console.error('Failed to fetch sales data', error);
@@ -79,7 +83,7 @@ const WidgetsDropdown = (props) => {
   useEffect(() => {
     const fetchMonthlyOrdersCountData = async () => {
       try {
-        const data = await getMonthlyOrderCounts();
+        const data = await getMonthlyOrderCounts(vendorId);
         setMonthlyOrdersCountData(data);
       } catch (error) {
         console.error('Failed to fetch sales data', error);
@@ -92,7 +96,7 @@ const WidgetsDropdown = (props) => {
   useEffect(() => {
     const fetchSalesData = async () => {
       try {
-        const data = await getTotalSales();
+        const data = await getTotalSales(vendorId);
         setSalesData(data);
         setDisplayedSales(data.totalSalesToday); // Default display today's sales
       } catch (error) {

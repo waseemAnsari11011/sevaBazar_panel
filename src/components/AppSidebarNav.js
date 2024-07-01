@@ -9,9 +9,10 @@ import { CBadge, CNavLink, CSidebarNav } from '@coreui/react';
 import { useSelector } from 'react-redux';
 
 export const AppSidebarNav = ({ items }) => {
-  const user = useSelector(state => state.user);
+  const user = useSelector(state => state.app.user);
   const userRole = user ? user.role : null;
   const [filteredItems, setFilteredItems] = useState([])
+
 
   useEffect(() => {
     // Filter out "Vendors" if userRole is 'vendor'

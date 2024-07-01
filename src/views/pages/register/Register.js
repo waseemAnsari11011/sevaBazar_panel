@@ -27,7 +27,11 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [businessName, setBusinessName] = useState('');
+  const [businessAddress, setBusinessAddress] = useState('');
+  const [businessPincode, setBusinessPincode] = useState('');
+
   const [contactNumber, setContactNumber] = useState('');
+  const [alternativeContactNumber, setAlternativeContactNumber] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertColor, setAlertColor] = useState('primary');
@@ -53,7 +57,12 @@ const Register = () => {
         email,
         vendorInfo: {
           contactNumber,
-          businessName
+          alternativeContactNumber:alternativeContactNumber,
+          businessName,
+          address:{
+            addressLine1:businessAddress,
+            postalCode:businessPincode
+          }
         },
       });
 
@@ -115,14 +124,22 @@ const Register = () => {
                     <CInputGroupText><CIcon icon={cilPhone} /></CInputGroupText>
                     <CFormInput placeholder="Contact Number" autoComplete="contactNumber" onChange={(e) => setContactNumber(e.target.value)} />
                   </CInputGroup>
-                  {/* <CInputGroup className="mb-3">
+                  <CInputGroup className="mb-3">
+                    <CInputGroupText><CIcon icon={cilPhone} /></CInputGroupText>
+                    <CFormInput placeholder="Alternative Contact Number" autoComplete="alternativecontactNumber" onChange={(e) => setAlternativeContactNumber(e.target.value)} />
+                  </CInputGroup>
+                  <CInputGroup className="mb-3">
                     <CInputGroupText> <CIcon icon={cilBuilding} /></CInputGroupText>
                     <CFormInput placeholder="Business Name" autoComplete="businessName" onChange={(e) => setBusinessName(e.target.value)} />
-                  </CInputGroup> */}
-                  {/* <CInputGroup className="mb-3">
+                  </CInputGroup>
+                  <CInputGroup className="mb-3">
                     <CInputGroupText>  <CIcon icon={cilLocationPin} /></CInputGroupText>
-                    <CFormInput placeholder="Available Locations (pin code)" autoComplete="availableLocalities" onChange={(e) => setAvailableLocalities(e.target.value)} />
-                  </CInputGroup> */}
+                    <CFormInput placeholder="business - address" autoComplete="businessaddress" onChange={(e) => setBusinessAddress(e.target.value)} />
+                  </CInputGroup>
+                  <CInputGroup className="mb-3">
+                    <CInputGroupText>  <CIcon icon={cilLocationPin} /></CInputGroupText>
+                    <CFormInput placeholder="business - pincode" autoComplete="businesspincode" onChange={(e) => setBusinessPincode(e.target.value)} />
+                  </CInputGroup>
                   <CInputGroup className="mb-3">
                     <CInputGroupText>
                       <CIcon icon={cilLockLocked} />

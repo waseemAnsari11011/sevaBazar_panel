@@ -1,8 +1,8 @@
 import axiosInstance from "../../utils/axiosConfig";
 
-export const getTotalSales = async () => {
+export const getTotalSales = async (vendorId) => {
     try {
-        const response = await axiosInstance.get('/get-sales');
+        const response = await axiosInstance.get(`/get-sales/${vendorId}`);
         return response.data;
     } catch (error) {
         console.error('Error fetching total sales data', error);
@@ -10,9 +10,9 @@ export const getTotalSales = async () => {
     }
 };
 
-export const getMonthlySales = async () => {
+export const getMonthlySales = async (vendorId) => {
     try {
-        const response = await axiosInstance.get('/monthly-sales');
+        const response = await axiosInstance.get(`/monthly-sales/${vendorId}`);
         return response.data;
     } catch (error) {
         console.error('Error fetching monthly sales data', error);
@@ -20,9 +20,9 @@ export const getMonthlySales = async () => {
     }
 };
 
-export const getOrdersCount = async () => {
+export const getOrdersCount = async (vendorId) => {
     try {
-        const response = await axiosInstance.get('/orders-counts');
+        const response = await axiosInstance.get(`/orders-counts/${vendorId}`);
         return response.data;
     } catch (error) {
         console.error('Error fetching orders count data', error);
@@ -30,9 +30,9 @@ export const getOrdersCount = async () => {
     }
 };
 
-export const getMonthlyOrderCounts = async () => {
+export const getMonthlyOrderCounts = async (vendorId) => {
     try {
-        const response = await axiosInstance.get('/monthly-orders-counts');
+        const response = await axiosInstance.get(`/monthly-orders-counts/${vendorId}`);
         return response.data;
     } catch (error) {
         console.error('Error fetching monthly orders count', error);

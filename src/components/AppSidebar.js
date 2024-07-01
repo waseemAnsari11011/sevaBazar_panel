@@ -17,15 +17,17 @@ import { AppSidebarNav } from './AppSidebarNav'
 import { sygnet } from 'src/assets/brand/sygnet'
 
 // sidebar nav config
-import navigation from '../_nav'
+import Navigation from '../_nav'
+
 
 import logo from '../assets/brand/logo_long.png'; // adjust the path to your logo image
 
 
 const AppSidebar = () => {
+  const navItems = Navigation();
   const dispatch = useDispatch()
-  const unfoldable = useSelector((state) => state.sidebarUnfoldable)
-  const sidebarShow = useSelector((state) => state.sidebarShow)
+  const unfoldable = useSelector((state) => state.app.sidebarUnfoldable)
+  const sidebarShow = useSelector((state) => state.app.sidebarShow)
 
   return (
     <CSidebar
@@ -48,7 +50,7 @@ const AppSidebar = () => {
           onClick={() => dispatch({ type: 'set', sidebarShow: false })}
         />
       </CSidebarHeader>
-      <AppSidebarNav items={navigation} />
+      <AppSidebarNav items={navItems} />
       <CSidebarFooter className="border-top d-none d-lg-flex">
         <CSidebarToggler
           onClick={() => dispatch({ type: 'set', sidebarUnfoldable: !unfoldable })}

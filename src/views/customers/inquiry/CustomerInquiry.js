@@ -15,10 +15,12 @@ import {
   CFormInput,
   CBadge
 } from '@coreui/react';
-import { startLoading, stopLoading } from '../../../store';
+// import { startLoading, stopLoading } from '../../../store';
+
 import { useDispatch, useSelector } from 'react-redux';
 import getAllInquiries from '../../../api/Inquiry/getAllInquiries';
 import sendInquiryResponse from '../../../api/Inquiry/sendInquiryResponse';
+import { startLoading, stopLoading } from '../../../redux/actions/defaultActions';
 
 const CustomerInquiry = () => {
   const dispatch = useDispatch();
@@ -26,7 +28,7 @@ const CustomerInquiry = () => {
   const [inquiries, setInquiries] = useState([]);
   const [response, setResponse] = useState('');
   const [selectedInquiryId, setSelectedInquiryId] = useState(null); // State to track selected inquiry ID
-  const isLoading = useSelector((state) => state.loading);
+  const isLoading = useSelector((state) => state.app.loading);
 
   // Function to toggle modal visibility
   const toggleModal = (inquiryId = null) => {

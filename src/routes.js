@@ -126,7 +126,7 @@ const routes = [
   { path: '/widgets', name: 'Widgets', element: Widgets },
   { path: '/products/products-create', name: 'Create Products', element: Products },
   { path: '/products/categories-create', name: 'Create Categories', element: Categories },
-  { path: '/orders/all-orders', name: 'All Orders', element: AllOrders },
+  { path: '/orders/all-orders', name: 'Orders', element: AllOrders },
   { path: '/orders/refund', name: 'Refund', element: Refund },
   { path: '/customer-inquiries', name: 'Inquires', element: CustomerInquiry },
   { path: '/customer/list', name: 'customer-list', element: CustomerList },
