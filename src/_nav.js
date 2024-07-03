@@ -16,18 +16,12 @@ import {
   cilClipboard,
   cilGroup,
   cilInfo,
-  cilEnvelopeClosed,
   cilPhone,
   cilSpeech,
 } from '@coreui/icons';
 import { CNavGroup, CNavItem, CNavTitle, CBadge } from '@coreui/react';
-import { useSelector } from 'react-redux';
 
-const Navigation = () => {
-  const { orders } = useSelector(state => state.orders); // Adjust the path based on your Redux state structure
-
-  const count = orders ? orders : 0; // Assuming orders is an array and you want the count of orders
-
+const Navigation = (neworderCount) => {
   const _nav = [
     {
       component: CNavItem,
@@ -62,9 +56,9 @@ const Navigation = () => {
       name: (
         <>
           Orders
-          {count !== 0 && (
+          {neworderCount !== 0 && (
             <CBadge color="info" className="ms-auto">
-              {count}
+              {neworderCount}
             </CBadge>
           )}
         </>

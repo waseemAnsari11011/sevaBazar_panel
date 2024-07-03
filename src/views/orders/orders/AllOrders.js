@@ -421,19 +421,19 @@ const AllOrders = () => {
                 </CTableDataCell>
                 <CTableDataCell>
                   <div>
-                    <strong>Business Name:</strong> {order.vendors.vendor.vendorInfo.businessName}
+                    <strong>Business Name:</strong> {order.vendors.vendor.vendorInfo?.businessName}
                   </div>
                   <div>
-                    <strong>Contact Number:</strong> {order.vendors.vendor.vendorInfo.contactNumber}
+                    <strong>Contact Number:</strong> {order.vendors.vendor.vendorInfo?.contactNumber}
                   </div>
                   <div>
-                    <strong>Alternative Contact Number:</strong> {order.vendors.vendor.vendorInfo.alternativeContactNumber}
+                    <strong>Alternative Contact Number:</strong> {order.vendors.vendor?.vendorInfo?.alternativeContactNumber}
                   </div>
                   <div>
-                    <strong>Address :</strong> {order.vendors.vendor.vendorInfo.address.addressLine1}
+                    <strong>Address :</strong> {order.vendors.vendor.vendorInfo?.address?.addressLine1}
                   </div>
                   <div>
-                    <strong>Postal Code:</strong> {order.vendors.vendor.vendorInfo.address.postalCode}
+                    <strong>Postal Code:</strong> {order.vendors.vendor.vendorInfo.address?.postalCode}
                   </div>
                 </CTableDataCell>
                 <CTableDataCell>

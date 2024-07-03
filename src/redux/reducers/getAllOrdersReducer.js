@@ -8,7 +8,7 @@ import {
 
 const initialState = {
     loading: false,
-    orders: 0,
+    neworderCount: 0,
     error: ''
 };
 
@@ -23,14 +23,14 @@ const orderReducer = (state = initialState, action) => {
             return {
                 ...state,
                 loading: false,
-                orders: action.payload,
+                neworderCount: action.payload,
                 error: ''
             };
         case FETCH_VENDOR_ORDERS_FAILURE:
             return {
                 ...state,
                 loading: false,
-                orders: [],
+                neworderCount: [],
                 error: action.payload
             };
         default:

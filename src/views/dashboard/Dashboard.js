@@ -82,14 +82,14 @@ const Dashboard = () => {
   const userRole = user ? user.role : null;
   const vendorId = user._id
 
-  console.log("products-->>", products)
+  // console.log("products-->>", products)
 
   const fetchRecentOrders = async () => {
     try {
       dispatch(startLoading());
       const recentOrdersData = await getRecentOrdersByVendor(vendorId);
 
-      console.log("recentOrdersData-->>", recentOrdersData)
+      // console.log("recentOrdersData-->>", recentOrdersData)
       setOrders(recentOrdersData);
       dispatch(stopLoading());
     } catch (error) {
@@ -123,7 +123,7 @@ const Dashboard = () => {
       dispatch(startLoading());
       const lowQuantityProducts = await getProductsLowQuantity(vendorId);
 
-      console.log("lowQuantityProducts-->>", lowQuantityProducts)
+      // console.log("lowQuantityProducts-->>", lowQuantityProducts)
       setProducts(lowQuantityProducts);
       dispatch(stopLoading());
     } catch (error) {

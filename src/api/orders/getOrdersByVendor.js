@@ -23,7 +23,7 @@ export const getRecentOrdersByVendor = async (vendorId) => {
 export const getProductsLowQuantity = async (vendorId) => {
   try {
     const response = await axiosInstance.get(`/products-low-quantity/${vendorId}`);
-    console.log("response.data--->>>", response.data)
+    // console.log("response.data--->>>", response.data)
     return response.data;
   } catch (error) {
     console.error('Failed to retrieve product:', error);

@@ -4,7 +4,7 @@ import axiosInstance from "../../utils/axiosConfig";
 
 const getAllInquiries = async () => {
     const token = localStorage.getItem('token');
-    console.log("token----->>>", token)
+    // console.log("token----->>>", token)
     try {
         const response = await axiosInstance.get('/inquiries', {
             headers: {
