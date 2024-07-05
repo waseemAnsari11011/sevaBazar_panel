@@ -17,11 +17,13 @@ const AppSidebar = () => {
   const unfoldable = useSelector((state) => state.app.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.app.sidebarShow)
   const neworderCount = useSelector(state => state.orders.neworderCount)
-  const [navItems, setNavItems] = useState(Navigation(neworderCount));
+  const newChatOrderCount = useSelector(state => state.newChatOrders.newChatOrderCount)
+
+  const [navItems, setNavItems] = useState(Navigation(neworderCount, newChatOrderCount));
 
   useEffect(() => {
-    setNavItems(Navigation(neworderCount));
-  }, [neworderCount]);
+    setNavItems(Navigation(neworderCount, newChatOrderCount));
+  }, [neworderCount, newChatOrderCount]);
 
   return (
     <CSidebar

@@ -17,8 +17,9 @@ import { startLoading, stopLoading } from '../../../redux/actions/defaultActions
 // import { fetchVendorChatOrders } from '../../../redux/actions/getAllChatOrdersAction';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { fetchChatOrdersByVendor, updateChatOrderAmountAndStatus } from '../../../redux/actions/chatOrdersActions';
+import { fetchChatOrdersByVendor, updateChatOrderAmountAndStatus, updateChatOrderStatus, updateChatPaymentStatusManually } from '../../../redux/actions/chatOrdersActions';
 import DateTimeFilter from '../../components/DateTimeFilter';
+import { markChatOrdersViewed } from '../../../redux/actions/getNewChatOrdersAction';
 
 
 const ChatOrders = () => {
@@ -37,14 +38,14 @@ const ChatOrders = () => {
 
   console.log("filteredOrders-->>", filteredOrders)
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     await dispatch(markOrdersViewed(vendorId));
-  //     await dispatch(fetchVendorChatOrders(vendorId));
-  //   };
+  useEffect(() => {
+    const fetchData = async () => {
+      await dispatch(markChatOrdersViewed(vendorId));
+      await dispatch(fetchChatOrdersByVendor(vendorId));
+    };
 
-  //   fetchData();
-  // }, [dispatch, vendorId]);
+    fetchData();
+  }, [dispatch, vendorId]);
 
   useEffect(() => {
     let timeout;
@@ -85,7 +86,7 @@ const ChatOrders = () => {
     const doc = new jsPDF();
 
     const totalAmount = (20).toFixed(2); // Assuming there is a delivery charge of 20
-    const finalTotal = (parseFloat(totalAmount) + 20).toFixed(2);
+    const finalTotal = (parseFloat(order.totalAmount) + 20).toFixed(2);
     const rupeeSymbol = '\u20B9';
 
     doc.autoTable({
@@ -109,9 +110,9 @@ const ChatOrders = () => {
       body: [
         [
           {
-            content: `Reference: #${order.orderId}`
+            content: `Reference: #${order.shortId}`
               + `\nDate: ${getFormattedDate(order.createdAt)}`
-              + `\nInvoice number: ${order.orderId}`,
+              + `\nInvoice number: ${order.shortId}`,
             styles: { halign: 'right' }
           }
         ],
@@ -174,9 +175,9 @@ const ChatOrders = () => {
     });
 
     doc.autoTable({
-      head: [['Items', 'Quantity', 'Price']],
+      head: [['Items',  'Price']],
       body: [
-        ['Order Message', 1, `rs ${totalAmount}`],
+        [`${order.orderMessage}`,  `rs ${order.totalAmount}`],
       ],
       theme: 'striped',
       headStyles: { fillColor: '#343a40' }
@@ -186,7 +187,7 @@ const ChatOrders = () => {
       body: [
         [
           { content: 'Subtotal:', styles: { halign: 'right' } },
-          { content: `rs ${totalAmount}`, styles: { halign: 'right' } },
+          { content: `rs ${order.totalAmount}`, styles: { halign: 'right' } },
         ],
         [
           { content: 'Delivery charge:', styles: { halign: 'right' } },
@@ -226,7 +227,7 @@ const ChatOrders = () => {
       theme: "plain"
     });
 
-    doc.save(`invoice_${order.orderId}.pdf`);
+    doc.save(`invoice_${order.shortId}.pdf`);
   };
 
   const handleAddAmountChange = (orderId, amount) => {
@@ -248,14 +249,28 @@ const ChatOrders = () => {
   };
 
   const handlePaymentStatusChange = async (orderId, newStatus) => {
-    try {
-      await updateOrderPaymentStatus(orderId, newStatus);
+    dispatch(updateChatPaymentStatusManually(orderId, newStatus)).then(() => {
       setAlertMessage('Order status updated successfully');
       setAlertVisible(true);
-      fetchOrders();
-    } catch (error) {
-      console.error('Failed to update order status:', error);
-    }
+      dispatch(fetchChatOrdersByVendor(vendorId))
+    }).catch((error) => {
+      setAlertMessage(`Failed to update amount: ${error.message}`);
+      setAlertVisible(true);
+    });
+
+
+  };
+
+  const handleStatusChange = async (orderId, vendorId, newStatus) => {
+    dispatch(updateChatOrderStatus(orderId, newStatus)).then(() => {
+      setAlertMessage('Order status updated successfully');
+      setAlertVisible(true);
+      dispatch(fetchChatOrdersByVendor(vendorId))
+    }).catch((error) => {
+      setAlertMessage(`Failed to update amount: ${error.message}`);
+      setAlertVisible(true);
+    });
+
   };
 
 
@@ -277,19 +292,22 @@ const ChatOrders = () => {
               <CTableHeaderCell style={{ minWidth: '100px' }}>Order ID</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '200px' }}>Date & Time</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '50px' }}>Customer</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '120px' }}>Number</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '200px' }}>Shipping Address</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Order Message</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Add Amount</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '150px' }}>Status</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Invoice</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
             {filteredOrders?.map((order, index) => (
               <CTableRow key={index}>
-                <CTableDataCell>{order.orderId}</CTableDataCell>
+                <CTableDataCell>{order.shortId}</CTableDataCell>
                 <CTableDataCell>{getFormattedDate(order.createdAt)}</CTableDataCell>
                 <CTableDataCell>{order.customer.name}</CTableDataCell>
+                <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
                 <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
                 <CTableDataCell>{order.orderMessage}</CTableDataCell>
                 <CTableDataCell>
@@ -299,13 +317,29 @@ const ChatOrders = () => {
                     onChange={(e) => handleAddAmountChange(order.orderId, e.target.value)}
                   />
                 </CTableDataCell>
-                <CFormSelect
-                  // value={order.paymentStatus}
-                  // onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
-                >
-                  <option value="Paid">Paid</option>
-                  <option value="Unpaid">Unpaid</option>
-                </CFormSelect>
+                <CTableDataCell>
+                  <CFormSelect
+                    value={order.paymentStatus}
+                    onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                  </CFormSelect>
+                </CTableDataCell>
+
+                <CTableDataCell>
+                  <CFormSelect
+                    value={order.orderStatus}
+                    onChange={(e) => handleStatusChange(order.orderId, order.vendors.vendor._id, e.target.value)}
+                  > <option value="In Review">In Review</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </CFormSelect>
+                </CTableDataCell>
+
                 <CTableDataCell>
                   <CButton color="primary" onClick={() => handleDownloadInvoice(order)}>
                     Download Invoice

@@ -21,7 +21,9 @@ import {
 } from '@coreui/icons';
 import { CNavGroup, CNavItem, CNavTitle, CBadge } from '@coreui/react';
 
-const Navigation = (neworderCount) => {
+const Navigation = (neworderCount, newChatOrderCount) => {
+
+  console.log("newChatOrderCount-->", newChatOrderCount)
   const _nav = [
     {
       component: CNavItem,
@@ -56,11 +58,12 @@ const Navigation = (neworderCount) => {
       name: (
         <>
           Orders
-          {neworderCount !== 0 && (
+          {(neworderCount !== 0 || newChatOrderCount !== 0) && (
             <CBadge color="info" className="ms-auto">
-              {neworderCount}
+              {neworderCount + newChatOrderCount}
             </CBadge>
           )}
+
         </>
       ),
       to: '/orders/all-orders',
@@ -70,11 +73,19 @@ const Navigation = (neworderCount) => {
           component: CNavItem,
           name: 'All Orders',
           to: '/orders/all-orders',
+          badge: {
+            color: 'info',
+            text: neworderCount,
+          },
         },
         {
           component: CNavItem,
           name: 'Chat Orders',
           to: '/orders/chat-orders',
+          badge: {
+            color: 'info',
+            text: newChatOrderCount,
+          },
         },
       ],
     },

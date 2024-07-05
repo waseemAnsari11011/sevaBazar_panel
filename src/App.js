@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
 import { fetchVendorOrders } from './redux/actions/getAllOrdersAction'
+import { fetchVendorChatOrders } from './redux/actions/getNewChatOrdersAction'
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -28,6 +29,7 @@ const App = () => {
   useEffect(() => {
     const fetchOrdersAndSetTheme = async () => {
       await dispatch(fetchVendorOrders(vendorId));
+      await dispatch(fetchVendorChatOrders(vendorId));
 
       const urlParams = new URLSearchParams(window.location.search);
       const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0];
