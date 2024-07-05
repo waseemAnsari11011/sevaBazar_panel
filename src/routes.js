@@ -9,6 +9,7 @@ const Products = React.lazy(() => import('./views/products/products/CreateProduc
 const Categories = React.lazy(() => import('./views/products/categories/CreateCategories'))
 
 //order
+const ChatOrders = React.lazy(() => import('./views/orders/orders/ChatOrders'))
 const AllOrders = React.lazy(() => import('./views/orders/orders/AllOrders'))
 const Refund = React.lazy(() => import('./views/orders/refund/Refund'))
 
@@ -127,6 +128,7 @@ const routes = [
   { path: '/products/products-create', name: 'Create Products', element: Products },
   { path: '/products/categories-create', name: 'Create Categories', element: Categories },
   { path: '/orders/all-orders', name: 'Orders', element: AllOrders },
+  { path: '/orders/chat-orders', name: 'Orders', element: ChatOrders },
   { path: '/orders/refund', name: 'Refund', element: Refund },
   { path: '/customer-inquiries', name: 'Inquires', element: CustomerInquiry },
   { path: '/customer/list', name: 'customer-list', element: CustomerList },

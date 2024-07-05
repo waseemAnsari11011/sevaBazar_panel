@@ -71,6 +71,11 @@ const Navigation = (neworderCount) => {
           name: 'All Orders',
           to: '/orders/all-orders',
         },
+        {
+          component: CNavItem,
+          name: 'Chat Orders',
+          to: '/orders/chat-orders',
+        },
       ],
     },
     {
