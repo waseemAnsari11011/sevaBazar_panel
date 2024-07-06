@@ -20,6 +20,9 @@ import 'jspdf-autotable';
 import { fetchChatOrdersByVendor, updateChatOrderAmountAndStatus, updateChatOrderStatus, updateChatPaymentStatusManually } from '../../../redux/actions/chatOrdersActions';
 import DateTimeFilter from '../../components/DateTimeFilter';
 import { markChatOrdersViewed } from '../../../redux/actions/getNewChatOrdersAction';
+import { handleDownloadChatInvoice } from './utils';
+import CIcon from '@coreui/icons-react'
+import { cilCloudDownload } from '@coreui/icons';
 
 
 const ChatOrders = () => {
@@ -82,153 +85,6 @@ const ChatOrders = () => {
     return `${createdAtDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} ${createdAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
   };
 
-  const handleDownloadInvoice = (order) => {
-    const doc = new jsPDF();
-
-    const totalAmount = (20).toFixed(2); // Assuming there is a delivery charge of 20
-    const finalTotal = (parseFloat(order.totalAmount) + 20).toFixed(2);
-    const rupeeSymbol = '\u20B9';
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: 'Seva Bazar',
-            styles: { halign: 'left', fontSize: 20, textColor: '#ffffff' }
-          },
-          {
-            content: 'Invoice',
-            styles: { halign: 'right', fontSize: 20, textColor: '#ffffff' }
-          }
-        ],
-      ],
-      theme: 'plain',
-      styles: { fillColor: '#3366ff' }
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: `Reference: #${order.shortId}`
-              + `\nDate: ${getFormattedDate(order.createdAt)}`
-              + `\nInvoice number: ${order.shortId}`,
-            styles: { halign: 'right' }
-          }
-        ],
-      ],
-      theme: 'plain'
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: 'Billed to:'
-              + `\n${order.customer.name}`
-              + `\n${order.shippingAddress.address}`
-              + `\n${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.postalCode}`
-              + `\n${order.shippingAddress.country}`,
-            styles: { halign: 'left' }
-          },
-          {
-            content: 'Shipping address:'
-              + `\n${order.customer.name}`
-              + `\n${order.shippingAddress.address}`
-              + `\n${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.postalCode}`
-              + `\n${order.shippingAddress.country}`,
-            styles: { halign: 'left' }
-          },
-          {
-            content: 'From:'
-              + '\nSeva Bazar'
-              + '\nWest Bengal'
-              + '\nIndia'
-              + '\n713301 - Asansol'
-              + '\nIndia',
-            styles: { halign: 'right' }
-          }
-        ],
-      ],
-      theme: 'plain'
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          { content: 'Amount due:', styles: { halign: 'right', fontSize: 14 } }
-        ],
-        [
-          { content: `rs ${finalTotal}`, styles: { halign: 'right', fontSize: 20, textColor: '#3366ff' } }
-        ],
-      ],
-      theme: 'plain'
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          { content: 'Products', styles: { halign: 'left', fontSize: 14 } }
-        ]
-      ],
-      theme: 'plain'
-    });
-
-    doc.autoTable({
-      head: [['Items',  'Price']],
-      body: [
-        [`${order.orderMessage}`,  `rs ${order.totalAmount}`],
-      ],
-      theme: 'striped',
-      headStyles: { fillColor: '#343a40' }
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          { content: 'Subtotal:', styles: { halign: 'right' } },
-          { content: `rs ${order.totalAmount}`, styles: { halign: 'right' } },
-        ],
-        [
-          { content: 'Delivery charge:', styles: { halign: 'right' } },
-          { content: `rs 20`, styles: { halign: 'right' } },
-        ],
-        [
-          { content: 'Total amount:', styles: { halign: 'right' } },
-          { content: `rs ${finalTotal}`, styles: { halign: 'right' } },
-        ],
-      ],
-      theme: 'plain'
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          { content: 'Terms & notes', styles: { halign: 'left', fontSize: 14 } }
-        ],
-        [
-          {
-            content: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Maxime mollitia'
-              + 'molestiae quas vel sint commodi repudiandae consequuntur voluptatum laborum'
-              + 'numquam blanditiis harum quisquam eius sed odit fugiat iusto fuga praesentium',
-            styles: { halign: 'left' }
-          }
-        ],
-      ],
-      theme: "plain"
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          { content: 'Thank you!', styles: { halign: 'center' } }
-        ]
-      ],
-      theme: "plain"
-    });
-
-    doc.save(`invoice_${order.shortId}.pdf`);
-  };
 
   const handleAddAmountChange = (orderId, amount) => {
     if (isNaN(amount) || amount < 0) {
@@ -298,7 +154,7 @@ const ChatOrders = () => {
               <CTableHeaderCell style={{ minWidth: '150px' }}>Add Amount</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Status</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '150px' }}>Invoice</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '10px' }}>Invoice</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
@@ -341,10 +197,14 @@ const ChatOrders = () => {
                 </CTableDataCell>
 
                 <CTableDataCell>
-                  <CButton color="primary" onClick={() => handleDownloadInvoice(order)}>
-                    Download Invoice
+                  <CButton color="warning" onClick={() => handleDownloadChatInvoice(order)}
+                    style={{ cursor: 'pointer' }}>
+                    <CIcon icon={cilCloudDownload} />
                   </CButton>
+                  
                 </CTableDataCell>
+
+               
               </CTableRow>
             ))}
           </CTableBody>

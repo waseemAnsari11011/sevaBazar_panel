@@ -10,7 +10,7 @@ import {
 } from '@coreui/react'
 import { AppSidebarNav } from './AppSidebarNav'
 import Navigation from '../_nav'
-import logo from '../assets/brand/logo_long.png'; // adjust the path to your logo image
+import logo from '../assets/brand/logo_long_white.png'; // adjust the path to your logo image
 
 const AppSidebar = () => {
   const dispatch = useDispatch()

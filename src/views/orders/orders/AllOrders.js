@@ -15,17 +15,21 @@ import {
   CTableBody,
   CTableDataCell,
   CFormSelect,
-  CAlert
+  CAlert,
+  
 } from '@coreui/react';
+import CIcon from '@coreui/icons-react'
 import { getOrdersByVendor } from '../../../api/orders/getOrdersByVendor';
 import { updateOrderPaymentStatus, updateOrderStatus } from '../../../api/orders/updateOrderStatus';
 import DateTimeFilter from '../../components/DateTimeFilter';
 import SearchComponent from '../../components/Search';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+
 import { startLoading, stopLoading } from '../../../redux/actions/defaultActions';
 import { markOrdersViewed } from '../../../redux/actions/markOrderViewedAction';
 import { fetchVendorOrders } from '../../../redux/actions/getAllOrdersAction';
+import { getFormattedDate, handleDownloadInvoice } from './utils';
+
+import { cilCloudDownload } from '@coreui/icons';
 
 const AllOrders = () => {
   const dispatch = useDispatch();
@@ -41,12 +45,12 @@ const AllOrders = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-        await dispatch(markOrdersViewed(vendorId));
-        await dispatch(fetchVendorOrders(vendorId));
+      await dispatch(markOrdersViewed(vendorId));
+      await dispatch(fetchVendorOrders(vendorId));
     };
 
     fetchData();
-}, []);
+  }, []);
 
   useEffect(() => {
     let timeout;
@@ -99,271 +103,8 @@ const AllOrders = () => {
       console.error('Failed to update order status:', error);
     }
   };
-  const getFormattedDate = (dateTime) => {
-    const createdAtDate = new Date(dateTime);
-    const formattedCreatedDate = `${createdAtDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} ${createdAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
-    return formattedCreatedDate
 
-  }
 
-  const handleDownloadInvoice = (order) => {
-    const doc = new jsPDF();
-
-    // Calculate the total amount
-    const totalAmount = order.vendors.products.reduce((total, product) => {
-      const totalAmount = product.totalAmount;
-      return total + totalAmount;
-    }, 0).toFixed(2);
-
-    const finalTotal = (parseFloat(totalAmount) + 20).toFixed(2);
-
-    // Use the Unicode character for the Rupee symbol
-    const rupeeSymbol = '\u20B9';
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: 'Seva Bazar',
-            styles: {
-              halign: 'left',
-              fontSize: 20,
-              textColor: '#ffffff'
-            }
-          },
-          {
-            content: 'Invoice',
-            styles: {
-              halign: 'right',
-              fontSize: 20,
-              textColor: '#ffffff'
-            }
-          }
-        ],
-      ],
-      theme: 'plain',
-      styles: {
-        fillColor: '#3366ff'
-      }
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: `Reference: #${order.orderId}`
-              + `\nDate: ${getFormattedDate(order.createdAt)}`
-              + `\nInvoice number: ${order.orderId}`,
-            styles: {
-              halign: 'right'
-            }
-          }
-        ],
-      ],
-      theme: 'plain'
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: 'Billed to:'
-              + `\n${order.customer.name}`
-              + `\n${order.shippingAddress.address}`
-              + `\n${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.postalCode}`
-              + `\n${order.shippingAddress.country}`,
-            styles: {
-              halign: 'left'
-            }
-          },
-          {
-            content: 'Shipping address:'
-              + `\n${order.customer.name}`
-              + `\n${order.shippingAddress.address}`
-              + `\n${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.postalCode}`
-              + `\n${order.shippingAddress.country}`,
-            styles: {
-              halign: 'left'
-            }
-          },
-          {
-            content: 'From:'
-              + '\nSeva Bazar'
-              + '\nWest Bengal'
-              + '\nIndia'
-              + '\n713301 - Asansol'
-              + '\nIndia',
-            styles: {
-              halign: 'right'
-            }
-          }
-        ],
-      ],
-      theme: 'plain'
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: 'Amount due:',
-            styles: {
-              halign: 'right',
-              fontSize: 14
-            }
-          }
-        ],
-        [
-          {
-            content: `rs ${finalTotal}`,
-            styles: {
-              halign: 'right',
-              fontSize: 20,
-              textColor: '#3366ff'
-            }
-          }
-        ],
-        // [
-        //   {
-        //     content: `Due date: ${getFormattedDate(order.dueDate)}`,
-        //     styles: {
-        //       halign: 'right'
-        //     }
-        //   }
-        // ]
-      ],
-      theme: 'plain'
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: 'Products',
-            styles: {
-              halign: 'left',
-              fontSize: 14
-            }
-          }
-        ]
-      ],
-      theme: 'plain'
-    });
-
-    const items = order.vendors.products.map((product) => {
-      const actualPrice = product.price;
-      const discountPercentage = product.discount;
-      const discountAmount = (actualPrice * discountPercentage) / 100;
-      const discountedPrice = (actualPrice - discountAmount) * product.quantity;
-
-      return [
-        product.product.name,  // Replace with actual category if available
-        product.quantity,
-        `${discountPercentage} %`,
-        `rs ${actualPrice.toFixed(2)}`,
-
-        `rs ${discountedPrice.toFixed(2)}`,
-      ];
-    });
-
-    doc.autoTable({
-      head: [['Items', 'Quantity', 'Discount', 'Price', 'Amount']],
-      body: items,
-      theme: 'striped',
-      headStyles: {
-        fillColor: '#343a40'
-      }
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: 'Subtotal:',
-            styles: {
-              halign: 'right'
-            }
-          },
-          {
-            content: `rs ${totalAmount}`,
-            styles: {
-              halign: 'right'
-            }
-          },
-        ],
-        [
-          {
-            content: 'Delivery charge:',
-            styles: {
-              halign: 'right'
-            }
-          },
-          {
-            content: `rs 20`,
-            styles: {
-              halign: 'right'
-            }
-          },
-        ],
-        [
-          {
-            content: 'Total amount:',
-            styles: {
-              halign: 'right'
-            }
-          },
-          {
-            content: `rs ${finalTotal}`,
-            styles: {
-              halign: 'right'
-            }
-          },
-        ],
-      ],
-      theme: 'plain'
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: 'Terms & notes',
-            styles: {
-              halign: 'left',
-              fontSize: 14
-            }
-          }
-        ],
-        [
-          {
-            content: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Maxime mollitia'
-              + 'molestiae quas vel sint commodi repudiandae consequuntur voluptatum laborum'
-              + 'numquam blanditiis harum quisquam eius sed odit fugiat iusto fuga praesentium',
-            styles: {
-              halign: 'left'
-            }
-          }
-        ],
-      ],
-      theme: "plain"
-    });
-
-    doc.autoTable({
-      body: [
-        [
-          {
-            content: 'Thank you!',
-            styles: {
-              halign: 'center'
-            }
-          }
-        ]
-      ],
-      theme: "plain"
-    });
-
-    doc.save(`invoice_${order.orderId}.pdf`);
-  };
 
 
 
@@ -394,14 +135,14 @@ const AllOrders = () => {
               <CTableHeaderCell style={{ minWidth: '200px' }}>Breakdown</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '120px' }}>Total</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '150px' }}>Status</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '150px' }}>Invoice</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '170px' }}>Status</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '10px' }}>Invoice</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
             {filteredOrders?.map((order, index) => (
               <CTableRow key={index}>
-                <CTableDataCell>{order.orderId}</CTableDataCell>
+                <CTableDataCell>{order.shortId}</CTableDataCell>
                 <CTableDataCell>{getFormattedDate(order.createdAt)}</CTableDataCell>
                 <CTableDataCell>{order.customer.name}</CTableDataCell>
                 <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
@@ -489,13 +230,13 @@ const AllOrders = () => {
                   </CFormSelect>
                 </CTableDataCell>
                 <CTableDataCell>
-                  <CButton
-                    color="primary"
-                    onClick={() => handleDownloadInvoice(order)}
-                  >
-                    Download Invoice
+                  <CButton color="warning" onClick={() => handleDownloadInvoice(order)}
+                    style={{ cursor: 'pointer' }}>
+                    <CIcon icon={cilCloudDownload} />
                   </CButton>
+                  
                 </CTableDataCell>
+
               </CTableRow>
             ))}
           </CTableBody>

@@ -63,7 +63,6 @@ const Navigation = (neworderCount, newChatOrderCount) => {
               {neworderCount + newChatOrderCount}
             </CBadge>
           )}
-
         </>
       ),
       to: '/orders/all-orders',
@@ -73,7 +72,7 @@ const Navigation = (neworderCount, newChatOrderCount) => {
           component: CNavItem,
           name: 'All Orders',
           to: '/orders/all-orders',
-          badge: {
+          badge: neworderCount !== 0 && {
             color: 'info',
             text: neworderCount,
           },
@@ -82,13 +81,14 @@ const Navigation = (neworderCount, newChatOrderCount) => {
           component: CNavItem,
           name: 'Chat Orders',
           to: '/orders/chat-orders',
-          badge: {
+          badge: newChatOrderCount !== 0 && {
             color: 'info',
             text: newChatOrderCount,
           },
         },
       ],
     },
+    
     {
       component: CNavGroup,
       name: 'Vendors',
