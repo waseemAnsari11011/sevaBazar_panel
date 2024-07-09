@@ -106,7 +106,9 @@ export const handleDownloadInvoice = (order) => {
             ],
             [
                 {
-                    content: shippingAddress,
+                    content: order.customer.name
+                        + `\n${order.customer.contactNumber}`
+                        + `\n${shippingAddress}`,
                     styles: {
                         halign: 'left',
                         fontSize: 10,
@@ -115,7 +117,9 @@ export const handleDownloadInvoice = (order) => {
                     }
                 },
                 {
-                    content: billingAddress,
+                    content: order.customer.name
+                        + `\n${order.customer.contactNumber}`
+                        + `\n${billingAddress}`,
                     styles: {
                         halign: 'right',
                         fontSize: 10,
@@ -278,7 +282,7 @@ export const handleDownloadChatInvoice = (order) => {
 
     const totalAmount = (20).toFixed(2); // Assuming there is a delivery charge of 20
     const finalTotal = (parseFloat(order.totalAmount) + 20).toFixed(2);
-    const rupeeSymbol = '\u20B9';
+    const rupeeSymbol = 'INR';
 
     doc.autoTable({
         body: [
@@ -356,7 +360,9 @@ export const handleDownloadChatInvoice = (order) => {
             ],
             [
                 {
-                    content: shippingAddress,
+                    content: order.customer.name
+                        + `\n${order.customer.contactNumber}`
+                        + `\n${shippingAddress}`,
                     styles: {
                         halign: 'left',
                         fontSize: 10,
@@ -365,7 +371,9 @@ export const handleDownloadChatInvoice = (order) => {
                     }
                 },
                 {
-                    content: billingAddress,
+                    content: order.customer.name
+                        + `\n${order.customer.contactNumber}`
+                        + `\n${billingAddress}`,
                     styles: {
                         halign: 'right',
                         fontSize: 10,
@@ -373,7 +381,7 @@ export const handleDownloadChatInvoice = (order) => {
                         lineHeight: 1.2
                     }
                 },
-            ],
+            ]
         ],
         theme: 'plain',
         styles: {
@@ -384,13 +392,30 @@ export const handleDownloadChatInvoice = (order) => {
 
 
 
+    const items = order.products.map((product) => {
+        const actualPrice = product.price;
+        const discountPercentage = product.discount;
+        const discountAmount = (actualPrice * discountPercentage) / 100;
+        const discountedPrice = (actualPrice - discountAmount) * product.quantity;
+        const paymentStatus = order.paymentStatus;
+
+        return [
+            product.name,  // Replace with actual category if available
+            product.quantity,
+            `${discountPercentage} %`,
+            `${rupeeSymbol} ${actualPrice.toFixed(2)}`,
+            `${rupeeSymbol} ${discountedPrice.toFixed(2)}`,
+            paymentStatus
+        ];
+    });
+
     doc.autoTable({
-        head: [['Items', 'Price', 'Status']],
-        body: [
-            [`${order.orderMessage}`, `rs ${order.totalAmount}`, order.paymentStatus],
-        ],
+        head: [['Items', 'Quantity', 'Discount', 'Price', 'Amount', 'Status']],
+        body: items,
         theme: 'striped',
-        headStyles: { fillColor: '#0066b2' }
+        headStyles: {
+            fillColor: '#0066b2'
+        }
     });
 
     doc.autoTable({

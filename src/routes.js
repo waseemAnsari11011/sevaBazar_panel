@@ -9,7 +9,7 @@ const Products = React.lazy(() => import('./views/products/products/CreateProduc
 const Categories = React.lazy(() => import('./views/products/categories/CreateCategories'))
 
 //order
-const ChatOrders = React.lazy(() => import('./views/orders/orders/ChatOrders'))
+const ChatOrders = React.lazy(() => import('./views/orders/orders/chat/ChatOrders'))
 const AllOrders = React.lazy(() => import('./views/orders/orders/AllOrders'))
 const Refund = React.lazy(() => import('./views/orders/refund/Refund'))
 

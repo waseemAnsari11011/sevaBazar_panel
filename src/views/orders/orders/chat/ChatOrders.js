@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import './order.css'; // Import custom CSS file
+import '../order.css'; // Import custom CSS file
 import {
   CButton,
   CTable,
@@ -12,18 +12,14 @@ import {
   CAlert,
   CFormSelect
 } from '@coreui/react';
-import { startLoading, stopLoading } from '../../../redux/actions/defaultActions';
-// import { markOrdersViewed } from '../../../redux/actions/markOrderViewedAction';
-// import { fetchVendorChatOrders } from '../../../redux/actions/getAllChatOrdersAction';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { fetchChatOrdersByVendor, updateChatOrderAmountAndStatus, updateChatOrderStatus, updateChatPaymentStatusManually } from '../../../redux/actions/chatOrdersActions';
-import DateTimeFilter from '../../components/DateTimeFilter';
-import { markChatOrdersViewed } from '../../../redux/actions/getNewChatOrdersAction';
-import { handleDownloadChatInvoice } from './utils';
+import { startLoading, stopLoading } from '../../../../redux/actions/defaultActions';
+import { fetchChatOrdersByVendor, updateChatOrderAmountAndStatus, updateChatOrderStatus, updateChatPaymentStatusManually } from '../../../../redux/actions/chatOrdersActions';
+import DateTimeFilter from '../../../components/DateTimeFilter';
+import { markChatOrdersViewed } from '../../../../redux/actions/getNewChatOrdersAction';
+import { handleDownloadChatInvoice } from '../utils';
 import CIcon from '@coreui/icons-react'
 import { cilCloudDownload } from '@coreui/icons';
-
+import CreateChatOrderModal from './createChatOrder';
 
 const ChatOrders = () => {
   const dispatch = useDispatch();
@@ -31,15 +27,9 @@ const ChatOrders = () => {
   const vendorId = user._id;
   const { orders, loading, error } = useSelector((state) => state.chatOrders);
 
-  // const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState(orders);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
-
-
-  console.log("orders-->>", orders)
-
-  console.log("filteredOrders-->>", filteredOrders)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,8 +53,7 @@ const ChatOrders = () => {
   const fetchOrders = async () => {
     try {
       dispatch(startLoading());
-      dispatch(fetchChatOrdersByVendor(vendorId))
-
+      await dispatch(fetchChatOrdersByVendor(vendorId));
       dispatch(stopLoading());
     } catch (error) {
       dispatch(stopLoading());
@@ -73,7 +62,7 @@ const ChatOrders = () => {
   };
 
   useEffect(() => {
-    setFilteredOrders(orders)
+    setFilteredOrders(orders);
   }, [orders]);
 
   useEffect(() => {
@@ -85,7 +74,6 @@ const ChatOrders = () => {
     return `${createdAtDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} ${createdAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
   };
 
-
   const handleAddAmountChange = (orderId, amount) => {
     if (isNaN(amount) || amount < 0) {
       setAlertMessage('Please enter a valid amount.');
@@ -96,7 +84,7 @@ const ChatOrders = () => {
       .then(() => {
         setAlertMessage('Amount updated successfully.');
         setAlertVisible(true);
-        dispatch(fetchChatOrdersByVendor(vendorId))
+        dispatch(fetchChatOrdersByVendor(vendorId));
       })
       .catch((error) => {
         setAlertMessage(`Failed to update amount: ${error.message}`);
@@ -108,28 +96,23 @@ const ChatOrders = () => {
     dispatch(updateChatPaymentStatusManually(orderId, newStatus)).then(() => {
       setAlertMessage('Order status updated successfully');
       setAlertVisible(true);
-      dispatch(fetchChatOrdersByVendor(vendorId))
+      dispatch(fetchChatOrdersByVendor(vendorId));
     }).catch((error) => {
       setAlertMessage(`Failed to update amount: ${error.message}`);
       setAlertVisible(true);
     });
-
-
   };
 
   const handleStatusChange = async (orderId, vendorId, newStatus) => {
     dispatch(updateChatOrderStatus(orderId, newStatus)).then(() => {
       setAlertMessage('Order status updated successfully');
       setAlertVisible(true);
-      dispatch(fetchChatOrdersByVendor(vendorId))
+      dispatch(fetchChatOrdersByVendor(vendorId));
     }).catch((error) => {
       setAlertMessage(`Failed to update amount: ${error.message}`);
       setAlertVisible(true);
     });
-
   };
-
-
 
   return (
     <div>
@@ -151,7 +134,7 @@ const ChatOrders = () => {
               <CTableHeaderCell style={{ minWidth: '120px' }}>Number</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '200px' }}>Shipping Address</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Order Message</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '150px' }}>Add Amount</CTableHeaderCell>
+              <CTableHeaderCell style={{ minWidth: '150px' }}>Create Order</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '150px' }}>Status</CTableHeaderCell>
               <CTableHeaderCell style={{ minWidth: '10px' }}>Invoice</CTableHeaderCell>
@@ -166,13 +149,7 @@ const ChatOrders = () => {
                 <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
                 <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
                 <CTableDataCell>{order.orderMessage}</CTableDataCell>
-                <CTableDataCell>
-                  <input
-                    value={order.totalAmount}
-                    type="number"
-                    onChange={(e) => handleAddAmountChange(order.orderId, e.target.value)}
-                  />
-                </CTableDataCell>
+                <CTableDataCell><CreateChatOrderModal orderId={order.orderId} vendorId={vendorId} /></CTableDataCell>
                 <CTableDataCell>
                   <CFormSelect
                     value={order.paymentStatus}
@@ -182,12 +159,12 @@ const ChatOrders = () => {
                     <option value="Unpaid">Unpaid</option>
                   </CFormSelect>
                 </CTableDataCell>
-
                 <CTableDataCell>
                   <CFormSelect
                     value={order.orderStatus}
                     onChange={(e) => handleStatusChange(order.orderId, order.vendors.vendor._id, e.target.value)}
-                  > <option value="In Review">In Review</option>
+                  >
+                    <option value="In Review">In Review</option>
                     <option value="Pending">Pending</option>
                     <option value="Processing">Processing</option>
                     <option value="Shipped">Shipped</option>
@@ -195,16 +172,12 @@ const ChatOrders = () => {
                     <option value="Cancelled">Cancelled</option>
                   </CFormSelect>
                 </CTableDataCell>
-
                 <CTableDataCell>
                   <CButton color="warning" onClick={() => handleDownloadChatInvoice(order)}
                     style={{ cursor: 'pointer' }}>
                     <CIcon icon={cilCloudDownload} />
                   </CButton>
-                  
                 </CTableDataCell>
-
-               
               </CTableRow>
             ))}
           </CTableBody>
