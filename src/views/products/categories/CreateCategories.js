@@ -34,7 +34,7 @@ import { startLoading, stopLoading  } from '../../../redux/actions/defaultAction
 const token = localStorage.getItem('token');
 
 const Categories = () => {
-  const user = useSelector(state => state.user);
+  const user = useSelector(state => state.app.user);
   const userRole = user ? user.role : null;
   const dispatch = useDispatch()
   const isLoading = useSelector((state) => state.app.loading)
@@ -167,6 +167,7 @@ const Categories = () => {
     }
   }
 
+  console.log("userRole---->>>", userRole)
   return (
     <div>
       <h2>Manage Product Categories</h2>
