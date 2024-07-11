@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import '../order.css'; // Import custom CSS file
 import {
@@ -18,10 +18,23 @@ import DateTimeFilter from '../../../components/DateTimeFilter';
 import { markChatOrdersViewed } from '../../../../redux/actions/getNewChatOrdersAction';
 import { handleDownloadChatInvoice } from '../utils';
 import CIcon from '@coreui/icons-react'
-import { cilCloudDownload } from '@coreui/icons';
+import { cilCloudDownload, cilChevronLeft, cilChevronRight, cilChevronCircleRightAlt } from '@coreui/icons';
 import CreateChatOrderModal from './createChatOrder';
 
 const ChatOrders = () => {
+  const tableContainerRef = useRef(null);
+
+  const scrollLeft = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollLeft -= 100; // Adjust scroll amount as needed
+    }
+  };
+
+  const scrollRight = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollLeft += 100; // Adjust scroll amount as needed
+    }
+  };
   const dispatch = useDispatch();
   const user = useSelector((state) => state.app.user);
   const vendorId = user._id;
@@ -125,63 +138,74 @@ const ChatOrders = () => {
         <DateTimeFilter orders={orders} setFilteredOrders={setFilteredOrders} />
       </div>
       <div style={{ position: 'relative', overflowX: 'auto' }}>
-        <CTable striped hover>
-          <CTableHead>
-            <CTableRow>
-              <CTableHeaderCell style={{ minWidth: '100px' }}>Order ID</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '200px' }}>Date & Time</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '50px' }}>Customer</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '120px' }}>Number</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '200px' }}>Shipping Address</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '150px' }}>Order Message</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '150px' }}>Create Order</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '150px' }}>Status</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '10px' }}>Invoice</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            {filteredOrders?.map((order, index) => (
-              <CTableRow key={index}>
-                <CTableDataCell>{order.shortId}</CTableDataCell>
-                <CTableDataCell>{getFormattedDate(order.createdAt)}</CTableDataCell>
-                <CTableDataCell>{order.customer.name}</CTableDataCell>
-                <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
-                <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
-                <CTableDataCell>{order.orderMessage}</CTableDataCell>
-                <CTableDataCell><CreateChatOrderModal orderId={order.orderId} vendorId={vendorId} /></CTableDataCell>
-                <CTableDataCell>
-                  <CFormSelect
-                    value={order.paymentStatus}
-                    onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
-                  >
-                    <option value="Paid">Paid</option>
-                    <option value="Unpaid">Unpaid</option>
-                  </CFormSelect>
-                </CTableDataCell>
-                <CTableDataCell>
-                  <CFormSelect
-                    value={order.orderStatus}
-                    onChange={(e) => handleStatusChange(order.orderId, order.vendors.vendor._id, e.target.value)}
-                  >
-                    <option value="In Review">In Review</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Processing">Processing</option>
-                    <option value="Shipped">Shipped</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </CFormSelect>
-                </CTableDataCell>
-                <CTableDataCell>
-                  <CButton color="warning" onClick={() => handleDownloadChatInvoice(order)}
-                    style={{ cursor: 'pointer' }}>
-                    <CIcon icon={cilCloudDownload} />
-                  </CButton>
-                </CTableDataCell>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: "14px", }}>
+          <CButton color="warning" onClick={scrollLeft} style={{ cursor: 'pointer', marginRight: "10px" }}>
+            <CIcon icon={cilChevronLeft} />
+          </CButton>
+          <CButton color="warning" onClick={scrollRight} style={{ cursor: 'pointer' }}>
+            <CIcon icon={cilChevronRight} />
+          </CButton>
+        </div>
+        <div ref={tableContainerRef} style={{ overflowX: 'auto', flexGrow: 1 }}>
+          <CTable striped hover>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell style={{ minWidth: '100px' }}>Order ID</CTableHeaderCell>
+                <CTableHeaderCell style={{ minWidth: '200px' }}>Date & Time</CTableHeaderCell>
+                <CTableHeaderCell style={{ minWidth: '50px' }}>Customer</CTableHeaderCell>
+                <CTableHeaderCell style={{ minWidth: '120px' }}>Number</CTableHeaderCell>
+                <CTableHeaderCell style={{ minWidth: '200px' }}>Shipping Address</CTableHeaderCell>
+                <CTableHeaderCell style={{ minWidth: '150px' }}>Order Message</CTableHeaderCell>
+                <CTableHeaderCell style={{ minWidth: '150px' }}>Create Order</CTableHeaderCell>
+                <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
+                <CTableHeaderCell style={{ minWidth: '150px' }}>Status</CTableHeaderCell>
+                <CTableHeaderCell style={{ minWidth: '10px' }}>Invoice</CTableHeaderCell>
               </CTableRow>
-            ))}
-          </CTableBody>
-        </CTable>
+            </CTableHead>
+            <CTableBody>
+              {filteredOrders?.map((order, index) => (
+                <CTableRow key={index}>
+                  <CTableDataCell>{order.shortId}</CTableDataCell>
+                  <CTableDataCell>{getFormattedDate(order.createdAt)}</CTableDataCell>
+                  <CTableDataCell>{order.customer.name}</CTableDataCell>
+                  <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
+                  <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
+                  <CTableDataCell>{order.orderMessage}</CTableDataCell>
+                  <CTableDataCell><CreateChatOrderModal orderId={order.orderId} vendorId={vendorId} /></CTableDataCell>
+                  <CTableDataCell>
+                    <CFormSelect
+                      value={order.paymentStatus}
+                      onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
+                    >
+                      <option value="Paid">Paid</option>
+                      <option value="Unpaid">Unpaid</option>
+                    </CFormSelect>
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <CFormSelect
+                      value={order.orderStatus}
+                      onChange={(e) => handleStatusChange(order.orderId, order.vendors.vendor._id, e.target.value)}
+                    >
+                      <option value="In Review">In Review</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Processing">Processing</option>
+                      <option value="Shipped">Shipped</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </CFormSelect>
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <CButton color="warning" onClick={() => handleDownloadChatInvoice(order)}
+                      style={{ cursor: 'pointer' }}>
+                      <CIcon icon={cilCloudDownload} />
+                    </CButton>
+                  </CTableDataCell>
+                </CTableRow>
+              ))}
+            </CTableBody>
+          </CTable>
+        </div>
+
         <div style={{ textAlign: 'center', marginTop: '10px' }}>
           {filteredOrders.length === 0 && <p>No Orders to Display</p>}
         </div>

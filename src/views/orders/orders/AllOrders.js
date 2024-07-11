@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import './order.css' // Import custom CSS file
 
@@ -16,7 +16,7 @@ import {
   CTableDataCell,
   CFormSelect,
   CAlert,
-  
+
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react'
 import { getOrdersByVendor } from '../../../api/orders/getOrdersByVendor';
@@ -29,9 +29,25 @@ import { markOrdersViewed } from '../../../redux/actions/markOrderViewedAction';
 import { fetchVendorOrders } from '../../../redux/actions/getAllOrdersAction';
 import { getFormattedDate, handleDownloadInvoice } from './utils';
 
-import { cilCloudDownload } from '@coreui/icons';
+import { cilCloudDownload, cilChevronLeft, cilChevronRight, cilChevronCircleRightAlt } from '@coreui/icons';
 
 const AllOrders = () => {
+  const tableContainerRef = useRef(null);
+
+  const scrollLeft = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollLeft -= 100; // Adjust scroll amount as needed
+    }
+  };
+
+  const scrollRight = () => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollLeft += 100; // Adjust scroll amount as needed
+    }
+  };
+
+
+  /////////////////////
   const dispatch = useDispatch();
   const user = useSelector((state) => state.app.user)
   const vendorId = user._id
@@ -121,130 +137,146 @@ const AllOrders = () => {
       <div>
         <DateTimeFilter orders={orders} setFilteredOrders={setFilteredOrders} />
       </div>
-      <div style={{ position: 'relative', overflowX: 'auto' }}>
-        <CTable striped hover>
-          <CTableHead>
-            <CTableRow>
-              <CTableHeaderCell style={{ minWidth: '100px' }}>Order ID</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '200px' }}>Date & Time</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '50px' }}>Customer</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '120px' }}>Number</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '200px' }}>Shipping Address</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '130px' }}>Products</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '300px' }}>Vendor</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '200px' }}>Breakdown</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '120px' }}>Total</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '170px' }}>Status</CTableHeaderCell>
-              <CTableHeaderCell style={{ minWidth: '10px' }}>Invoice</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            {filteredOrders?.map((order, index) => (
-              <CTableRow key={index}>
-                <CTableDataCell>{order.shortId}</CTableDataCell>
-                <CTableDataCell>{getFormattedDate(order.createdAt)}</CTableDataCell>
-                <CTableDataCell>{order.customer.name}</CTableDataCell>
-                <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
-                <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
+      <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: "14px", }}>
+          <CButton color="warning" onClick={scrollLeft} style={{ cursor: 'pointer', marginRight:"10px" }}>
+            <CIcon icon={cilChevronLeft} />
+          </CButton>
+          <CButton color="warning" onClick={scrollRight} style={{ cursor: 'pointer' }}>
+            <CIcon icon={cilChevronRight} />
+          </CButton>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
 
-                <CTableDataCell>
-                  {order.vendors.products.map((product, idx) => (
-                    <div key={idx}>
-                      {product.product.name}
-                      {product.orderedVariations?.map((variation, varIdx) => (
-                        <div key={varIdx}>
-                          {variation.attributes.selected} : {variation.attributes.value}
+
+          <div ref={tableContainerRef} style={{ overflowX: 'auto', flexGrow: 1 }}>
+            <CTable striped hover>
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell style={{ minWidth: '100px' }}>Order ID</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '200px' }}>Date & Time</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '50px' }}>Customer</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '120px' }}>Number</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '200px' }}>Shipping Address</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '130px' }}>Products</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '300px' }}>Vendor</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '200px' }}>Breakdown</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '120px' }}>Total</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '170px' }}>Status</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '10px' }}>Invoice</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {filteredOrders?.map((order, index) => (
+                  <CTableRow key={index}>
+                    <CTableDataCell>{order.shortId}</CTableDataCell>
+                    <CTableDataCell>{getFormattedDate(order.createdAt)}</CTableDataCell>
+                    <CTableDataCell>{order.customer.name}</CTableDataCell>
+                    <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
+                    <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
+                    <CTableDataCell>
+                      {order.vendors.products.map((product, idx) => (
+                        <div key={idx}>
+                          {product.product.name}
+                          {product.orderedVariations?.map((variation, varIdx) => (
+                            <div key={varIdx}>
+                              {variation.attributes.selected} : {variation.attributes.value}
+                            </div>
+                          ))}
                         </div>
                       ))}
-                    </div>
-                  ))}
-                </CTableDataCell>
-                <CTableDataCell>
-                  <div>
-                    <strong>Business Name:</strong> {order.vendors.vendor.vendorInfo?.businessName}
-                  </div>
-                  <div>
-                    <strong>Contact Number:</strong> {order.vendors.vendor.vendorInfo?.contactNumber}
-                  </div>
-                  <div>
-                    <strong>Alternative Contact Number:</strong> {order.vendors.vendor?.vendorInfo?.alternativeContactNumber}
-                  </div>
-                  <div>
-                    <strong>Address :</strong> {order.vendors.vendor.vendorInfo?.address?.addressLine1}
-                  </div>
-                  <div>
-                    <strong>Postal Code:</strong> {order.vendors.vendor.vendorInfo.address?.postalCode}
-                  </div>
-                </CTableDataCell>
-                <CTableDataCell>
-                  {order.vendors.products.map((product, idx) => {
-                    const actualPrice = product.price;
-                    const discountPercentage = product.discount;
-                    const discountAmount = (actualPrice * discountPercentage) / 100;
-                    const discountedPrice = (actualPrice - discountAmount) * product.quantity;
-
-                    return (
-                      <div key={idx}>
-                        {product.quantity} x ₹{actualPrice.toFixed(2)} - {discountPercentage}% = ₹{discountedPrice.toFixed(2)}
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div>
+                        <strong>Business Name:</strong> {order.vendors.vendor.vendorInfo?.businessName}
                       </div>
-                    );
-                  })}
-                </CTableDataCell>
-                <CTableDataCell>
-                  ₹{order.vendors.products.reduce((total, product) => {
-                    const totalAmount = product.totalAmount;
-                    return total + totalAmount;
-                  }, 0).toFixed(2)}+ ₹20
-                </CTableDataCell>
-                <CTableDataCell>
-                  {order.razorpay_payment_id ? (
-                    <CFormSelect
-                      value={order.paymentStatus}
-                      onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
-                      disabled
-                    >
-                      <option value="Paid">Paid</option>
-                      <option value="Unpaid">Unpaid</option>
-                    </CFormSelect>
-                  ) : (
-                    <CFormSelect
-                      value={order.paymentStatus}
-                      onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
-                    >
-                      <option value="Paid">Paid</option>
-                      <option value="Unpaid">Unpaid</option>
-                    </CFormSelect>
-                  )}
-                </CTableDataCell>
-                <CTableDataCell>
-                  <CFormSelect
-                    value={order.vendors.orderStatus}
-                    onChange={(e) => handleStatusChange(order.orderId, order.vendors.vendor._id, e.target.value)}
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Processing">Processing</option>
-                    <option value="Shipped">Shipped</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </CFormSelect>
-                </CTableDataCell>
-                <CTableDataCell>
-                  <CButton color="warning" onClick={() => handleDownloadInvoice(order)}
-                    style={{ cursor: 'pointer' }}>
-                    <CIcon icon={cilCloudDownload} />
-                  </CButton>
-                  
-                </CTableDataCell>
+                      <div>
+                        <strong>Contact Number:</strong> {order.vendors.vendor.vendorInfo?.contactNumber}
+                      </div>
+                      <div>
+                        <strong>Alternative Contact Number:</strong> {order.vendors.vendor?.vendorInfo?.alternativeContactNumber}
+                      </div>
+                      <div>
+                        <strong>Address :</strong> {order.vendors.vendor.vendorInfo?.address?.addressLine1}
+                      </div>
+                      <div>
+                        <strong>Postal Code:</strong> {order.vendors.vendor.vendorInfo.address?.postalCode}
+                      </div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      {order.vendors.products.map((product, idx) => {
+                        const actualPrice = product.price;
+                        const discountPercentage = product.discount;
+                        const discountAmount = (actualPrice * discountPercentage) / 100;
+                        const discountedPrice = (actualPrice - discountAmount) * product.quantity;
+                        return (
+                          <div key={idx}>
+                            {product.quantity} x ₹{actualPrice.toFixed(2)} - {discountPercentage}% = ₹{discountedPrice.toFixed(2)}
+                          </div>
+                        );
+                      })}
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      ₹{order.vendors.products.reduce((total, product) => {
+                        const totalAmount = product.totalAmount;
+                        return total + totalAmount;
+                      }, 0).toFixed(2)}+ ₹20
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      {order.razorpay_payment_id ? (
+                        <CFormSelect
+                          value={order.paymentStatus}
+                          onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
+                          disabled
+                        >
+                          <option value="Paid">Paid</option>
+                          <option value="Unpaid">Unpaid</option>
+                        </CFormSelect>
+                      ) : (
+                        <CFormSelect
+                          value={order.paymentStatus}
+                          onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
+                        >
+                          <option value="Paid">Paid</option>
+                          <option value="Unpaid">Unpaid</option>
+                        </CFormSelect>
+                      )}
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <CFormSelect
+                        value={order.vendors.orderStatus}
+                        onChange={(e) => handleStatusChange(order.orderId, order.vendors.vendor._id, e.target.value)}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </CFormSelect>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <CButton color="warning" onClick={() => handleDownloadInvoice(order)} style={{ cursor: 'pointer' }}>
+                        <CIcon icon={cilCloudDownload} />
+                      </CButton>
+                    </CTableDataCell>
+                  </CTableRow>
+                ))}
+              </CTableBody>
+            </CTable>
+          </div>
 
-              </CTableRow>
-            ))}
-          </CTableBody>
-        </CTable>
+        </div>
         <div style={{ textAlign: 'center', marginTop: '10px' }}>
-          <p style={{ fontSize: '14px', color: '#888' }}>Scroll &gt;&gt; to see more</p>
+          <p style={{ fontSize: '14px', color: '#888' }}>
+            Use the buttons to scroll &gt;&gt; to see more
+          </p>
         </div>
       </div>
+
+
+
+
     </div>
   );
 };
