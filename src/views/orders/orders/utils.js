@@ -28,7 +28,7 @@ export const handleDownloadInvoice = (order) => {
     const finalTotal = (parseFloat(totalAmount) + 20).toFixed(2);
 
     // Use the Unicode character for the Rupee symbol
-    const rupeeSymbol = 'INR';
+    const rupeeSymbol = 'Rs.';
 
     doc.autoTable({
         body: [
@@ -52,7 +52,7 @@ export const handleDownloadInvoice = (order) => {
         theme: 'plain',
         didDrawCell: function (data) {
             if (data.column.index === 1 && data.row.index === 0) {
-                const imgWidth = 30; // width of the logo
+                const imgWidth = 60; // width of the logo
                 const imgHeight = 10; // height of the logo
                 const xPos = data.cell.x + data.cell.width - imgWidth;
                 const yPos = data.cell.y + (data.cell.height - imgHeight) / 2;
@@ -141,7 +141,6 @@ export const handleDownloadInvoice = (order) => {
         const discountPercentage = product.discount;
         const discountAmount = (actualPrice * discountPercentage) / 100;
         const discountedPrice = (actualPrice - discountAmount) * product.quantity;
-        const paymentStatus = order.paymentStatus;
 
         return [
             product.product.name,  // Replace with actual category if available
@@ -149,16 +148,18 @@ export const handleDownloadInvoice = (order) => {
             `${discountPercentage} %`,
             `${rupeeSymbol} ${actualPrice.toFixed(2)}`,
             `${rupeeSymbol} ${discountedPrice.toFixed(2)}`,
-            paymentStatus
         ];
     });
 
     doc.autoTable({
-        head: [['Items', 'Quantity', 'Discount', 'Price', 'Amount', 'Status']],
+        head: [['Items', 'Quantity', 'Discount', 'Price', 'Amount']],
         body: items,
         theme: 'striped',
         headStyles: {
             fillColor: '#0066b2'
+        },
+        bodyStyles: {
+            textColor: '#000000' // Set the text color of the table content to black
         }
     });
 
@@ -212,61 +213,82 @@ export const handleDownloadInvoice = (order) => {
                     }
                 },
             ],
+            [
+                {
+                    content: 'Customer Signature:',
+                    styles: {
+                        halign: 'right',
+                        fontStyle: 'bold'
+                    }
+                },
+                {
+                    content: '___________',
+                    styles: {
+                        halign: 'right',
+                        fontStyle: 'bold'
+                    }
+                },
+            ],
         ],
         theme: 'plain'
     });
 
-    // doc.autoTable({
-    //     body: [
-    //         [
-    //             {
-    //                 content: 'If you require any assistance or have feedback or suggestions about our site you can email us at (sevabazar.com@gmail.com)',
-    //                 styles: {
-    //                     halign: 'left'
-    //                 }
-    //             }
-    //         ],
-    //     ],
-    //     theme: 'plain',
-    //     startY: doc.autoTable.previous.finalY  // Start from where the previous table ended plus some margin
-    // });
+    
 
-    const footer = (data) => {
-        const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-        const footerContent = 'Phone : 8809959154\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar';
-
-        // Set background color
-        doc.setFillColor('#dddddd');
-        // Draw rectangle for the footer background
-        const footerRectWidth = doc.internal.pageSize.width - 2 * data.settings.margin.left;
-        const footerRectHeight = 30;
-        const footerRectX = data.settings.margin.left;
-        const footerRectY = pageHeight - 50;
-        doc.rect(footerRectX, footerRectY, footerRectWidth, footerRectHeight, 'F');
-
-        // Set text color and font
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(10);
-
-        // Calculate text width and height
-        const textWidth = doc.getStringUnitWidth(footerContent) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-        const textHeight = doc.internal.getLineHeight();
-
-        // Calculate positions for centering text
-        const textX = footerRectX + (footerRectWidth - textWidth) / 2;
-        const textY = footerRectY + (footerRectHeight - textHeight - 5) / 2 + textHeight / 2; // Adjusted for vertical centering
-
-        // Add footer text
-        doc.text(footerContent, textX, textY);
-    };
-
-    // Call footer function at the end of each page
     doc.autoTable({
-        body: [],
+        body: [
+            [
+                {
+                    content: 'Phone : 8809959154\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar',
+                    styles: {
+                        halign: 'center',
+                        fillColor: '#dddddd', // Grey background color
+                        valign: 'middle' // Vertically centered text
+                    }
+                }
+            ],
+        ],
         theme: 'plain',
-        margin: { top: 10, bottom: 30 }, // Provide some bottom margin for the footer
-        didDrawPage: footer // Call the footer function at the end of each page
+        startY: doc.autoTable.previous.finalY+10 // Start from where the previous table ended plus some margin
+
     });
+
+    // const footer = (data) => {
+    //     const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+    //     const footerContent = 'Phone : 8809959154\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar';
+
+    //     // Set background color
+    //     doc.setFillColor('#dddddd');
+    //     // Draw rectangle for the footer background
+    //     const footerRectWidth = doc.internal.pageSize.width - 2 * data.settings.margin.left;
+    //     const footerRectHeight = 30;
+    //     const footerRectX = data.settings.margin.left;
+    //     const footerRectY = pageHeight - 50;
+    //     doc.rect(footerRectX, footerRectY, footerRectWidth, footerRectHeight, 'F');
+
+    //     // Set text color and font
+    //     doc.setTextColor(0, 0, 0);
+    //     doc.setFontSize(10);
+
+    //     // Calculate text width and height
+    //     const textWidth = doc.getStringUnitWidth(footerContent) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    //     const textHeight = doc.internal.getLineHeight();
+
+    //     // Calculate positions for centering text
+    //     const textX = footerRectX + (footerRectWidth - textWidth) / 2;
+    //     const textY = footerRectY + (footerRectHeight - textHeight - 5) / 2 + textHeight / 2; // Adjusted for vertical centering
+
+    //     // Add footer text
+    //     doc.text(footerContent, textX, textY);
+    // };
+
+    // // Call footer function at the end of each page
+    // doc.autoTable({
+    //     body: [],
+    //     theme: 'plain',
+    //     margin: { top: 10, bottom: 30 }, // Provide some bottom margin for the footer
+    //     didDrawPage: footer // Call the footer function at the end of each page
+    // });
 
 
     doc.save(`invoice_${order.shortId}.pdf`);
@@ -282,7 +304,7 @@ export const handleDownloadChatInvoice = (order) => {
 
     const totalAmount = (20).toFixed(2); // Assuming there is a delivery charge of 20
     const finalTotal = (parseFloat(order.totalAmount) + 20).toFixed(2);
-    const rupeeSymbol = 'INR';
+    const rupeeSymbol = 'Rs.';
 
     doc.autoTable({
         body: [
@@ -306,7 +328,7 @@ export const handleDownloadChatInvoice = (order) => {
         theme: 'plain',
         didDrawCell: function (data) {
             if (data.column.index === 1 && data.row.index === 0) {
-                const imgWidth = 30; // width of the logo
+                const imgWidth = 60; // width of the logo
                 const imgHeight = 10; // height of the logo
                 const xPos = data.cell.x + data.cell.width - imgWidth;
                 const yPos = data.cell.y + (data.cell.height - imgHeight) / 2;
@@ -404,17 +426,19 @@ export const handleDownloadChatInvoice = (order) => {
             product.quantity,
             `${discountPercentage} %`,
             `${rupeeSymbol} ${actualPrice.toFixed(2)}`,
-            `${rupeeSymbol} ${discountedPrice.toFixed(2)}`,
-            paymentStatus
+            `${rupeeSymbol} ${discountedPrice.toFixed(2)}`
         ];
     });
 
     doc.autoTable({
-        head: [['Items', 'Quantity', 'Discount', 'Price', 'Amount', 'Status']],
+        head: [['Items', 'Quantity', 'Discount', 'Price', 'Amount']],
         body: items,
         theme: 'striped',
         headStyles: {
             fillColor: '#0066b2'
+        },
+        bodyStyles: {
+            textColor: '#000000' // Set the text color of the table content to black
         }
     });
 
@@ -432,77 +456,68 @@ export const handleDownloadChatInvoice = (order) => {
                 { content: 'Total amount:', styles: { halign: 'right', fontStyle: 'bold', } },
                 { content: `rs ${finalTotal}`, styles: { halign: 'right', fontStyle: 'bold', } },
             ],
+            [
+                { content: 'Customer Signature:', styles: { halign: 'right', fontStyle: 'bold', } },
+                { content: '________', styles: { halign: 'right', fontStyle: 'bold', } },
+            ],
         ],
         theme: 'plain'
     });
 
-    // doc.autoTable({
-    //     body: [
-    //         [
-    //             {
-    //                 content: 'If you require any assistance or have feedback or suggestions about our site you can email us at (sevabazar.com@gmail.com)',
-    //                 styles: {
-    //                     halign: 'left'
-    //                 }
-    //             }
-    //         ],
-    //     ],
-    //     theme: 'plain',
-    //     startY: doc.autoTable.previous.finalY + 120 // Start from where the previous table ended plus some margin
-    // });
-
-    // doc.autoTable({
-    //     body: [
-    //         [
-    //             {
-    //                 content: 'Phone : 8809959154\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar',
-    //                 styles: {
-    //                     halign: 'center',
-    //                     fillColor: '#dddddd', // Grey background color
-    //                     valign: 'middle' // Vertically centered text
-    //                 }
-    //             }
-    //         ],
-    //     ],
-    //     theme: 'plain'
-    // });
-
-    const footer = (data) => {
-        const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-        const footerContent = 'Phone : 8809959154\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar';
-
-        // Set background color
-        doc.setFillColor('#dddddd');
-        // Draw rectangle for the footer background
-        const footerRectWidth = doc.internal.pageSize.width - 2 * data.settings.margin.left;
-        const footerRectHeight = 30;
-        const footerRectX = data.settings.margin.left;
-        const footerRectY = pageHeight - 50;
-        doc.rect(footerRectX, footerRectY, footerRectWidth, footerRectHeight, 'F');
-
-        // Set text color and font
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(10);
-
-        // Calculate text width and height
-        const textWidth = doc.getStringUnitWidth(footerContent) * doc.internal.getFontSize() / doc.internal.scaleFactor;
-        const textHeight = doc.internal.getLineHeight();
-
-        // Calculate positions for centering text
-        const textX = footerRectX + (footerRectWidth - textWidth) / 2;
-        const textY = footerRectY + (footerRectHeight - textHeight - 5) / 2 + textHeight / 2; // Adjusted for vertical centering
-
-        // Add footer text
-        doc.text(footerContent, textX, textY);
-    };
-
-    // Call footer function at the end of each page
     doc.autoTable({
-        body: [],
+        body: [
+            [
+                {
+                    content: 'Phone : 8809959154\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar',
+                    styles: {
+                        halign: 'center',
+                        fillColor: '#dddddd', // Grey background color
+                        valign: 'middle' // Vertically centered text
+                    }
+                }
+            ],
+        ],
         theme: 'plain',
-        margin: { top: 10, bottom: 30 }, // Provide some bottom margin for the footer
-        didDrawPage: footer // Call the footer function at the end of each page
+        startY: doc.autoTable.previous.finalY+10 // Start from where the previous table ended plus some margin
+
     });
+
+    // const footer = (data) => {
+    //     const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+    //     const footerContent = 'Phone : 8809959154\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar';
+
+    //     // Set background color
+    //     doc.setFillColor('#dddddd');
+    //     // Draw rectangle for the footer background
+    //     const footerRectWidth = doc.internal.pageSize.width - 2 * data.settings.margin.left;
+    //     const footerRectHeight = 30;
+    //     const footerRectX = data.settings.margin.left;
+    //     const footerRectY = pageHeight - 50;
+    //     doc.rect(footerRectX, footerRectY, footerRectWidth, footerRectHeight, 'F');
+
+    //     // Set text color and font
+    //     doc.setTextColor(0, 0, 0);
+    //     doc.setFontSize(10);
+
+    //     // Calculate text width and height
+    //     const textWidth = doc.getStringUnitWidth(footerContent) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    //     const textHeight = doc.internal.getLineHeight();
+
+    //     // Calculate positions for centering text
+    //     const textX = footerRectX + (footerRectWidth - textWidth) / 2;
+    //     const textY = footerRectY + (footerRectHeight - textHeight - 5) / 2 + textHeight / 2; // Adjusted for vertical centering
+
+    //     // Add footer text
+    //     doc.text(footerContent, textX, textY);
+    // };
+
+    // // Call footer function at the end of each page
+    // doc.autoTable({
+    //     body: [],
+    //     theme: 'plain',
+    //     margin: { top: 10, bottom: 30 }, // Provide some bottom margin for the footer
+    //     didDrawPage: footer // Call the footer function at the end of each page
+    // });
 
 
     doc.save(`invoice_${order.shortId}.pdf`);

@@ -139,7 +139,7 @@ const AllOrders = () => {
       </div>
       <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: "14px", }}>
-          <CButton color="warning" onClick={scrollLeft} style={{ cursor: 'pointer', marginRight:"10px" }}>
+          <CButton color="warning" onClick={scrollLeft} style={{ cursor: 'pointer', marginRight: "10px" }}>
             <CIcon icon={cilChevronLeft} />
           </CButton>
           <CButton color="warning" onClick={scrollRight} style={{ cursor: 'pointer' }}>
@@ -147,8 +147,6 @@ const AllOrders = () => {
           </CButton>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-
-
           <div ref={tableContainerRef} style={{ overflowX: 'auto', flexGrow: 1 }}>
             <CTable striped hover>
               <CTableHead>
@@ -265,7 +263,6 @@ const AllOrders = () => {
               </CTableBody>
             </CTable>
           </div>
-
         </div>
         <div style={{ textAlign: 'center', marginTop: '10px' }}>
           <p style={{ fontSize: '14px', color: '#888' }}>
