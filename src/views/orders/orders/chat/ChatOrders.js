@@ -171,7 +171,7 @@ const ChatOrders = () => {
                   <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
                   <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
                   <CTableDataCell>{order.orderMessage}</CTableDataCell>
-                  <CTableDataCell><CreateChatOrderModal orderId={order.orderId} vendorId={vendorId} /></CTableDataCell>
+                  <CTableDataCell><CreateChatOrderModal orderId={order.orderId} vendorId={vendorId} orderMsg={order.orderMessage}  /></CTableDataCell>
                   <CTableDataCell>
                     <CFormSelect
                       value={order.paymentStatus}

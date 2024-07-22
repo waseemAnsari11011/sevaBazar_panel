@@ -17,7 +17,9 @@ import { fetchChatOrdersByVendor } from '../../../../redux/actions/chatOrdersAct
 import { useDispatch } from 'react-redux';
 
 
-const CreateChatOrderModal = ({ orderId, vendorId }) => {
+const CreateChatOrderModal = ({ orderId, vendorId, orderMsg }) => {
+
+  console.log("orderMsg-->>", orderMsg)
     const dispatch = useDispatch()
   const [visible, setVisible] = useState(false);
   const [products, setProducts] = useState([{ name: '', quantity: 1, price: 0, discount: 0, totalAmount: 0 }]);
@@ -91,7 +93,7 @@ const CreateChatOrderModal = ({ orderId, vendorId }) => {
       </CButton>
       <CModal visible={visible} onClose={toggleModal}>
         <CModalHeader onClose={toggleModal} closeButton>
-          <CModalTitle>Create Chat Order</CModalTitle>
+          <CModalTitle>Create order for message: {orderMsg}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
