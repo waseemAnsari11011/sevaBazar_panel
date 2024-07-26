@@ -25,6 +25,8 @@ const AppSidebar = () => {
     setNavItems(Navigation(neworderCount, newChatOrderCount));
   }, [neworderCount, newChatOrderCount]);
 
+console.log("navItems-->", navItems)
+
   return (
     <CSidebar
       className="border-end"

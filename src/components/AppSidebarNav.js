@@ -13,18 +13,19 @@ export const AppSidebarNav = ({ items }) => {
   const userRole = user ? user.role : null;
   const [filteredItems, setFilteredItems] = useState([])
 
-
   useEffect(() => {
     // Filter out "Vendors" if userRole is 'vendor'
-    const filtered = userRole === 'vendor'
+   const filtered = userRole === 'vendor'
       ? filterMenu(items, ['Customers', 'Vendors', 'Customer Inquiries', 'Help Center', 'Contact', 'Support', 'Banner'])
       : items;
 
+      
+
     setFilteredItems(filtered)
-  }, [userRole])
+  }, [userRole, items])
+  console.log("items--->>", items)
 
 
-// console.log("filteredItems--->>", filteredItems)
 
 
   function filterMenu(data, namesToExclude) {

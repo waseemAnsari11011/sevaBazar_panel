@@ -23,7 +23,6 @@ import { CNavGroup, CNavItem, CNavTitle, CBadge } from '@coreui/react';
 
 const Navigation = (neworderCount, newChatOrderCount) => {
 
-  console.log("newChatOrderCount-->", newChatOrderCount)
   const _nav = [
     {
       component: CNavItem,

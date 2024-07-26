@@ -15,7 +15,7 @@ import {
 import { startLoading, stopLoading } from '../../../../redux/actions/defaultActions';
 import { fetchChatOrdersByVendor, updateChatOrderAmountAndStatus, updateChatOrderStatus, updateChatPaymentStatusManually } from '../../../../redux/actions/chatOrdersActions';
 import DateTimeFilter from '../../../components/DateTimeFilter';
-import { markChatOrdersViewed } from '../../../../redux/actions/getNewChatOrdersAction';
+import { fetchVendorChatOrders, markChatOrdersViewed } from '../../../../redux/actions/getNewChatOrdersAction';
 import { handleDownloadChatInvoice } from '../utils';
 import CIcon from '@coreui/icons-react'
 import { cilCloudDownload, cilChevronLeft, cilChevronRight, cilChevronCircleRightAlt } from '@coreui/icons';
@@ -47,7 +47,7 @@ const ChatOrders = () => {
   useEffect(() => {
     const fetchData = async () => {
       await dispatch(markChatOrdersViewed(vendorId));
-      await dispatch(fetchChatOrdersByVendor(vendorId));
+      await dispatch(fetchVendorChatOrders(vendorId));
     };
 
     fetchData();

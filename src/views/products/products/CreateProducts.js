@@ -263,9 +263,13 @@ const Products = () => {
 
 
             // Check if all locations are selected
-            if (singProduct.product.availableLocalities[0] === 'all') {
+            if (
+                singProduct.product.availableLocalities?.includes('all') && 
+                !singProduct.product.availableLocalities.some(locality => /\d/.test(locality))
+            ) {
                 setIsAllSelected(true);
-            } else {
+            }
+             else {
                 setPincodes(singProduct.product.availableLocalities);
             }
 

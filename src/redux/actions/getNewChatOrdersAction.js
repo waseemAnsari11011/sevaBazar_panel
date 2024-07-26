@@ -23,7 +23,7 @@ export const fetchVendorChatOrdersFailure = (error) => ({
 });
 
 export const fetchVendorChatOrders = (vendorId) => async (dispatch) => {
-    console.log("get orders api called")
+    console.log("get chat orders api called")
     dispatch(fetchVendorChatOrdersRequest());
     try {
         const response = await axiosInstance.get(`/new-chat-order/vendor/${vendorId}`);
