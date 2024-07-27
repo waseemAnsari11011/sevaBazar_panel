@@ -36,7 +36,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import VariationsComponent from './VariationsComponent';
 import { Tags } from './tags';
 import SearchComponent from '../../components/Search';
-import { startLoading, stopLoading  } from '../../../redux/actions/defaultActions';
+import { startLoading, stopLoading } from '../../../redux/actions/defaultActions';
+import toggleVisibilityApi from '../../../api/product/toggleProductVisibility';
 
 
 const Products = () => {
@@ -106,14 +107,19 @@ const Products = () => {
     };
 
 
-
+    const handleProductVisibility = async (id) => {
+        await toggleVisibilityApi(id)
+        const productsData = await getAllProducts(vendor);
+        setProducts(productsData);
+        setFilteredProducts(productsData)
+    }
 
 
 
     // Fetch categories 
     const fetchCategories = async () => {
         try {
-            
+
             dispatch(startLoading())
             const categoriesData = await getAllCategories();
             setCategories(categoriesData);
@@ -264,12 +270,12 @@ const Products = () => {
 
             // Check if all locations are selected
             if (
-                singProduct.product.availableLocalities?.includes('all') && 
+                singProduct.product.availableLocalities?.includes('all') &&
                 !singProduct.product.availableLocalities.some(locality => /\d/.test(locality))
             ) {
                 setIsAllSelected(true);
             }
-             else {
+            else {
                 setPincodes(singProduct.product.availableLocalities);
             }
 
@@ -309,25 +315,25 @@ const Products = () => {
     };
 
 
-const getProductVariants = (variations) => {
-    return variations?.map(variation => `${variation.attributes.selected}: "${variation.attributes.value}"`).join('\n');
-  };
+    const getProductVariants = (variations) => {
+        return variations?.map(variation => `${variation.attributes.selected}: "${variation.attributes.value}"`).join('\n');
+    };
 
-  console.log("getProductVariants[0]-->>", getProductVariants(products[0]?.variations))
+    console.log("getProductVariants[0]-->>", getProductVariants(products[0]?.variations))
 
 
-  const getVariantsPrice = (variations) => {
-    return variations?.map(variation => `₹${variation.price}, `).join('\n');
-  };
+    const getVariantsPrice = (variations) => {
+        return variations?.map(variation => `₹${variation.price}, `).join('\n');
+    };
 
-  const getVariantsQuantity = (variations) => {
-    return variations?.map(variation => `${variation.quantity}, `).join('\n');
-  };
+    const getVariantsQuantity = (variations) => {
+        return variations?.map(variation => `${variation.quantity}, `).join('\n');
+    };
 
-  const getVariantsDiscount = (variations) => {
-    return variations?.map(variation => `${variation.discount}, `).join('\n');
-  };
-  
+    const getVariantsDiscount = (variations) => {
+        return variations?.map(variation => `${variation.discount}, `).join('\n');
+    };
+
 
     return (
         <div>
@@ -358,6 +364,7 @@ const getProductVariants = (variations) => {
                             <CTableHeaderCell>Quantity</CTableHeaderCell>
                             <CTableHeaderCell>Discount</CTableHeaderCell>
                             <CTableHeaderCell>Actions</CTableHeaderCell>
+                            <CTableHeaderCell>Visibility</CTableHeaderCell>
                         </CTableRow>
                     </CTableHead>
                     <CTableBody>
@@ -388,6 +395,17 @@ const getProductVariants = (variations) => {
                                         </CButton>
                                     </div>
 
+                                </CTableDataCell>
+                                <CTableDataCell>
+                                    <div className="actions-cell">
+                                        <CFormSwitch
+                                            label=""
+                                            id={`formSwitch-${product._id}`}
+                                            checked={product.isVisible}
+                                            onChange={() => handleProductVisibility(product._id)}
+                                        />
+
+                                    </div>
                                 </CTableDataCell>
                             </CTableRow>
                         ))}
