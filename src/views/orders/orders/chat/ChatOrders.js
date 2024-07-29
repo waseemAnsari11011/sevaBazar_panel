@@ -167,8 +167,8 @@ const ChatOrders = () => {
                 <CTableRow key={index}>
                   <CTableDataCell>{order.shortId}</CTableDataCell>
                   <CTableDataCell>{getFormattedDate(order.createdAt)}</CTableDataCell>
-                  <CTableDataCell>{order.customer.name}</CTableDataCell>
-                  <CTableDataCell>{order.customer.contactNumber}</CTableDataCell>
+                  <CTableDataCell>{order.shippingAddress.name?order.shippingAddress.name:order.customer.name}</CTableDataCell>
+                  <CTableDataCell>{order.shippingAddress.phone?order.shippingAddress.phone:order.customer.contactNumber}</CTableDataCell>
                   <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
                   <CTableDataCell>{order.orderMessage}</CTableDataCell>
                   <CTableDataCell><CreateChatOrderModal orderId={order.orderId} vendorId={vendorId} orderMsg={order.orderMessage}  /></CTableDataCell>
