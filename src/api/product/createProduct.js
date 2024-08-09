@@ -3,6 +3,7 @@ import axiosInstance from "../../utils/axiosConfig";
 // Create a new product
 const createProduct = async (productData) => {
     const formData = new FormData();
+    console.log("productData-->>", productData)
     formData.append('name', productData.name);
     formData.append('quantity', productData.quantity);
     formData.append('price', productData.price);
