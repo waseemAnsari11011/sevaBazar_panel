@@ -1,6 +1,8 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import logo from '../../../assets/brand/logo_long.png'; // adjust the path to your logo image
+import getContact from '../../../api/helpCenter/getContact';
+const phonenumber = '8116341826'
 
 export const getFormattedDate = (dateTime) => {
     const createdAtDate = new Date(dateTime);
@@ -10,7 +12,9 @@ export const getFormattedDate = (dateTime) => {
 }
 
 
-export const handleDownloadInvoice = (order) => {
+export const handleDownloadInvoice = async (order) => {
+    const contactInfo = await getContact()
+
     const doc = new jsPDF();
     doc.page = 1;
 
@@ -239,7 +243,7 @@ export const handleDownloadInvoice = (order) => {
         body: [
             [
                 {
-                    content: 'Phone : 8809959154\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar',
+                    content: `Phone : ${contactInfo?.phone?contactInfo?.phone:phonenumber}\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar`,
                     styles: {
                         halign: 'center',
                         fillColor: '#dddddd', // Grey background color
@@ -294,7 +298,9 @@ export const handleDownloadInvoice = (order) => {
     doc.save(`invoice_${order.shortId}.pdf`);
 };
 
-export const handleDownloadChatInvoice = (order) => {
+export const handleDownloadChatInvoice = async (order) => {
+    const contactInfo = await getContact()
+
     const doc = new jsPDF();
 
     // Function to format address
@@ -468,7 +474,7 @@ export const handleDownloadChatInvoice = (order) => {
         body: [
             [
                 {
-                    content: 'Phone : 8809959154\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar',
+                    content: `Phone : ${contactInfo?.phone?contactInfo?.phone:phonenumber}\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar`,
                     styles: {
                         halign: 'center',
                         fillColor: '#dddddd', // Grey background color
