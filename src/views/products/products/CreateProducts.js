@@ -151,7 +151,7 @@ const Products = () => {
 
     const toggleModal = () => {
         if (editingProduct !== null) {
-            setForm({ name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [], tags: [], isReturnAllowed: false })
+            setForm({_id:'', name: '', quantity: '', price: '', images: [], description: '', discount: '', category: '', vendor, availableLocalities: [], tags: [], isReturnAllowed: false })
             setVariations([{ attributes: { selected: '', value: '' }, price: '', discount: '', quantity: '', parentVariation: null }]);
             setPincodes([])
             setTags([])
@@ -187,7 +187,7 @@ const Products = () => {
 
 
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (id) => {
         try {
             dispatch(startLoading());
 
@@ -195,11 +195,12 @@ const Products = () => {
                 ...form,
                 variations
             };
-
-            console.log("productData-->>", productData)
+            form
+            console.log("productData form-->>", form)
+            console.log("productData id-->>", id)
 
             if (editingProduct !== null) {
-                let res = await updateProduct(products[editingProduct]._id, productData);
+                let res = await updateProduct(id, productData);
                 setAlertMessage(res?.message)
                 setAlertVisible(true)
                 await fetchProducts();
@@ -216,6 +217,7 @@ const Products = () => {
 
             // Reset form fields and state after successful operation
             setForm({
+                _id:'',
                 name: '',
                 quantity: '',
                 price: '',
@@ -252,6 +254,7 @@ const Products = () => {
 
             // Set form state with product details
             setForm({
+                _id:singProduct.product._id,
                 name: singProduct.product.name,
                 description: singProduct.product.description,
                 images: singProduct.product.images,
