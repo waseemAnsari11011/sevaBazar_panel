@@ -70,8 +70,7 @@ export const handleDownloadInvoice = async (order) => {
             [
                 {
                     content: `Invoice: #${order.shortId}`
-                        + `\nDate: ${getFormattedDate(order.createdAt)}`
-                        + `\nShop Name: ${order.vendors?.vendor?.businessName}`,
+                        + `\nDate: ${getFormattedDate(order.createdAt)}`,
                     styles: {
                         halign: 'right',
                         fontStyle: 'bold'
@@ -110,8 +109,10 @@ export const handleDownloadInvoice = async (order) => {
             ],
             [
                 {
-                    content: order.customer.name
+                    content:
+                        (order.shippingAddress.name ? order.shippingAddress.name : order.customer.name) // Corrected conditional
                         + `\n${order.customer.contactNumber}`
+                        + `\n${order.shippingAddress.phone}`
                         + `\n${shippingAddress}`,
                     styles: {
                         halign: 'left',
@@ -121,7 +122,8 @@ export const handleDownloadInvoice = async (order) => {
                     }
                 },
                 {
-                    content: order.customer.name
+                    content:
+                    (order.customer.name ? order.customer.name : order.shippingAddress.name) // Corrected conditional
                         + `\n${order.customer.contactNumber}`
                         + `\n${billingAddress}`,
                     styles: {
@@ -139,6 +141,7 @@ export const handleDownloadInvoice = async (order) => {
         },
         margin: { top: 10, right: 10, bottom: 0, left: 10 },
     });
+
 
     const items = order.vendors.products.map((product) => {
         const actualPrice = product.price;
@@ -237,13 +240,13 @@ export const handleDownloadInvoice = async (order) => {
         theme: 'plain'
     });
 
-    
+
 
     doc.autoTable({
         body: [
             [
                 {
-                    content: `Phone : ${contactInfo?.phone?contactInfo?.phone:phonenumber}\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar`,
+                    content: `Phone : ${contactInfo?.phone ? contactInfo?.phone : phonenumber}\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar`,
                     styles: {
                         halign: 'center',
                         fillColor: '#dddddd', // Grey background color
@@ -253,7 +256,7 @@ export const handleDownloadInvoice = async (order) => {
             ],
         ],
         theme: 'plain',
-        startY: doc.autoTable.previous.finalY+10 // Start from where the previous table ended plus some margin
+        startY: doc.autoTable.previous.finalY + 10 // Start from where the previous table ended plus some margin
 
     });
 
@@ -348,8 +351,7 @@ export const handleDownloadChatInvoice = async (order) => {
             [
                 {
                     content: `Invoice: #${order.shortId}`
-                        + `\nDate: ${getFormattedDate(order.createdAt)}`
-                        + `\nShop Name: ${order.vendors?.vendor?.businessName}`,
+                        + `\nDate: ${getFormattedDate(order.createdAt)}`,
                     styles: {
                         halign: 'right',
                         fontStyle: 'bold'
@@ -388,8 +390,10 @@ export const handleDownloadChatInvoice = async (order) => {
             ],
             [
                 {
-                    content: order.customer.name
+                    content: 
+                        (order.shippingAddress.name ? order.shippingAddress.name : order.customer.name) // Corrected conditional
                         + `\n${order.customer.contactNumber}`
+                        + `\n${order.shippingAddress.phone}`
                         + `\n${shippingAddress}`,
                     styles: {
                         halign: 'left',
@@ -399,7 +403,8 @@ export const handleDownloadChatInvoice = async (order) => {
                     }
                 },
                 {
-                    content: order.customer.name
+                    content: 
+                        (order.customer.name ? order.customer.name : order.shippingAddress.name) // Corrected conditional
                         + `\n${order.customer.contactNumber}`
                         + `\n${billingAddress}`,
                     styles: {
@@ -409,7 +414,7 @@ export const handleDownloadChatInvoice = async (order) => {
                         lineHeight: 1.2
                     }
                 },
-            ]
+            ],
         ],
         theme: 'plain',
         styles: {
@@ -417,6 +422,7 @@ export const handleDownloadChatInvoice = async (order) => {
         },
         margin: { top: 10, right: 10, bottom: 0, left: 10 },
     });
+    
 
 
 
@@ -474,7 +480,7 @@ export const handleDownloadChatInvoice = async (order) => {
         body: [
             [
                 {
-                    content: `Phone : ${contactInfo?.phone?contactInfo?.phone:phonenumber}\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar`,
+                    content: `Phone : ${contactInfo?.phone ? contactInfo?.phone : phonenumber}\nEmail : sevabazar.com@gmail.com\nAll Copyright Reserved © 2024 Seva Bazar`,
                     styles: {
                         halign: 'center',
                         fillColor: '#dddddd', // Grey background color
@@ -484,7 +490,7 @@ export const handleDownloadChatInvoice = async (order) => {
             ],
         ],
         theme: 'plain',
-        startY: doc.autoTable.previous.finalY+10 // Start from where the previous table ended plus some margin
+        startY: doc.autoTable.previous.finalY + 10 // Start from where the previous table ended plus some margin
 
     });
 
