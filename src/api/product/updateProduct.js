@@ -1,74 +1,74 @@
-import axiosInstance from "../../utils/axiosConfig";
+// src/api/product/updateProduct.js
 
-// Function to update an existing product
+import axiosInstance from '../../utils/axiosConfig'
+
 const updateProduct = async (id, productData) => {
-  const formData = new FormData();
+  const formData = new FormData()
 
   // Append basic product details
-  formData.append('name', productData.name || '');
-  formData.append('price', (productData.price !== undefined ? productData.price.toString() : ''));
-  formData.append('discount', (productData.discount !== undefined ? productData.discount.toString() : ''));
-  formData.append('description', productData.description || '');
-  formData.append('category', productData.category || '');
-  formData.append('vendor', productData.vendor || '');
-  formData.append('isReturnAllowed', productData.isReturnAllowed);
+  formData.append('name', productData.name || '')
+  formData.append('description', productData.description || '')
+  formData.append('category', productData.category || '')
+  formData.append('vendor', productData.vendor || '')
+  formData.append('isReturnAllowed', productData.isReturnAllowed)
 
   // Append available localities
-  if (productData.availableLocalities) {
-    productData.availableLocalities.forEach(location => {
-      formData.append('availableLocalities', location);
-    });
-  }
+  productData.availableLocalities?.forEach((location) => {
+    formData.append('availableLocalities', location)
+  })
 
-  console.log("productData.tags-->>", productData.tags)
+  // Append tags
+  productData.tags?.forEach((tag) => {
+    formData.append('tags', tag)
+  })
 
-  productData.tags?.forEach(tag => {
-    formData.append('tags', tag);
-  });
-  // Append product images
+  // ✅ CORRECTED PRODUCT IMAGE HANDLING
+  // Handle main product images: separate existing URLs from new files
+  let newProductImageIndex = 0 // Initialize a counter for new images
   if (productData.images) {
-    productData.images.forEach((image, index) => {
+    productData.images.forEach((image) => {
       if (typeof image === 'string') {
-        formData.append(`existingImages[${index}]`, image);
+        // Append existing image URLs to the 'existingImages' field
+        formData.append('existingImages', image)
       } else {
-        formData.append(`productImage_${index}`, image);
+        // Append new image files with dynamically numbered field names
+        formData.append(`productImage_${newProductImageIndex}`, image)
+        newProductImageIndex++ // Increment counter for the next new image
       }
-    });
+    })
   }
 
-  const variations = productData.variations;
-  const newVariations = [];
+  // Correctly handle variations
+  const variations = productData.variations
+  const variationsForJson = []
 
-  // Append variation data and images
   if (variations) {
-    variations?.forEach((variation, variationIndex) => {
-      const { images, ...variationWithoutImages } = variation;
-      newVariations.push(variationWithoutImages);
+    variations.forEach((variation, variationIndex) => {
+      const cleanVariation = { ...variation, images: [] }
 
-      images?.forEach((image, imageIndex) => {
+      variation.images?.forEach((image, imageIndex) => {
         if (typeof image === 'string') {
-          formData.append(`existingVariationImages[${variationIndex}][${imageIndex}]`, image);
+          cleanVariation.images.push(image)
         } else {
-          formData.append(`variationImage_${variationIndex}_${imageIndex}`, image);
+          formData.append(`variationImage_${variationIndex}_${imageIndex}`, image)
         }
-      });
-    });
+      })
+
+      variationsForJson.push(cleanVariation)
+    })
   }
 
-  // Append the JSON string of the new variations array to FormData
-  formData.append('variations', JSON.stringify(newVariations));
+  formData.append('variations', JSON.stringify(variationsForJson))
 
   try {
     const response = await axiosInstance.put(`/products/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
   } catch (error) {
-    console.error('Failed to update product:', error);
-    throw error;
+    console.error('Failed to update product:', error)
+    throw error
   }
-};
+}
 
-export default updateProduct;
+export default updateProduct

@@ -30,12 +30,12 @@ import { useDispatch, useSelector } from 'react-redux'
 // import { startLoading, stopLoading } from '../../../store'
 
 import SearchComponent from '../../components/Search'
-import { startLoading, stopLoading  } from '../../../redux/actions/defaultActions'
-const token = localStorage.getItem('token');
+import { startLoading, stopLoading } from '../../../redux/actions/defaultActions'
+const token = localStorage.getItem('token')
 
 const Categories = () => {
-  const user = useSelector(state => state.app.user);
-  const userRole = user ? user.role : null;
+  const user = useSelector((state) => state.app.user)
+  const userRole = user ? user.role : null
   const dispatch = useDispatch()
   const isLoading = useSelector((state) => state.app.loading)
   const [categories, setCategories] = useState([])
@@ -136,10 +136,10 @@ const Categories = () => {
       dispatch(startLoading())
       const response = await axiosInstance.get('/category', {
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
-    });// Adjust the URL as necessary
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }) // Adjust the URL as necessary
       if (response.status === 200) {
         setCategories(response.data.categories)
         setFilteredCategories(response.data.categories)
@@ -167,15 +167,17 @@ const Categories = () => {
     }
   }
 
-  console.log("userRole---->>>", userRole)
+  console.log('userRole---->>>', userRole)
   return (
     <div>
       <h2>Manage Product Categories</h2>
-     {userRole === 'admin' && <div className="mb-4">
-        <CButton color="primary" onClick={toggleModal}>
-          Add Category
-        </CButton>
-      </div>}
+      {userRole === 'admin' && (
+        <div className="mb-4">
+          <CButton color="primary" onClick={toggleModal}>
+            Add Category
+          </CButton>
+        </div>
+      )}
       <SearchComponent
         items={categories}
         searchKey="name"
@@ -191,7 +193,7 @@ const Categories = () => {
             <CTableRow>
               <CTableHeaderCell>Category Photo</CTableHeaderCell>
               <CTableHeaderCell>Category Name</CTableHeaderCell>
-             { userRole === 'admin' && <CTableHeaderCell>Actions</CTableHeaderCell>}
+              {userRole === 'admin' && <CTableHeaderCell>Actions</CTableHeaderCell>}
             </CTableRow>
           </CTableHead>
           <CTableBody>
@@ -201,23 +203,27 @@ const Categories = () => {
                   {category.images.map((file, imgIndex) => (
                     <img
                       key={imgIndex}
-                      src={`${baseURL}/${file}`}
+                      src={file}
                       alt={`Category Image ${imgIndex + 1}`}
                       className="table-img"
                     />
                   ))}
                 </CTableDataCell>
                 <CTableDataCell>{category?.name}</CTableDataCell>
-                {userRole === 'admin' &&<CTableDataCell>
-                  <div className="actions-cell">
-                    <CButton color="warning" onClick={() => handleEdit(index, category?._id)}>
-                      <CIcon icon={cilPencil} />
-                    </CButton>{' '}
-                    <CButton color="danger" onClick={() => handleDelete(category?._id)}>
-                      <CIcon icon={cilTrash} />
-                    </CButton>
-                  </div>
-                </CTableDataCell>}
+
+                {/* ✅ ADD THIS ENTIRE BLOCK BACK IN */}
+                {userRole === 'admin' && (
+                  <CTableDataCell>
+                    <div className="actions-cell">
+                      <CButton color="warning" onClick={() => handleEdit(index, category?._id)}>
+                        <CIcon icon={cilPencil} />
+                      </CButton>{' '}
+                      <CButton color="danger" onClick={() => handleDelete(category?._id)}>
+                        <CIcon icon={cilTrash} />
+                      </CButton>
+                    </div>
+                  </CTableDataCell>
+                )}
               </CTableRow>
             ))}
           </CTableBody>
@@ -248,9 +254,8 @@ const Categories = () => {
                 <div key={index} className="image-wrapper">
                   <img
                     className="img"
-                    src={
-                      typeof file === 'string' ? `${baseURL}/${file}` : URL.createObjectURL(file)
-                    }
+                    // ✅ FIX: Use the S3 URL directly for strings, create object URL for new files
+                    src={typeof file === 'string' ? file : URL.createObjectURL(file)}
                     alt={`Category Image ${index + 1}`}
                   />
                   <button type="button" className="close-button" onClick={() => removeImage(index)}>
