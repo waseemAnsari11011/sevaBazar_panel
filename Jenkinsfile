@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+    environment {
+        DEPLOY_USER = 'ec2-user'
+        DEPLOY_HOST = '51.20.54.216'
+        DEPLOY_PATH = '/home/ec2-user/build'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    git branch: 'main', url: 'git@github.com:waseemAnsari11011/sevaBazar_panel.git', credentialsId: 'github-ssh-key'
+                }
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    sh "ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} 'rm -rf ${DEPLOY_PATH}/*'"
+                    sh "rsync -avz -e 'ssh -o StrictHostKeyChecking=no' ./build/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Deployment succeeded!'
+        }
+        failure {
+            echo 'Deployment failed!'
+        }
+    }
+}
