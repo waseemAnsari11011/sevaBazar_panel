@@ -36,6 +36,7 @@ import {
 } from '@coreui/icons'
 import axiosInstance from '../../../utils/axiosConfig'
 import { useNavigate } from 'react-router-dom'
+import PincodeInput from './PincodeInput' // Adjust the import path
 
 const Register = () => {
   const navigate = useNavigate()
@@ -85,6 +86,20 @@ const Register = () => {
   const [alertColor, setAlertColor] = useState('primary')
   const [isLoading, setIsLoading] = useState(false)
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false)
+
+  const [pincode, setPincode] = useState('')
+  const [pincodes, setPincodes] = useState([])
+
+  const handleAddPincode = () => {
+    if (pincode && !pincodes.includes(pincode)) {
+      setPincodes([...pincodes, pincode])
+      setPincode('')
+    }
+  }
+
+  const handleRemovePincode = (code) => {
+    setPincodes(pincodes.filter((p) => p !== code))
+  }
 
   useEffect(() => {
     if (window.google && window.google.maps && window.google.maps.places) {
@@ -470,6 +485,7 @@ const Register = () => {
           address: {
             addressLine1: businessAddress.trim(),
             postalCode: businessPincode.trim(),
+            postalCodes: pincodes,
           },
           coordinates: latitude && longitude ? [longitude, latitude] : [],
         }),
@@ -640,6 +656,16 @@ const Register = () => {
                       onChange={(e) => setBusinessPincode(e.target.value)}
                     />
                   </CInputGroup>
+                  <div className="mb-3">
+                    <PincodeInput
+                      pincode={pincode}
+                      setPincode={setPincode}
+                      pincodes={pincodes}
+                      setPincodes={setPincodes}
+                      handleAddPincode={handleAddPincode}
+                      handleRemovePincode={handleRemovePincode}
+                    />
+                  </div>
 
                   <div className="mb-3">
                     <div className="d-grid d-md-flex justify-content-md-center gap-2">
