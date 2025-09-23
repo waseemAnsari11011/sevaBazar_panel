@@ -19,6 +19,7 @@ import {
   CModalTitle,
   CModalBody,
   CModalFooter,
+  CFormCheck,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -49,6 +50,7 @@ const Register = () => {
   const shopPhotoInputRef = useRef(null)
   const aadharFrontInputRef = useRef(null)
   const aadharBackInputRef = useRef(null)
+  const panCardInputRef = useRef(null)
   const selfiePhotoInputRef = useRef(null)
 
   // Form fields state
@@ -62,6 +64,7 @@ const Register = () => {
   const [businessPincode, setBusinessPincode] = useState('')
   const [contactNumber, setContactNumber] = useState('')
   const [alternativeContactNumber, setAlternativeContactNumber] = useState('')
+  const [documentType, setDocumentType] = useState('aadhaar')
 
   // Location state
   const [latitude, setLatitude] = useState(null)
@@ -82,6 +85,8 @@ const Register = () => {
   const [aadharFrontDocumentPreview, setAadharFrontDocumentPreview] = useState(null)
   const [aadharBackDocument, setAadharBackDocument] = useState(null)
   const [aadharBackDocumentPreview, setAadharBackDocumentPreview] = useState(null)
+  const [panCardDocument, setPanCardDocument] = useState(null)
+  const [panCardDocumentPreview, setPanCardDocumentPreview] = useState(null)
 
   // Camera modal states
   const [showCameraModal, setShowCameraModal] = useState(false)
@@ -317,7 +322,7 @@ const Register = () => {
     const file = e.target.files[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        showError('Aadhar/PAN document size should be less than 5MB.')
+        showError('Aadhar document size should be less than 5MB.')
         return
       }
       handleFileUpload(file, setAadharFrontDocument, setAadharFrontDocumentPreview)
@@ -328,12 +333,23 @@ const Register = () => {
     const file = e.target.files[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        showError('Aadhar/PAN document size should be less than 5MB.')
+        showError('Aadhar document size should be less than 5MB.')
         return
       }
       handleFileUpload(file, setAadharBackDocument, setAadharBackDocumentPreview)
     }
   }
+  const handlePanCardUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showError('PAN card document size should be less than 5MB.')
+        return
+      }
+      handleFileUpload(file, setPanCardDocument, setPanCardDocumentPreview)
+    }
+  }
+
   const handleSelfieUpload = (e) => {
     const file = e.target.files[0]
     if (file) {
@@ -409,15 +425,17 @@ const Register = () => {
     if (!contactNumber.trim()) return showError('Please enter your contact number.')
     if (!shopPhoto) return showError('Please upload a shop photo.')
     if (!selfiePhoto) return showError('Please take a selfie or upload a photo.')
-
-    if (aadharFrontDocument && !aadharBackDocument) {
-      return showError('Please upload the back of your Aadhar/PAN document.')
-    }
-    if (!aadharFrontDocument && aadharBackDocument) {
-      return showError('Please upload the front of your Aadhar/PAN document.')
-    }
-    if (!aadharFrontDocument || !aadharBackDocument) {
-      return showError('Please upload both the front and back of your Aadhar/PAN document.')
+    if (documentType === 'aadhaar') {
+      if (!aadharFrontDocument) {
+        return showError('Please upload the front of your Aadhar card.')
+      }
+      if (!aadharBackDocument) {
+        return showError('Please upload the back of your Aadhar card.')
+      }
+    } else if (documentType === 'pan') {
+      if (!panCardDocument) {
+        return showError('Please upload your PAN card.')
+      }
     }
 
     setIsLoading(true)
@@ -451,8 +469,12 @@ const Register = () => {
       if (placeDetails) formData.append('placeId', placeDetails.place_id)
       formData.append('shopPhoto', shopPhoto)
       formData.append('selfiePhoto', selfiePhoto)
-      formData.append('aadharFrontDocument', aadharFrontDocument)
-      formData.append('aadharBackDocument', aadharBackDocument)
+      if (documentType === 'aadhaar') {
+        formData.append('aadharFrontDocument', aadharFrontDocument)
+        formData.append('aadharBackDocument', aadharBackDocument)
+      } else if (documentType === 'pan') {
+        formData.append('panCardDocument', panCardDocument)
+      }
 
       const response = await axiosInstance.post('/vendors/signup', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -762,93 +784,169 @@ const Register = () => {
                     )}
                   </div>
 
-                  {/* Aadhar Document Upload */}
+                  {/* Document Upload */}
                   <div className="mb-3">
-                    <CFormLabel>Aadhar Card Document *</CFormLabel>
-                    <div className="d-grid gap-2">
-                      <CButton
-                        color="info"
-                        variant="outline"
-                        onClick={() => aadharFrontInputRef.current?.click()}
-                      >
-                        <CIcon icon={cilCloudUpload} className="me-2" />
-                        Upload Front
-                      </CButton>
-                      <CFormInput
-                        type="file"
-                        ref={aadharFrontInputRef}
-                        accept="image/*,application/pdf"
-                        onChange={handleAadharFrontUpload}
-                        style={{ display: 'none' }}
+                    <CFormLabel>Document *</CFormLabel>
+                    <div>
+                      <CFormCheck
+                        type="radio"
+                        name="documentType"
+                        id="aadhaarRadio"
+                        label="Aadhaar Card"
+                        value="aadhaar"
+                        checked={documentType === 'aadhaar'}
+                        onChange={() => setDocumentType('aadhaar')}
                       />
-                      <CButton
-                        color="info"
-                        variant="outline"
-                        onClick={() => aadharBackInputRef.current?.click()}
-                      >
-                        <CIcon icon={cilCloudUpload} className="me-2" />
-                        Upload Back
-                      </CButton>
-                      <CFormInput
-                        type="file"
-                        ref={aadharBackInputRef}
-                        accept="image/*,application/pdf"
-                        onChange={handleAadharBackUpload}
-                        style={{ display: 'none' }}
+                      <CFormCheck
+                        type="radio"
+                        name="documentType"
+                        id="panRadio"
+                        label="PAN Card"
+                        value="pan"
+                        checked={documentType === 'pan'}
+                        onChange={() => setDocumentType('pan')}
                       />
                     </div>
-                    <CFormText className="text-muted">
-                      Accepted formats: JPG, PNG, PDF (Max: 5MB)
-                    </CFormText>
-                    {aadharFrontDocumentPreview && (
-                      <div className="mt-2 text-center">
-                        <img
-                          src={aadharFrontDocumentPreview}
-                          alt="Aadhar front preview"
-                          style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '5px' }}
-                        />
-                        <div className="mt-1">
-                          <CIcon icon={cilCheckCircle} className="text-success me-2" />
-                          <small className="text-success">Aadhar/PAN front uploaded</small>
-                          <CButton
-                            color="danger"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              removeImage(setAadharFrontDocument, setAadharFrontDocumentPreview)
-                            }
-                            className="ms-2"
-                          >
-                            <CIcon icon={cilTrash} />
-                          </CButton>
-                        </div>
-                      </div>
-                    )}
-                    {aadharBackDocumentPreview && (
-                      <div className="mt-2 text-center">
-                        <img
-                          src={aadharBackDocumentPreview}
-                          alt="Aadhar back preview"
-                          style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '5px' }}
-                        />
-                        <div className="mt-1">
-                          <CIcon icon={cilCheckCircle} className="text-success me-2" />
-                          <small className="text-success">Aadhar/PAN back uploaded</small>
-                          <CButton
-                            color="danger"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              removeImage(setAadharBackDocument, setAadharBackDocumentPreview)
-                            }
-                            className="ms-2"
-                          >
-                            <CIcon icon={cilTrash} />
-                          </CButton>
-                        </div>
-                      </div>
-                    )}
                   </div>
+
+                  {documentType === 'aadhaar' && (
+                    <div className="mb-3">
+                      <CFormLabel>Aadhaar Card *</CFormLabel>
+                      <div className="d-grid gap-2">
+                        <CButton
+                          color="info"
+                          variant="outline"
+                          onClick={() => aadharFrontInputRef.current?.click()}
+                        >
+                          <CIcon icon={cilCloudUpload} className="me-2" />
+                          Upload Front
+                        </CButton>
+                        <CFormInput
+                          type="file"
+                          ref={aadharFrontInputRef}
+                          accept="image/*,application/pdf"
+                          onChange={handleAadharFrontUpload}
+                          style={{ display: 'none' }}
+                        />
+                        <CButton
+                          color="info"
+                          variant="outline"
+                          onClick={() => aadharBackInputRef.current?.click()}
+                        >
+                          <CIcon icon={cilCloudUpload} className="me-2" />
+                          Upload Back
+                        </CButton>
+                        <CFormInput
+                          type="file"
+                          ref={aadharBackInputRef}
+                          accept="image/*,application/pdf"
+                          onChange={handleAadharBackUpload}
+                          style={{ display: 'none' }}
+                        />
+                      </div>
+                      <CFormText className="text-muted">
+                        Accepted formats: JPG, PNG, PDF (Max: 5MB)
+                      </CFormText>
+                      {aadharFrontDocumentPreview && (
+                        <div className="mt-2 text-center">
+                          <img
+                            src={aadharFrontDocumentPreview}
+                            alt="Aadhar front preview"
+                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '5px' }}
+                          />
+                          <div className="mt-1">
+                            <CIcon icon={cilCheckCircle} className="text-success me-2" />
+                            <small className="text-success">Aadhar front uploaded</small>
+                            <CButton
+                              color="danger"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                removeImage(setAadharFrontDocument, setAadharFrontDocumentPreview)
+                              }
+                              className="ms-2"
+                            >
+                              <CIcon icon={cilTrash} />
+                            </CButton>
+                          </div>
+                        </div>
+                      )}
+                      {aadharBackDocumentPreview && (
+                        <div className="mt-2 text-center">
+                          <img
+                            src={aadharBackDocumentPreview}
+                            alt="Aadhar back preview"
+                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '5px' }}
+                          />
+                          <div className="mt-1">
+                            <CIcon icon={cilCheckCircle} className="text-success me-2" />
+                            <small className="text-success">Aadhar back uploaded</small>
+                            <CButton
+                              color="danger"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                removeImage(setAadharBackDocument, setAadharBackDocumentPreview)
+                              }
+                              className="ms-2"
+                            >
+                              <CIcon icon={cilTrash} />
+                            </CButton>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {documentType === 'pan' && (
+                    <div className="mb-3">
+                      <CFormLabel>PAN Card *</CFormLabel>
+                      <div className="d-grid gap-2">
+                        <CButton
+                          color="info"
+                          variant="outline"
+                          onClick={() => panCardInputRef.current?.click()}
+                        >
+                          <CIcon icon={cilCloudUpload} className="me-2" />
+                          Upload PAN Card
+                        </CButton>
+                        <CFormInput
+                          type="file"
+                          ref={panCardInputRef}
+                          accept="image/*,application/pdf"
+                          onChange={handlePanCardUpload}
+                          style={{ display: 'none' }}
+                        />
+                      </div>
+                      <CFormText className="text-muted">
+                        Accepted formats: JPG, PNG, PDF (Max: 5MB)
+                      </CFormText>
+                      {panCardDocumentPreview && (
+                        <div className="mt-2 text-center">
+                          <img
+                            src={panCardDocumentPreview}
+                            alt="PAN card preview"
+                            style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '5px' }}
+                          />
+                          <div className="mt-1">
+                            <CIcon icon={cilCheckCircle} className="text-success me-2" />
+                            <small className="text-success">PAN card uploaded</small>
+                            <CButton
+                              color="danger"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                removeImage(setPanCardDocument, setPanCardDocumentPreview)
+                              }
+                              className="ms-2"
+                            >
+                              <CIcon icon={cilTrash} />
+                            </CButton>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <hr />
 
