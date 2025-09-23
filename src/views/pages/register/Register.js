@@ -53,6 +53,8 @@ const Register = () => {
   const [email, setEmail] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [businessAddress, setBusinessAddress] = useState('')
+  const [landmark, setLandmark] = useState('')
+  const [alternativeAddress, setAlternativeAddress] = useState('')
   const [businessPincode, setBusinessPincode] = useState('')
   const [contactNumber, setContactNumber] = useState('')
   const [alternativeContactNumber, setAlternativeContactNumber] = useState('')
@@ -484,6 +486,8 @@ const Register = () => {
         JSON.stringify({
           address: {
             addressLine1: businessAddress.trim(),
+            addressLine2: alternativeAddress.trim(),
+            landmark: landmark.trim(),
             postalCode: businessPincode.trim(),
             postalCodes: pincodes,
           },
@@ -637,6 +641,30 @@ const Register = () => {
                       onChange={handleAddressChange}
                       autoComplete="off"
                       required
+                    />
+                  </CInputGroup>
+
+                  <CInputGroup className="mb-3">
+                    <CInputGroupText>
+                      <CIcon icon={cilLocationPin} />
+                    </CInputGroupText>
+                    <CFormInput
+                      placeholder="Landmark"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      autoComplete="off"
+                    />
+                  </CInputGroup>
+
+                  <CInputGroup className="mb-3">
+                    <CInputGroupText>
+                      <CIcon icon={cilLocationPin} />
+                    </CInputGroupText>
+                    <CFormInput
+                      placeholder="Alternative Address"
+                      value={alternativeAddress}
+                      onChange={(e) => setAlternativeAddress(e.target.value)}
+                      autoComplete="off"
                     />
                   </CInputGroup>
 
