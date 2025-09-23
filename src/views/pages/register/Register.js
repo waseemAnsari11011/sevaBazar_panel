@@ -10,7 +10,6 @@ import {
   CInputGroup,
   CInputGroupText,
   CRow,
-  CAlert,
   CSpinner,
   CFormText,
   CFormSelect,
@@ -33,10 +32,13 @@ import {
   cilCloudUpload,
   cilTrash,
   cilCheckCircle,
+  cilWarning,
+  cilEyedropper,
+  cilShortText,
 } from '@coreui/icons'
 import axiosInstance from '../../../utils/axiosConfig'
 import { useNavigate } from 'react-router-dom'
-import PincodeInput from './PincodeInput' // Adjust the import path
+import PincodeInput from './PincodeInput'
 
 const Register = () => {
   const navigate = useNavigate()
@@ -45,7 +47,9 @@ const Register = () => {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const shopPhotoInputRef = useRef(null)
-  const aadharInputRef = useRef(null)
+  const aadharFrontInputRef = useRef(null)
+  const aadharBackInputRef = useRef(null)
+  const selfiePhotoInputRef = useRef(null)
 
   // Form fields state
   const [name, setName] = useState('')
@@ -74,8 +78,10 @@ const Register = () => {
   const [shopPhotoPreview, setShopPhotoPreview] = useState(null)
   const [selfiePhoto, setSelfiePhoto] = useState(null)
   const [selfiePhotoPreview, setSelfiePhotoPreview] = useState(null)
-  const [aadharDocument, setAadharDocument] = useState(null)
-  const [aadharDocumentPreview, setAadharDocumentPreview] = useState(null)
+  const [aadharFrontDocument, setAadharFrontDocument] = useState(null)
+  const [aadharFrontDocumentPreview, setAadharFrontDocumentPreview] = useState(null)
+  const [aadharBackDocument, setAadharBackDocument] = useState(null)
+  const [aadharBackDocumentPreview, setAadharBackDocumentPreview] = useState(null)
 
   // Camera modal states
   const [showCameraModal, setShowCameraModal] = useState(false)
@@ -83,15 +89,19 @@ const Register = () => {
   const [isCameraReady, setIsCameraReady] = useState(false)
 
   // UI state
-  const [alertMessage, setAlertMessage] = useState('')
-  const [alertVisible, setAlertVisible] = useState(false)
-  const [alertColor, setAlertColor] = useState('primary')
   const [isLoading, setIsLoading] = useState(false)
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  // Modal states
+  const [modalMessage, setModalMessage] = useState('')
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   const [pincode, setPincode] = useState('')
   const [pincodes, setPincodes] = useState([])
 
+  // --- ADDED THIS SECTION BACK ---
   const handleAddPincode = () => {
     if (pincode && !pincodes.includes(pincode)) {
       setPincodes([...pincodes, pincode])
@@ -101,6 +111,12 @@ const Register = () => {
 
   const handleRemovePincode = (code) => {
     setPincodes(pincodes.filter((p) => p !== code))
+  }
+  // --- END OF ADDED SECTION ---
+
+  const showError = (message) => {
+    setModalMessage(message)
+    setShowErrorModal(true)
   }
 
   useEffect(() => {
@@ -122,9 +138,7 @@ const Register = () => {
 
     script.onerror = () => {
       console.error('Failed to load Google Maps API')
-      setAlertMessage('Failed to load Google Maps. Address autocomplete will not be available.')
-      setAlertColor('warning')
-      setAlertVisible(true)
+      showError('Failed to load Google Maps. Address autocomplete will not be available.')
     }
 
     document.head.appendChild(script)
@@ -149,9 +163,7 @@ const Register = () => {
         const place = autocomplete.getPlace()
 
         if (!place.geometry) {
-          setAlertMessage('Please select a valid address from the dropdown.')
-          setAlertColor('warning')
-          setAlertVisible(true)
+          showError('Please select a valid address from the dropdown.')
           return
         }
 
@@ -192,26 +204,12 @@ const Register = () => {
         }
       } catch (error) {
         console.error('Failed to fetch categories', error)
-        setAlertMessage('Could not load business categories. Please try again later.')
-        setAlertColor('danger')
-        setAlertVisible(true)
+        showError('Could not load business categories. Please try again later.')
       }
     }
 
     fetchCategories()
   }, [])
-
-  useEffect(() => {
-    let timeout
-    if (alertVisible) {
-      timeout = setTimeout(() => {
-        setAlertVisible(false)
-      }, 3000)
-    }
-    return () => clearTimeout(timeout)
-  }, [alertVisible])
-
-  // Cleanup camera stream when modal closes
   useEffect(() => {
     if (!showCameraModal && cameraStream) {
       cameraStream.getTracks().forEach((track) => track.stop())
@@ -293,7 +291,6 @@ const Register = () => {
     }
   }
 
-  // Image upload handlers
   const handleFileUpload = (file, setFile, setPreview) => {
     if (file) {
       const reader = new FileReader()
@@ -309,31 +306,45 @@ const Register = () => {
     const file = e.target.files[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        setAlertMessage('Shop photo size should be less than 5MB.')
-        setAlertColor('warning')
-        setAlertVisible(true)
+        showError('Shop photo size should be less than 5MB.')
         return
       }
       handleFileUpload(file, setShopPhoto, setShopPhotoPreview)
     }
   }
 
-  const handleAadharUpload = (e) => {
+  const handleAadharFrontUpload = (e) => {
     const file = e.target.files[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        setAlertMessage('Aadhar document size should be less than 5MB.')
-        setAlertColor('warning')
-        setAlertVisible(true)
+        showError('Aadhar/PAN document size should be less than 5MB.')
         return
       }
-      handleFileUpload(file, setAadharDocument, setAadharDocumentPreview)
+      handleFileUpload(file, setAadharFrontDocument, setAadharFrontDocumentPreview)
     }
   }
 
-  // Camera functions
+  const handleAadharBackUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showError('Aadhar/PAN document size should be less than 5MB.')
+        return
+      }
+      handleFileUpload(file, setAadharBackDocument, setAadharBackDocumentPreview)
+    }
+  }
+  const handleSelfieUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showError('Selfie photo size should be less than 5MB.')
+        return
+      }
+      handleFileUpload(file, setSelfiePhoto, setSelfiePhotoPreview)
+    }
+  }
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -350,9 +361,7 @@ const Register = () => {
       }
     } catch (error) {
       console.error('Error accessing camera:', error)
-      setAlertMessage('Unable to access camera. Please check permissions.')
-      setAlertColor('danger')
-      setAlertVisible(true)
+      showError('Unable to access camera. Please check permissions.')
       setShowCameraModal(false)
     }
   }
@@ -390,86 +399,30 @@ const Register = () => {
     setFile(null)
     setPreview(null)
   }
-
   const handleSignUp = async () => {
-    // Validation
-    if (!name.trim()) {
-      setAlertMessage('Please enter your name.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
-    }
+    if (!name.trim()) return showError('Please enter your name.')
+    if (!email.trim()) return showError('Please enter your email.')
+    if (!password.trim()) return showError('Please enter a password.')
+    if (!businessName.trim()) return showError('Please enter your business name.')
+    if (!selectedCategory) return showError('Please select a business category.')
+    if (!businessAddress.trim()) return showError('Please enter your business address.')
+    if (!contactNumber.trim()) return showError('Please enter your contact number.')
+    if (!shopPhoto) return showError('Please upload a shop photo.')
+    if (!selfiePhoto) return showError('Please take a selfie or upload a photo.')
 
-    if (!email.trim()) {
-      setAlertMessage('Please enter your email.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
+    if (aadharFrontDocument && !aadharBackDocument) {
+      return showError('Please upload the back of your Aadhar/PAN document.')
     }
-
-    if (!password.trim()) {
-      setAlertMessage('Please enter a password.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
+    if (!aadharFrontDocument && aadharBackDocument) {
+      return showError('Please upload the front of your Aadhar/PAN document.')
     }
-
-    if (!businessName.trim()) {
-      setAlertMessage('Please enter your business name.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
-    }
-
-    if (!selectedCategory) {
-      setAlertMessage('Please select a business category.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
-    }
-
-    if (!businessAddress.trim()) {
-      setAlertMessage('Please enter your business address.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
-    }
-
-    if (!contactNumber.trim()) {
-      setAlertMessage('Please enter your contact number.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
-    }
-
-    if (!shopPhoto) {
-      setAlertMessage('Please upload a shop photo.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
-    }
-
-    if (!selfiePhoto) {
-      setAlertMessage('Please take a selfie.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
-    }
-
-    if (!aadharDocument) {
-      setAlertMessage('Please upload your Aadhar document.')
-      setAlertColor('warning')
-      setAlertVisible(true)
-      return
+    if (!aadharFrontDocument || !aadharBackDocument) {
+      return showError('Please upload both the front and back of your Aadhar/PAN document.')
     }
 
     setIsLoading(true)
-
     try {
-      // Create FormData for multipart upload
       const formData = new FormData()
-
-      // Add text fields
       formData.append('name', name.trim())
       formData.append('password', password.trim())
       formData.append('email', email.trim())
@@ -495,36 +448,23 @@ const Register = () => {
         }),
       )
       formData.append('category', selectedCategory)
-
-      if (placeDetails) {
-        formData.append('placeId', placeDetails.place_id)
-      }
-
-      // Add image files
+      if (placeDetails) formData.append('placeId', placeDetails.place_id)
       formData.append('shopPhoto', shopPhoto)
       formData.append('selfiePhoto', selfiePhoto)
-      formData.append('aadharDocument', aadharDocument)
+      formData.append('aadharFrontDocument', aadharFrontDocument)
+      formData.append('aadharBackDocument', aadharBackDocument)
 
       const response = await axiosInstance.post('/vendors/signup', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
 
       if (response.status === 201) {
-        setAlertMessage('Registration successful! Redirecting to login...')
-        setAlertColor('success')
-        setAlertVisible(true)
-        setTimeout(() => {
-          navigate('/')
-        }, 1500)
+        setShowSuccessModal(true)
       }
     } catch (error) {
       const errorMessage =
-        error.response?.data?.message || error.message || 'No response from server.'
-      setAlertMessage(`Registration failed: ${errorMessage}`)
-      setAlertColor('danger')
-      setAlertVisible(true)
+        error.response?.data?.message || error.message || 'An unexpected error occurred.'
+      showError(`Registration failed: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
@@ -534,11 +474,6 @@ const Register = () => {
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
         <CRow className="justify-content-center">
-          {alertVisible && (
-            <CAlert color={alertColor} onClose={() => setAlertVisible(false)} dismissible>
-              {alertMessage}
-            </CAlert>
-          )}
           <CCol md={9} lg={7} xl={6}>
             <CCard className="mx-4">
               <CCardBody className="p-4">
@@ -781,12 +716,27 @@ const Register = () => {
 
                   {/* Selfie Photo */}
                   <div className="mb-3">
-                    <CFormLabel>Your Selfie *</CFormLabel>
+                    <CFormLabel>Business owner photo *</CFormLabel>
                     <div className="d-grid gap-2">
                       <CButton color="success" variant="outline" onClick={openCamera}>
                         <CIcon icon={cilCamera} className="me-2" />
                         Take Selfie
                       </CButton>
+                      <CButton
+                        color="info"
+                        variant="outline"
+                        onClick={() => selfiePhotoInputRef.current?.click()}
+                      >
+                        <CIcon icon={cilCloudUpload} className="me-2" />
+                        Upload Photo
+                      </CButton>
+                      <CFormInput
+                        type="file"
+                        ref={selfiePhotoInputRef}
+                        accept="image/*"
+                        onChange={handleSelfieUpload}
+                        style={{ display: 'none' }}
+                      />
                     </div>
                     {selfiePhotoPreview && (
                       <div className="mt-2 text-center">
@@ -819,37 +769,78 @@ const Register = () => {
                       <CButton
                         color="info"
                         variant="outline"
-                        onClick={() => aadharInputRef.current?.click()}
+                        onClick={() => aadharFrontInputRef.current?.click()}
                       >
                         <CIcon icon={cilCloudUpload} className="me-2" />
-                        Upload Aadhar Document
+                        Upload Front
                       </CButton>
                       <CFormInput
                         type="file"
-                        ref={aadharInputRef}
+                        ref={aadharFrontInputRef}
                         accept="image/*,application/pdf"
-                        onChange={handleAadharUpload}
+                        onChange={handleAadharFrontUpload}
+                        style={{ display: 'none' }}
+                      />
+                      <CButton
+                        color="info"
+                        variant="outline"
+                        onClick={() => aadharBackInputRef.current?.click()}
+                      >
+                        <CIcon icon={cilCloudUpload} className="me-2" />
+                        Upload Back
+                      </CButton>
+                      <CFormInput
+                        type="file"
+                        ref={aadharBackInputRef}
+                        accept="image/*,application/pdf"
+                        onChange={handleAadharBackUpload}
                         style={{ display: 'none' }}
                       />
                     </div>
                     <CFormText className="text-muted">
                       Accepted formats: JPG, PNG, PDF (Max: 5MB)
                     </CFormText>
-                    {aadharDocumentPreview && (
+                    {aadharFrontDocumentPreview && (
                       <div className="mt-2 text-center">
                         <img
-                          src={aadharDocumentPreview}
-                          alt="Aadhar preview"
+                          src={aadharFrontDocumentPreview}
+                          alt="Aadhar front preview"
                           style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '5px' }}
                         />
                         <div className="mt-1">
                           <CIcon icon={cilCheckCircle} className="text-success me-2" />
-                          <small className="text-success">Aadhar document uploaded</small>
+                          <small className="text-success">Aadhar/PAN front uploaded</small>
                           <CButton
                             color="danger"
                             variant="ghost"
                             size="sm"
-                            onClick={() => removeImage(setAadharDocument, setAadharDocumentPreview)}
+                            onClick={() =>
+                              removeImage(setAadharFrontDocument, setAadharFrontDocumentPreview)
+                            }
+                            className="ms-2"
+                          >
+                            <CIcon icon={cilTrash} />
+                          </CButton>
+                        </div>
+                      </div>
+                    )}
+                    {aadharBackDocumentPreview && (
+                      <div className="mt-2 text-center">
+                        <img
+                          src={aadharBackDocumentPreview}
+                          alt="Aadhar back preview"
+                          style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '5px' }}
+                        />
+                        <div className="mt-1">
+                          <CIcon icon={cilCheckCircle} className="text-success me-2" />
+                          <small className="text-success">Aadhar/PAN back uploaded</small>
+                          <CButton
+                            color="danger"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              removeImage(setAadharBackDocument, setAadharBackDocumentPreview)
+                            }
                             className="ms-2"
                           >
                             <CIcon icon={cilTrash} />
@@ -866,12 +857,24 @@ const Register = () => {
                       <CIcon icon={cilLockLocked} />
                     </CInputGroupText>
                     <CFormInput
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
+                    <CButton
+                      type="button"
+                      color="secondary"
+                      variant="outline"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <CIcon icon={cilEyedropper} />
+                      ) : (
+                        <CIcon icon={cilShortText} />
+                      )}
+                    </CButton>
                   </CInputGroup>
 
                   <div className="d-grid">
@@ -896,7 +899,8 @@ const Register = () => {
           </CCol>
         </CRow>
 
-        {/* Camera Modal */}
+        {/* --- MODALS SECTION --- */}
+
         <CModal visible={showCameraModal} onClose={() => setShowCameraModal(false)} size="lg">
           <CModalHeader>
             <CModalTitle>Take Your Selfie</CModalTitle>
@@ -923,6 +927,48 @@ const Register = () => {
             <CButton color="primary" onClick={capturePhoto} disabled={!isCameraReady}>
               <CIcon icon={cilCamera} className="me-2" />
               Capture Photo
+            </CButton>
+          </CModalFooter>
+        </CModal>
+
+        <CModal
+          visible={showSuccessModal}
+          onClose={() => {
+            setShowSuccessModal(false)
+            navigate('/login')
+          }}
+        >
+          <CModalHeader>
+            <CModalTitle>
+              <CIcon icon={cilCheckCircle} className="text-success me-2" />
+              Registration Successful!
+            </CModalTitle>
+          </CModalHeader>
+          <CModalBody>Your account has been created successfully.</CModalBody>
+          <CModalFooter>
+            <CButton
+              color="primary"
+              onClick={() => {
+                setShowSuccessModal(false)
+                navigate('/login')
+              }}
+            >
+              OK
+            </CButton>
+          </CModalFooter>
+        </CModal>
+
+        <CModal visible={showErrorModal} onClose={() => setShowErrorModal(false)}>
+          <CModalHeader>
+            <CModalTitle>
+              <CIcon icon={cilWarning} className="text-danger me-2" />
+              Validation Error
+            </CModalTitle>
+          </CModalHeader>
+          <CModalBody>{modalMessage}</CModalBody>
+          <CModalFooter>
+            <CButton color="primary" onClick={() => setShowErrorModal(false)}>
+              OK
             </CButton>
           </CModalFooter>
         </CModal>
