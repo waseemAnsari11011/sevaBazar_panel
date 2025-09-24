@@ -17,22 +17,17 @@ const Refund = React.lazy(() => import('./views/orders/refund/Refund'))
 const CustomerInquiry = React.lazy(() => import('./views/customers/inquiry/CustomerInquiry'))
 const CustomerList = React.lazy(() => import('./views/customers/customerList/CustomerList'))
 
-
 //vendor
 const VendorList = React.lazy(() => import('./views/vendors/vendorList/VendorList'))
-
-
 
 //help-center
 const Faqs = React.lazy(() => import('./views/helpCenter/faqs/Faqs'))
 const ContactAdmin = React.lazy(() => import('./views/helpCenter/contactAdmin/ContactAdmin'))
 
-
 //Banner
 const Banner = React.lazy(() => import('./views/banner/Banner'))
 
-
-
+const UpdateAddress = React.lazy(() => import('./views/profile/UpdateAddress'))
 
 // Base
 const Accordion = React.lazy(() => import('./views/base/accordion/Accordion'))
@@ -136,6 +131,7 @@ const routes = [
   { path: '/contact', name: 'Contact', element: ContactAdmin },
   { path: '/vendor/list', name: 'vendors-list', element: VendorList },
   { path: '/banner/add-banner', name: 'Add Banner', element: Banner },
+  { path: '/profile/update-address', name: 'Update Address', element: UpdateAddress },
 ]
 
 export default routes

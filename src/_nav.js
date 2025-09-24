@@ -1,5 +1,5 @@
-import React from 'react';
-import CIcon from '@coreui/icons-react';
+import React from 'react'
+import CIcon from '@coreui/icons-react'
 import {
   cilBell,
   cilCalculator,
@@ -17,13 +17,19 @@ import {
   cilGroup,
   cilInfo,
   cilPhone,
+  cilLocationPin,
   cilSpeech,
-} from '@coreui/icons';
-import { CNavGroup, CNavItem, CNavTitle, CBadge } from '@coreui/react';
+} from '@coreui/icons'
+import { CNavGroup, CNavItem, CNavTitle, CBadge } from '@coreui/react'
 
 const Navigation = (neworderCount, newChatOrderCount) => {
-
   const _nav = [
+    {
+      component: CNavItem,
+      name: 'Update Address',
+      to: '/profile/update-address',
+      icon: <CIcon icon={cilLocationPin} customClassName="nav-icon" />,
+    },
     {
       component: CNavItem,
       name: 'Overview',
@@ -87,7 +93,7 @@ const Navigation = (neworderCount, newChatOrderCount) => {
         },
       ],
     },
-    
+
     {
       component: CNavGroup,
       name: 'Vendors',
@@ -149,9 +155,9 @@ const Navigation = (neworderCount, newChatOrderCount) => {
       to: '/contact',
       icon: <CIcon icon={cilPhone} customClassName="nav-icon" />,
     },
-  ];
+  ]
 
-  return _nav;
-};
+  return _nav
+}
 
-export default Navigation;
+export default Navigation
