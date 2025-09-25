@@ -27,7 +27,7 @@ const Navigation = (neworderCount, newChatOrderCount) => {
     {
       component: CNavItem,
       name: 'Update Address',
-      to: '/profile/update-address',
+      to: '/profile',
       icon: <CIcon icon={cilLocationPin} customClassName="nav-icon" />,
     },
     {
