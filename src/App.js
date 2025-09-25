@@ -6,6 +6,8 @@ import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
 import { fetchVendorOrders } from './redux/actions/getAllOrdersAction'
 import { fetchVendorChatOrders } from './redux/actions/getNewChatOrdersAction'
+import { ToastContainer } from 'react-toastify' // 1. Import ToastContainer
+import 'react-toastify/dist/ReactToastify.css' // 2. Import the CSS
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -28,25 +30,25 @@ const App = () => {
 
   useEffect(() => {
     const fetchOrdersAndSetTheme = async () => {
-      await dispatch(fetchVendorOrders(vendorId));
-      await dispatch(fetchVendorChatOrders(vendorId));
+      await dispatch(fetchVendorOrders(vendorId))
+      await dispatch(fetchVendorChatOrders(vendorId))
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0];
-      
+      const urlParams = new URLSearchParams(window.location.search)
+      const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0]
+
       if (theme) {
-        setColorMode(theme);
+        setColorMode(theme)
       }
 
       if (isColorModeSet()) {
-        return;
+        return
       }
 
-      setColorMode(storedTheme);
-    };
+      setColorMode(storedTheme)
+    }
 
-    fetchOrdersAndSetTheme();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    fetchOrdersAndSetTheme()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <HashRouter>
@@ -57,6 +59,7 @@ const App = () => {
           </div>
         }
       >
+        <ToastContainer />
         <Routes>
           <Route
             exact
