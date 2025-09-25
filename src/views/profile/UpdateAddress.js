@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { CForm, CCol, CFormLabel, CFormInput, CButton, CFormText } from '@coreui/react'
-import { useDispatch } from 'react-redux'
+import { CForm, CCol, CFormLabel, CFormInput, CButton, CFormText, CInputGroup } from '@coreui/react'
+import { useDispatch, useSelector } from 'react-redux'
 import { updateVendorAddress } from 'src/api/vendor/updateVendorAddress'
 import CIcon from '@coreui/icons-react'
 import { cilLocationPin } from '@coreui/icons'
+import PincodeInput from '../pages/register/PincodeInput' // Correctly importing the existing component
 
 const UpdateAddress = ({ user }) => {
   const dispatch = useDispatch()
@@ -15,6 +16,7 @@ const UpdateAddress = ({ user }) => {
     addressLine2: '',
     landmark: '',
     postalCode: '',
+    postalCodes: [],
   })
   const [latitude, setLatitude] = useState(null)
   const [longitude, setLongitude] = useState(null)
@@ -22,31 +24,31 @@ const UpdateAddress = ({ user }) => {
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false)
 
   useEffect(() => {
-    if (user && user.location) {
-      if (user.location.address) {
-        setAddress(user.location.address)
-      }
-      if (user.location.coordinates && user.location.coordinates.length === 2) {
-        setLongitude(user.location.coordinates[0])
-        setLatitude(user.location.coordinates[1])
-      }
+    if (user?.location?.address) {
+      setAddress({
+        ...address,
+        ...user.location.address,
+      })
+    }
+    if (user?.location?.coordinates) {
+      setLongitude(user.location.coordinates[0])
+      setLatitude(user.location.coordinates[1])
     }
   }, [user])
 
   useEffect(() => {
-    if (window.google && window.google.maps && window.google.maps.places) {
+    if (window.google?.maps?.places) {
       setGoogleMapsLoaded(true)
       return
     }
-
-    const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${
+      import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    }&libraries=places`
     script.async = true
     script.defer = true
     script.onload = () => setGoogleMapsLoaded(true)
     document.head.appendChild(script)
-
     return () => {
       const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`)
       if (existingScript) {
@@ -60,22 +62,27 @@ const UpdateAddress = ({ user }) => {
       const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
         types: ['address'],
         componentRestrictions: { country: 'in' },
+        fields: ['address_components', 'formatted_address', 'geometry'],
       })
 
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace()
-        if (place.geometry) {
-          setAddress({
-            ...address,
-            addressLine1: place.formatted_address,
-          })
+        if (place.geometry && place.address_components) {
+          const postalCodeComponent = place.address_components.find((c) =>
+            c.types.includes('postal_code'),
+          )
+          setAddress((prev) => ({
+            ...prev,
+            addressLine1: place.formatted_address || '',
+            postalCode: postalCodeComponent ? postalCodeComponent.long_name : '',
+          }))
           setLatitude(place.geometry.location.lat())
           setLongitude(place.geometry.location.lng())
         }
       })
       autocompleteRef.current = autocomplete
     }
-  }, [googleMapsLoaded, address])
+  }, [googleMapsLoaded])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -84,25 +91,36 @@ const UpdateAddress = ({ user }) => {
 
   const handleGetCurrentLocation = () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const { latitude, longitude } = position.coords
-        setLatitude(latitude)
-        setLongitude(longitude)
-        const geocoder = new window.google.maps.Geocoder()
-        geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
-          if (status === 'OK' && results[0]) {
-            setAddress({
-              ...address,
-              addressLine1: results[0].formatted_address,
+      setLocationStatus('Fetching current location...')
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords
+          setLatitude(latitude)
+          setLongitude(longitude)
+
+          if (googleMapsLoaded) {
+            const geocoder = new window.google.maps.Geocoder()
+            geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
+              if (status === 'OK' && results[0]) {
+                const postalCodeComponent = results[0].address_components.find((c) =>
+                  c.types.includes('postal_code'),
+                )
+                setAddress((prev) => ({
+                  ...prev,
+                  addressLine1: results[0].formatted_address || '',
+                  postalCode: postalCodeComponent ? postalCodeComponent.long_name : '',
+                }))
+                setLocationStatus('✅ Location found!')
+              } else {
+                setLocationStatus('Could not find address for your location.')
+              }
             })
-            setLocationStatus('✅ Location found!')
-          } else {
-            setLocationStatus('Could not find address for your location.')
           }
-        })
-      })
+        },
+        () => setLocationStatus('Unable to retrieve your location.'),
+      )
     } else {
-      setLocationStatus('Geolocation is not supported by your browser.')
+      setLocationStatus('Geolocation is not supported by this browser.')
     }
   }
 
@@ -120,16 +138,20 @@ const UpdateAddress = ({ user }) => {
     <CForm className="row g-3" onSubmit={handleSubmit}>
       <CCol md={12}>
         <CFormLabel htmlFor="addressLine1">Address Line 1</CFormLabel>
-        <CFormInput
-          ref={addressInputRef}
-          id="addressLine1"
-          name="addressLine1"
-          value={address.addressLine1}
-          onChange={handleChange}
-        />
+        <CInputGroup>
+          <CFormInput
+            ref={addressInputRef}
+            id="addressLine1"
+            name="addressLine1"
+            value={address.addressLine1}
+            onChange={handleChange}
+            placeholder="Search for your address..."
+          />
+        </CInputGroup>
       </CCol>
+
       <CCol md={6}>
-        <CFormLabel htmlFor="addressLine2">Address Line 2</CFormLabel>
+        <CFormLabel htmlFor="addressLine2">Address Line 2 / Building</CFormLabel>
         <CFormInput
           id="addressLine2"
           name="addressLine2"
@@ -155,12 +177,21 @@ const UpdateAddress = ({ user }) => {
           onChange={handleChange}
         />
       </CCol>
-      <CCol xs={12}>
-        <CButton color="info" onClick={handleGetCurrentLocation} className="me-2">
-          <CIcon icon={cilLocationPin} /> Use Current Location
-        </CButton>
-        {locationStatus && <CFormText>{locationStatus}</CFormText>}
+
+      <CCol md={12}>
+        <PincodeInput
+          pincodes={address.postalCodes || []}
+          setPincodes={(newPincodes) => setAddress({ ...address, postalCodes: newPincodes })}
+        />
       </CCol>
+
+      <CCol xs={12}>
+        <CButton color="secondary" onClick={handleGetCurrentLocation} className="me-2">
+          <CIcon icon={cilLocationPin} className="me-2" /> Use Current Location
+        </CButton>
+        {locationStatus && <CFormText className="ms-2">{locationStatus}</CFormText>}
+      </CCol>
+
       <CCol xs={12}>
         <CButton color="primary" type="submit">
           Update Address

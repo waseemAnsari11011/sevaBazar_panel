@@ -1,49 +1,57 @@
-// PincodeInput.js
+import React, { useState } from 'react'
+import { CFormLabel, CFormInput, CButton, CInputGroup } from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilPlus, cilTrash } from '@coreui/icons'
 
-import React from 'react'
-import { CRow, CCol, CFormInput, CButton, CBadge } from '@coreui/react'
+const PincodeInput = ({ pincodes, setPincodes }) => {
+  // 1. Manage the single pincode input state locally
+  const [pincode, setPincode] = useState('')
 
-const PincodeInput = ({
-  pincode,
-  setPincode,
-  pincodes,
-  setPincodes,
-  handleAddPincode,
-  handleRemovePincode,
-}) => (
-  <>
-    <CRow>
-      <CCol xs={8}>
+  const handleAddPincode = () => {
+    // 2. Check for valid input and if it already exists
+    if (pincode && !pincodes.includes(pincode)) {
+      // 3. Update the parent component's state
+      setPincodes([...pincodes, pincode])
+      // 4. Clear the local input field
+      setPincode('')
+    }
+  }
+
+  const handleRemovePincode = (code) => {
+    setPincodes(pincodes.filter((p) => p !== code))
+  }
+
+  return (
+    <div>
+      <CFormLabel>Serviceable Pincodes</CFormLabel>
+      <CInputGroup className="mb-3">
         <CFormInput
-          type="text"
+          placeholder="Enter a pincode and click Add"
           value={pincode}
           onChange={(e) => setPincode(e.target.value)}
-          placeholder="Enter pincode"
         />
-      </CCol>
-      <CCol xs={4}>
-        <CButton color="primary" onClick={handleAddPincode}>
-          Add Pincode
+        <CButton type="button" color="success" onClick={handleAddPincode}>
+          <CIcon icon={cilPlus} /> Add
         </CButton>
-      </CCol>
-    </CRow>
-    <div style={{ marginTop: '1rem' }}>
-      {pincodes.map((code, index) => (
-        <CBadge key={index} color="secondary" className="pincode-badge">
-          {code}
-          <CButton
-            color="danger"
-            size="sm"
-            variant="outline"
-            onClick={() => handleRemovePincode(code)}
-            style={{ marginLeft: '0.5rem' }}
-          >
-            &times;
-          </CButton>
-        </CBadge>
-      ))}
+      </CInputGroup>
+      <div>
+        {pincodes.map((code) => (
+          <span key={code} className="badge bg-secondary me-2 mb-2 p-2">
+            {code}
+            <CButton
+              color="danger"
+              size="sm"
+              variant="ghost"
+              onClick={() => handleRemovePincode(code)}
+              className="ms-2 p-0"
+            >
+              <CIcon icon={cilTrash} />
+            </CButton>
+          </span>
+        ))}
+      </div>
     </div>
-  </>
-)
+  )
+}
 
 export default PincodeInput

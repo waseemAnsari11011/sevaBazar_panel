@@ -26,12 +26,6 @@ const Navigation = (neworderCount, newChatOrderCount) => {
   const _nav = [
     {
       component: CNavItem,
-      name: 'Update Address',
-      to: '/profile',
-      icon: <CIcon icon={cilLocationPin} customClassName="nav-icon" />,
-    },
-    {
-      component: CNavItem,
       name: 'Overview',
       to: '/dashboard',
       icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
