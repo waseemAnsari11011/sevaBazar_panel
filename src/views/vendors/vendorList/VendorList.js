@@ -1,88 +1,88 @@
-import { useCallback, useState, useEffect } from 'react';
-import getAllVendors from '../../../api/vendor/getAllVendor';
-// import { startLoading, stopLoading } from '../../../store';
-
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import getAllVendors from '../../../api/vendor/getAllVendor'
+import { useDispatch } from 'react-redux'
 import {
   CButton,
-  CModal,
-  CModalHeader,
-  CModalTitle,
-  CModalBody,
-  CModalFooter,
-  CForm,
-  CFormInput,
   CTable,
   CTableHead,
   CTableRow,
   CTableHeaderCell,
   CTableBody,
   CTableDataCell,
-  CFormSelect,
-  CSpinner,
-  CAlert
-
+  CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPencil, cilTrash, cilCloudUpload, cilBan, cilLockUnlocked } from '@coreui/icons'
-import { restrictVendor, unRestrictVendor } from '../../../api/vendor/restrictUnrestrict';
-import { startLoading, stopLoading  } from '../../../redux/actions/defaultActions';
+import { cilBan, cilLockUnlocked, cilNotes } from '@coreui/icons'
+import { restrictVendor, unRestrictVendor } from '../../../api/vendor/restrictUnrestrict'
+import { startLoading, stopLoading } from '../../../redux/actions/defaultActions'
 
 const VendorList = () => {
   const dispatch = useDispatch()
-  const [vendors, setVendors] = useState([]);
-  const [alertMessage, setAlertMessage] = useState('');
-  const [alertVisible, setAlertVisible] = useState(false);
-
-  console.log("vendors--->", vendors)
+  const [vendors, setVendors] = useState([])
+  const [alertMessage, setAlertMessage] = useState('')
+  const [alertVisible, setAlertVisible] = useState(false)
+  const [userRole, setUserRole] = useState('')
 
   useEffect(() => {
-    let timeout;
+    try {
+      const user = JSON.parse(localStorage.getItem('user'))
+      if (user && user.role) {
+        setUserRole(user.role)
+      }
+    } catch (error) {
+      console.error('Failed to parse user data from localStorage', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    let timeout
     if (alertVisible) {
       timeout = setTimeout(() => {
-        setAlertVisible(false);
-      }, 1000); // Hide alert after 5 seconds (adjust as needed)
+        setAlertVisible(false)
+      }, 1000) // Hide alert after 1 second
     }
-    return () => clearTimeout(timeout);
-  }, [alertVisible]);
-
+    return () => clearTimeout(timeout)
+  }, [alertVisible])
 
   const fetchVendors = async () => {
     try {
       dispatch(startLoading())
-      const vendorsData = await getAllVendors();
-      setVendors(vendorsData);
-      dispatch(stopLoading())
+      const vendorsData = await getAllVendors()
+      setVendors(vendorsData)
     } catch (error) {
+      console.error('Failed to fetch vendors:', error)
+    } finally {
       dispatch(stopLoading())
-      console.error('Failed to fetch vendors:', error);
     }
-  };
-  useEffect(() => {
+  }
 
-    fetchVendors();
-  }, []);
+  useEffect(() => {
+    fetchVendors()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleUnRestrict = async (vendorId) => {
     try {
       await unRestrictVendor(vendorId)
       setAlertMessage('Unrestricted Successfully')
       setAlertVisible(true)
-      fetchVendors();
+      fetchVendors()
     } catch (error) {
+      console.error(error)
     }
   }
 
   const handleRestrict = async (vendorId) => {
     try {
       await restrictVendor(vendorId)
-      setAlertMessage('restricted Successfully')
+      setAlertMessage('Restricted Successfully')
       setAlertVisible(true)
-      fetchVendors();
+      fetchVendors()
     } catch (error) {
+      console.error(error)
     }
   }
-
 
   return (
     <div style={{ overflowX: 'auto' }}>
@@ -91,38 +91,54 @@ const VendorList = () => {
           {alertMessage}
         </CAlert>
       )}
-      <CTable striped>
+      <CTable striped hover>
         <CTableHead>
           <CTableRow>
             <CTableHeaderCell>Name</CTableHeaderCell>
             <CTableHeaderCell>Email</CTableHeaderCell>
             <CTableHeaderCell>Phone</CTableHeaderCell>
-            <CTableHeaderCell>Available Localities</CTableHeaderCell>
+            <CTableHeaderCell>Serviceable Pincodes</CTableHeaderCell>
             <CTableHeaderCell>Actions</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
         <CTableBody>
-          {vendors.map((vendor, index) => (
-            <CTableRow key={index}>
-
-              <CTableDataCell>{vendor.name}</CTableDataCell>
+          {vendors.map((vendor) => (
+            <CTableRow key={vendor._id}>
+              <CTableDataCell>{vendor.name || 'N/A'}</CTableDataCell>
               <CTableDataCell>{vendor.email}</CTableDataCell>
               <CTableDataCell>{vendor.vendorInfo.contactNumber}</CTableDataCell>
-              <CTableDataCell>{vendor?.availableLocalities?.[0]}</CTableDataCell>
-              <CTableDataCell >
-                <div className='actions-cell'>
-                  {!vendor.isRestricted ? <CButton style={{ margin: '0.25rem' }} disabled color="warning" onClick={() => handleUnRestrict(vendor._id)}>
-                    <CIcon icon={cilLockUnlocked} />
-                  </CButton> : <CButton style={{ margin: '0.25rem' }} color="warning" onClick={() => handleUnRestrict(vendor._id)}>
-                    <CIcon icon={cilLockUnlocked} />
-                  </CButton>}
-                  {vendor.isRestricted?<CButton style={{ margin: '0.25rem' }} disabled color="danger" onClick={() => handleRestrict(vendor._id)}>
-                    <CIcon icon={cilBan} />
-                  </CButton>:<CButton style={{ margin: '0.25rem' }}  color="danger" onClick={() => handleRestrict(vendor._id)}>
-                    <CIcon icon={cilBan} />
-                  </CButton>}
+              <CTableDataCell>
+                {vendor.location?.address?.postalCodes?.join(', ') || 'N/A'}
+              </CTableDataCell>
+              <CTableDataCell>
+                <div className="d-flex">
+                  {userRole === 'admin' && (
+                    <Link to={`/vendors/details/${vendor._id}`}>
+                      <CButton color="info" className="me-2" size="sm">
+                        <CIcon icon={cilNotes} className="me-1" /> View Details
+                      </CButton>
+                    </Link>
+                  )}
+                  {!vendor.isRestricted ? (
+                    <CButton
+                      color="danger"
+                      size="sm"
+                      onClick={() => handleRestrict(vendor._id)}
+                      title="Restrict Vendor"
+                    >
+                      <CIcon icon={cilBan} />
+                    </CButton>
+                  ) : (
+                    <CButton
+                      color="warning"
+                      size="sm"
+                      onClick={() => handleUnRestrict(vendor._id)}
+                      title="Un-restrict Vendor"
+                    >
+                      <CIcon icon={cilLockUnlocked} />
+                    </CButton>
+                  )}
                 </div>
-
               </CTableDataCell>
             </CTableRow>
           ))}
