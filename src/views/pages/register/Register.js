@@ -76,9 +76,9 @@ const Register = () => {
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('')
 
-  // Image upload states
-  const [shopPhoto, setShopPhoto] = useState(null)
-  const [shopPhotoPreview, setShopPhotoPreview] = useState(null)
+  // Change shopPhoto state to handle multiple files
+  const [shopPhotos, setShopPhotos] = useState([])
+  const [shopPhotoPreviews, setShopPhotoPreviews] = useState([])
   const [selfiePhoto, setSelfiePhoto] = useState(null)
   const [selfiePhotoPreview, setSelfiePhotoPreview] = useState(null)
   const [aadharFrontDocument, setAadharFrontDocument] = useState(null)
@@ -308,14 +308,35 @@ const Register = () => {
   }
 
   const handleShopPhotoUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showError('Shop photo size should be less than 5MB.')
+    const files = Array.from(e.target.files)
+    if (files.length > 0) {
+      if (files.some((file) => file.size > 5 * 1024 * 1024)) {
+        showError('Each shop photo size should be less than 5MB.')
         return
       }
-      handleFileUpload(file, setShopPhoto, setShopPhotoPreview)
+      const newPhotos = [...shopPhotos, ...files]
+      setShopPhotos(newPhotos)
+
+      const newPreviews = [...shopPhotoPreviews]
+      files.forEach((file) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          newPreviews.push(e.target.result)
+          setShopPhotoPreviews(newPreviews)
+        }
+        reader.readAsDataURL(file)
+      })
     }
+  }
+
+  const removeShopPhoto = (index) => {
+    const newPhotos = [...shopPhotos]
+    newPhotos.splice(index, 1)
+    setShopPhotos(newPhotos)
+
+    const newPreviews = [...shopPhotoPreviews]
+    newPreviews.splice(index, 1)
+    setShopPhotoPreviews(newPreviews)
   }
 
   const handleAadharFrontUpload = (e) => {
@@ -416,6 +437,7 @@ const Register = () => {
     setPreview(null)
   }
   const handleSignUp = async () => {
+    if (shopPhotos.length === 0) return showError('Please upload at least one shop photo.')
     if (!name.trim()) return showError('Please enter your name.')
     if (!email.trim()) return showError('Please enter your email.')
     if (!password.trim()) return showError('Please enter a password.')
@@ -423,7 +445,6 @@ const Register = () => {
     if (!selectedCategory) return showError('Please select a business category.')
     if (!businessAddress.trim()) return showError('Please enter your business address.')
     if (!contactNumber.trim()) return showError('Please enter your contact number.')
-    if (!shopPhoto) return showError('Please upload a shop photo.')
     if (!selfiePhoto) return showError('Please take a selfie or upload a photo.')
     if (documentType === 'aadhaar') {
       if (!aadharFrontDocument) {
@@ -467,7 +488,10 @@ const Register = () => {
       )
       formData.append('category', selectedCategory)
       if (placeDetails) formData.append('placeId', placeDetails.place_id)
-      formData.append('shopPhoto', shopPhoto)
+      // Append all shop photos
+      shopPhotos.forEach((photo) => {
+        formData.append('shopPhoto', photo)
+      })
       formData.append('selfiePhoto', selfiePhoto)
       if (documentType === 'aadhaar') {
         formData.append('aadharFrontDocument', aadharFrontDocument)
@@ -702,7 +726,7 @@ const Register = () => {
                         onClick={() => shopPhotoInputRef.current?.click()}
                       >
                         <CIcon icon={cilCloudUpload} className="me-2" />
-                        Upload Shop Photo
+                        Upload Shop Photos
                       </CButton>
                       <CFormInput
                         type="file"
@@ -710,30 +734,33 @@ const Register = () => {
                         accept="image/*"
                         onChange={handleShopPhotoUpload}
                         style={{ display: 'none' }}
+                        multiple // Allow multiple file selection
                       />
                     </div>
-                    {shopPhotoPreview && (
-                      <div className="mt-2 text-center">
-                        <img
-                          src={shopPhotoPreview}
-                          alt="Shop preview"
-                          style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '5px' }}
-                        />
-                        <div className="mt-1">
-                          <CIcon icon={cilCheckCircle} className="text-success me-2" />
-                          <small className="text-success">Shop photo uploaded</small>
+                    <div className="mt-2 d-flex flex-wrap">
+                      {shopPhotoPreviews.map((preview, index) => (
+                        <div key={index} className="m-1" style={{ position: 'relative' }}>
+                          <img
+                            src={preview}
+                            alt={`Shop preview ${index + 1}`}
+                            style={{
+                              width: '100px',
+                              height: '100px',
+                              objectFit: 'cover',
+                              borderRadius: '5px',
+                            }}
+                          />
                           <CButton
                             color="danger"
-                            variant="ghost"
                             size="sm"
-                            onClick={() => removeImage(setShopPhoto, setShopPhotoPreview)}
-                            className="ms-2"
+                            onClick={() => removeShopPhoto(index)}
+                            style={{ position: 'absolute', top: '0', right: '0' }}
                           >
                             <CIcon icon={cilTrash} />
                           </CButton>
                         </div>
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
 
                   {/* Selfie Photo */}
