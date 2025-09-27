@@ -106,6 +106,20 @@ const Register = () => {
   const [pincode, setPincode] = useState('')
   const [pincodes, setPincodes] = useState([])
 
+  const [bankDetails, setBankDetails] = useState({
+    accountHolderName: '',
+    accountNumber: '',
+    ifscCode: '',
+    bankName: '',
+  })
+  const [upiDetails, setUpiDetails] = useState({
+    upiId: '',
+    upiPhoneNumber: '',
+  })
+  const [qrCode, setQrCode] = useState(null)
+  const [qrCodePreview, setQrCodePreview] = useState(null)
+  const qrCodeInputRef = useRef(null)
+
   // --- ADDED THIS SECTION BACK ---
   const handleAddPincode = () => {
     if (pincode && !pincodes.includes(pincode)) {
@@ -487,6 +501,11 @@ const Register = () => {
         }),
       )
       formData.append('category', selectedCategory)
+      formData.append('bankDetails', JSON.stringify(bankDetails))
+      formData.append('upiDetails', JSON.stringify(upiDetails))
+      if (qrCode) {
+        formData.append('qrCode', qrCode)
+      }
       if (placeDetails) formData.append('placeId', placeDetails.place_id)
       // Append all shop photos
       shopPhotos.forEach((photo) => {
@@ -513,6 +532,23 @@ const Register = () => {
       showError(`Registration failed: ${errorMessage}`)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleBankDetailsChange = (e) => {
+    setBankDetails({ ...bankDetails, [e.target.name]: e.target.value })
+  }
+  const handleUpiDetailsChange = (e) => {
+    setUpiDetails({ ...upiDetails, [e.target.name]: e.target.value })
+  }
+  const handleQrCodeUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showError('QR Code image size should be less than 5MB.')
+        return
+      }
+      handleFileUpload(file, setQrCode, setQrCodePreview)
     }
   }
 
@@ -710,6 +746,88 @@ const Register = () => {
 
                     {locationStatus && (
                       <CFormText className="mt-2 d-block text-center">{locationStatus}</CFormText>
+                    )}
+                  </div>
+
+                  <hr />
+                  <p className="text-body-secondary">Bank Account Details</p>
+                  <CInputGroup className="mb-3">
+                    <CFormInput
+                      placeholder="Account Holder Name"
+                      name="accountHolderName"
+                      value={bankDetails.accountHolderName}
+                      onChange={handleBankDetailsChange}
+                    />
+                  </CInputGroup>
+                  <CInputGroup className="mb-3">
+                    <CFormInput
+                      placeholder="Account Number"
+                      name="accountNumber"
+                      value={bankDetails.accountNumber}
+                      onChange={handleBankDetailsChange}
+                    />
+                  </CInputGroup>
+                  <CInputGroup className="mb-3">
+                    <CFormInput
+                      placeholder="IFSC Code"
+                      name="ifscCode"
+                      value={bankDetails.ifscCode}
+                      onChange={handleBankDetailsChange}
+                    />
+                  </CInputGroup>
+                  <CInputGroup className="mb-3">
+                    <CFormInput
+                      placeholder="Bank Name"
+                      name="bankName"
+                      value={bankDetails.bankName}
+                      onChange={handleBankDetailsChange}
+                    />
+                  </CInputGroup>
+
+                  <hr />
+                  <p className="text-body-secondary">UPI Details</p>
+                  <CInputGroup className="mb-3">
+                    <CFormInput
+                      placeholder="UPI ID"
+                      name="upiId"
+                      value={upiDetails.upiId}
+                      onChange={handleUpiDetailsChange}
+                    />
+                  </CInputGroup>
+                  <CInputGroup className="mb-3">
+                    <CFormInput
+                      placeholder="UPI Phone Number"
+                      name="upiPhoneNumber"
+                      value={upiDetails.upiPhoneNumber}
+                      onChange={handleUpiDetailsChange}
+                    />
+                  </CInputGroup>
+
+                  <div className="mb-3">
+                    <CFormLabel>QR Code</CFormLabel>
+                    <CButton
+                      color="info"
+                      variant="outline"
+                      onClick={() => qrCodeInputRef.current?.click()}
+                    >
+                      <CIcon icon={cilCloudUpload} className="me-2" />
+                      Upload QR Code
+                    </CButton>
+                    <CFormInput
+                      type="file"
+                      ref={qrCodeInputRef}
+                      accept="image/*"
+                      onChange={handleQrCodeUpload}
+                      style={{ display: 'none' }}
+                    />
+                    {qrCodePreview && (
+                      <div className="mt-2 text-center">
+                        <img
+                          src={qrCodePreview}
+                          alt="QR Code Preview"
+                          style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '5px' }}
+                        />
+                      </div>
                     )}
                   </div>
 

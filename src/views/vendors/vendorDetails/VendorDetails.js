@@ -225,6 +225,56 @@ const VendorDetails = () => {
             </CRow>
           </CCardBody>
         </CCard>
+        <CCard className="mb-4">
+          <CCardHeader>
+            <strong>Bank and UPI Details</strong>
+          </CCardHeader>
+          <CCardBody>
+            {vendor.bankDetails && (
+              <>
+                <h5>Bank Details</h5>
+                <p>
+                  <strong>Account Holder Name:</strong> {vendor.bankDetails.accountHolderName}
+                </p>
+                <p>
+                  <strong>Account Number:</strong> {vendor.bankDetails.accountNumber}
+                </p>
+                <p>
+                  <strong>IFSC Code:</strong> {vendor.bankDetails.ifscCode}
+                </p>
+                <p>
+                  <strong>Bank Name:</strong> {vendor.bankDetails.bankName}
+                </p>
+                <hr />
+              </>
+            )}
+
+            {vendor.upiDetails && (
+              <>
+                <h5>UPI Details</h5>
+                <p>
+                  <strong>UPI ID:</strong> {vendor.upiDetails.upiId}
+                </p>
+                <p>
+                  <strong>UPI Phone Number:</strong> {vendor.upiDetails.upiPhoneNumber}
+                </p>
+                {vendor.upiDetails.qrCode && (
+                  <div>
+                    <strong>QR Code:</strong>
+                    <br />
+                    <a href={vendor.upiDetails.qrCode} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={vendor.upiDetails.qrCode}
+                        alt="QR Code"
+                        style={{ maxWidth: '150px', cursor: 'pointer' }}
+                      />
+                    </a>
+                  </div>
+                )}
+              </>
+            )}
+          </CCardBody>
+        </CCard>
       </CCol>
     </CRow>
   )
