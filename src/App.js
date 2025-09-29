@@ -1,13 +1,13 @@
 import React, { Suspense, useEffect } from 'react'
-import { HashRouter, Route, Routes, Navigate } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
 import { fetchVendorOrders } from './redux/actions/getAllOrdersAction'
 import { fetchVendorChatOrders } from './redux/actions/getNewChatOrdersAction'
-import { ToastContainer } from 'react-toastify' // 1. Import ToastContainer
-import 'react-toastify/dist/ReactToastify.css' // 2. Import the CSS
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -15,6 +15,8 @@ const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 // Pages
 const Login = React.lazy(() => import('./views/pages/login/Login'))
 const Register = React.lazy(() => import('./views/pages/register/Register'))
+const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/ForgotPassword'))
+const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 
@@ -24,34 +26,30 @@ const App = () => {
   const storedTheme = useSelector((state) => state.app.theme)
   const isAuthenticated = useSelector((state) => state.app.isAuthenticated)
   const user = useSelector((state) => state.app.user)
-  const vendorId = user._id
-
-  // console.log("console.log===>>>",isAuthenticated )
 
   useEffect(() => {
-    const fetchOrdersAndSetTheme = async () => {
-      await dispatch(fetchVendorOrders(vendorId))
-      await dispatch(fetchVendorChatOrders(vendorId))
-
-      const urlParams = new URLSearchParams(window.location.search)
-      const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0]
-
-      if (theme) {
-        setColorMode(theme)
-      }
-
-      if (isColorModeSet()) {
-        return
-      }
-
-      setColorMode(storedTheme)
+    if (isAuthenticated && user?._id) {
+      const vendorId = user._id
+      dispatch(fetchVendorOrders(vendorId))
+      dispatch(fetchVendorChatOrders(vendorId))
     }
 
-    fetchOrdersAndSetTheme()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    const urlParams = new URLSearchParams(window.location.search)
+    const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0]
+
+    if (theme) {
+      setColorMode(theme)
+    }
+
+    if (isColorModeSet()) {
+      return
+    }
+
+    setColorMode(storedTheme)
+  }, [isAuthenticated, user, dispatch, setColorMode, isColorModeSet, storedTheme])
 
   return (
-    <HashRouter>
+    <BrowserRouter>
       <Suspense
         fallback={
           <div className="pt-3 text-center">
@@ -61,6 +59,7 @@ const App = () => {
       >
         <ToastContainer />
         <Routes>
+          {/* Public Routes */}
           <Route
             exact
             path="/login"
@@ -73,8 +72,22 @@ const App = () => {
             name="Register Page"
             element={isAuthenticated ? <Navigate to="/" /> : <Register />}
           />
+          <Route
+            exact
+            path="/forgot-password"
+            name="Forgot Password"
+            element={<ForgotPassword />}
+          />
+          <Route
+            exact
+            path="/reset-password/:token"
+            name="Reset Password"
+            element={<ResetPassword />}
+          />
           <Route exact path="/404" name="Page 404" element={<Page404 />} />
           <Route exact path="/500" name="Page 500" element={<Page500 />} />
+
+          {/* Protected Route for the main application */}
           <Route
             path="*"
             name="Home"
@@ -82,7 +95,7 @@ const App = () => {
           />
         </Routes>
       </Suspense>
-    </HashRouter>
+    </BrowserRouter>
   )
 }
 

@@ -77,6 +77,9 @@ const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 
 const VendorDetails = React.lazy(() => import('./views/vendors/vendorDetails/VendorDetails'))
 
+const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/ForgotPassword'))
+const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
+
 const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
@@ -135,6 +138,8 @@ const routes = [
   { path: '/vendors/details/:vendorId', name: 'Vendor Details', element: VendorDetails },
   { path: '/banner/add-banner', name: 'Add Banner', element: Banner },
   { path: '/profile', name: 'Profile', element: Profile },
+  { path: '/forgot-password', name: 'Forgot Password', element: ForgotPassword },
+  { path: '/reset-password/', name: 'Reset Password', element: ResetPassword },
 ]
 
 export default routes
