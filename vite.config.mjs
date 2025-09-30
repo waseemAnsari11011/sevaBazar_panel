@@ -5,7 +5,7 @@ import autoprefixer from 'autoprefixer'
 
 export default defineConfig(({ mode }) => {
   return {
-    base: './',
+    base: '/', // Changed from './' to '/'
     build: {
       outDir: 'build',
     },
@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
           replacement: `${path.resolve(__dirname, 'src')}/`,
         },
       ],
-      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.scss'],
+      extensions: ['.mjs', '.js', 'ts', '.jsx', '.tsx', '.json', '.scss'],
     },
     server: {
       port: 3000,
