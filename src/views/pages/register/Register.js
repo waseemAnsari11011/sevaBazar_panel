@@ -40,11 +40,13 @@ import {
 import axiosInstance from '../../../utils/axiosConfig'
 import { useNavigate } from 'react-router-dom'
 import PincodeInput from './PincodeInput'
+import GooglePlacesAutocomplete, {
+  geocodeByAddress,
+  getLatLng,
+} from 'react-google-places-autocomplete'
 
 const Register = () => {
   const navigate = useNavigate()
-  const addressInputRef = useRef(null)
-  const autocompleteRef = useRef(null)
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const shopPhotoInputRef = useRef(null)
@@ -58,7 +60,7 @@ const Register = () => {
   const [password, setPassword] = useState('')
   const [email, setEmail] = useState('')
   const [businessName, setBusinessName] = useState('')
-  const [businessAddress, setBusinessAddress] = useState('')
+  const [businessAddress, setBusinessAddress] = useState(null)
   const [landmark, setLandmark] = useState('')
   const [alternativeAddress, setAlternativeAddress] = useState('')
   const [businessPincode, setBusinessPincode] = useState('')
@@ -70,7 +72,6 @@ const Register = () => {
   const [latitude, setLatitude] = useState(null)
   const [longitude, setLongitude] = useState(null)
   const [locationStatus, setLocationStatus] = useState('')
-  const [placeDetails, setPlaceDetails] = useState(null)
 
   // Categories state
   const [categories, setCategories] = useState([])
@@ -120,7 +121,6 @@ const Register = () => {
   const [qrCodePreview, setQrCodePreview] = useState(null)
   const qrCodeInputRef = useRef(null)
 
-  // --- ADDED THIS SECTION BACK ---
   const handleAddPincode = () => {
     if (pincode && !pincodes.includes(pincode)) {
       setPincodes([...pincodes, pincode])
@@ -131,7 +131,6 @@ const Register = () => {
   const handleRemovePincode = (code) => {
     setPincodes(pincodes.filter((p) => p !== code))
   }
-  // --- END OF ADDED SECTION ---
 
   const showError = (message) => {
     setModalMessage(message)
@@ -170,49 +169,24 @@ const Register = () => {
     }
   }, [])
 
-  useEffect(() => {
-    if (googleMapsLoaded && addressInputRef.current && !autocompleteRef.current) {
-      const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
-        types: ['address'],
-        componentRestrictions: { country: 'in' },
-        fields: ['address_components', 'formatted_address', 'geometry', 'place_id'],
-      })
+  const handlePlaceSelect = async (place) => {
+    if (!place) return
+    setBusinessAddress(place)
+    try {
+      const results = await geocodeByAddress(place.label)
+      const latLng = await getLatLng(results[0])
+      setLatitude(latLng.lat)
+      setLongitude(latLng.lng)
 
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace()
-
-        if (!place.geometry) {
-          showError('Please select a valid address from the dropdown.')
-          return
-        }
-
-        const addressComponents = place.address_components || []
-        let postalCode = ''
-        let formattedAddress = place.formatted_address || ''
-
-        const postalCodeComponent = addressComponents.find((component) =>
-          component.types.includes('postal_code'),
-        )
-        if (postalCodeComponent) {
-          postalCode = postalCodeComponent.long_name
-        }
-
-        setBusinessAddress(formattedAddress)
-        setBusinessPincode(postalCode)
-
-        const lat = place.geometry.location.lat()
-        const lng = place.geometry.location.lng()
-        setLatitude(lat)
-        setLongitude(lng)
-
-        setPlaceDetails(place)
-
-        setLocationStatus(`✅ Address selected: Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`)
-      })
-
-      autocompleteRef.current = autocomplete
+      const postalCode =
+        results[0].address_components.find((c) => c.types.includes('postal_code'))?.long_name || ''
+      setBusinessPincode(postalCode)
+      setLocationStatus(`✅ Address selected: ${place.label}`)
+    } catch (error) {
+      console.error('Error selecting place:', error)
+      showError('Could not get details for the selected address.')
     }
-  }, [googleMapsLoaded])
+  }
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -229,6 +203,7 @@ const Register = () => {
 
     fetchCategories()
   }, [])
+
   useEffect(() => {
     if (!showCameraModal && cameraStream) {
       cameraStream.getTracks().forEach((track) => track.stop())
@@ -238,75 +213,62 @@ const Register = () => {
   }, [showCameraModal, cameraStream])
 
   const handleGetCurrentLocation = () => {
+    if (!googleMapsLoaded) {
+      showError('Google Maps is not loaded yet. Please wait a moment and try again.')
+      return
+    }
     if (navigator.geolocation) {
       setLocationStatus('Fetching current location...')
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const lat = position.coords.latitude
           const lng = position.coords.longitude
-
           setLatitude(lat)
           setLongitude(lng)
 
-          if (googleMapsLoaded) {
-            const geocoder = new window.google.maps.Geocoder()
-            const latlng = { lat, lng }
+          const geocoder = new window.google.maps.Geocoder()
+          const latlng = { lat, lng }
 
-            geocoder.geocode({ location: latlng }, (results, status) => {
-              if (status === 'OK' && results[0]) {
-                const address = results[0].formatted_address
-                setBusinessAddress(address)
-
-                const postalCodeComponent = results[0].address_components.find((component) =>
-                  component.types.includes('postal_code'),
-                )
-                if (postalCodeComponent) {
-                  setBusinessPincode(postalCodeComponent.long_name)
-                }
-
-                if (addressInputRef.current) {
-                  addressInputRef.current.value = address
-                }
-
-                setLocationStatus(
-                  `✅ Current location: Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`,
-                )
-              } else {
-                setLocationStatus(
-                  `✅ Location captured: Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}. Please enter address manually.`,
-                )
+          geocoder.geocode({ location: latlng }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              const address = results[0].formatted_address
+              const postalCodeComponent = results[0].address_components.find((component) =>
+                component.types.includes('postal_code'),
+              )
+              setBusinessAddress({ label: address, value: results[0] })
+              if (postalCodeComponent) {
+                setBusinessPincode(postalCodeComponent.long_name)
               }
-            })
-          } else {
-            setLocationStatus(
-              `✅ Location captured: Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`,
-            )
-          }
+
+              setLocationStatus(
+                `✅ Current location: Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`,
+              )
+            } else {
+              setLocationStatus(
+                `✅ Location captured: Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(
+                  4,
+                )}. Please enter address manually.`,
+              )
+            }
+          })
         },
         (error) => {
           console.error('Geolocation error:', error)
           setLocationStatus(`❌ Error: ${error.message}. Please enter address manually.`)
         },
+        // --- FIX 2 START: Geolocation options updated for better reliability ---
+        // Increased timeout to give the device more time to get a location.
+        // Increased maximumAge to allow using a recently cached location,
+        // reducing errors on repeated clicks.
         {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
+          timeout: 15000,
+          maximumAge: 60000,
         },
+        // --- FIX 2 END ---
       )
     } else {
       setLocationStatus('Geolocation is not supported by this browser.')
-    }
-  }
-
-  const handleAddressChange = (e) => {
-    const value = e.target.value
-    setBusinessAddress(value)
-
-    if (autocompleteRef.current && placeDetails) {
-      setLatitude(null)
-      setLongitude(null)
-      setPlaceDetails(null)
-      setLocationStatus('Please select an address from the dropdown for accurate location.')
     }
   }
 
@@ -374,6 +336,7 @@ const Register = () => {
       handleFileUpload(file, setAadharBackDocument, setAadharBackDocumentPreview)
     }
   }
+
   const handlePanCardUpload = (e) => {
     const file = e.target.files[0]
     if (file) {
@@ -450,6 +413,7 @@ const Register = () => {
     setFile(null)
     setPreview(null)
   }
+
   const handleSignUp = async () => {
     if (shopPhotos.length === 0) return showError('Please upload at least one shop photo.')
     if (!name.trim()) return showError('Please enter your name.')
@@ -457,7 +421,7 @@ const Register = () => {
     if (!password.trim()) return showError('Please enter a password.')
     if (!businessName.trim()) return showError('Please enter your business name.')
     if (!selectedCategory) return showError('Please select a business category.')
-    if (!businessAddress.trim()) return showError('Please enter your business address.')
+    if (!businessAddress?.label) return showError('Please enter your business address.')
     if (!contactNumber.trim()) return showError('Please enter your contact number.')
     if (!selfiePhoto) return showError('Please take a selfie or upload a photo.')
     if (documentType === 'aadhaar') {
@@ -491,7 +455,7 @@ const Register = () => {
         'location',
         JSON.stringify({
           address: {
-            addressLine1: businessAddress.trim(),
+            addressLine1: businessAddress.label.trim(),
             addressLine2: alternativeAddress.trim(),
             landmark: landmark.trim(),
             postalCode: businessPincode.trim(),
@@ -506,8 +470,8 @@ const Register = () => {
       if (qrCode) {
         formData.append('qrCode', qrCode)
       }
-      if (placeDetails) formData.append('placeId', placeDetails.place_id)
-      // Append all shop photos
+      if (businessAddress?.value?.place_id)
+        formData.append('placeId', businessAddress.value.place_id)
       shopPhotos.forEach((photo) => {
         formData.append('shopPhoto', photo)
       })
@@ -538,9 +502,11 @@ const Register = () => {
   const handleBankDetailsChange = (e) => {
     setBankDetails({ ...bankDetails, [e.target.name]: e.target.value })
   }
+
   const handleUpiDetailsChange = (e) => {
     setUpiDetails({ ...upiDetails, [e.target.name]: e.target.value })
   }
+
   const handleQrCodeUpload = (e) => {
     const file = e.target.files[0]
     if (file) {
@@ -647,18 +613,48 @@ const Register = () => {
                     <CInputGroupText>
                       <CIcon icon={cilLocationPin} />
                     </CInputGroupText>
-                    <CFormInput
-                      ref={addressInputRef}
-                      placeholder={
-                        googleMapsLoaded
-                          ? 'Start typing your business address...'
-                          : 'Business Address'
-                      }
-                      value={businessAddress}
-                      onChange={handleAddressChange}
-                      autoComplete="off"
-                      required
-                    />
+                    <div style={{ flex: 1 }}>
+                      {googleMapsLoaded ? (
+                        <GooglePlacesAutocomplete
+                          selectProps={{
+                            value: businessAddress,
+                            onChange: handlePlaceSelect,
+                            placeholder: 'Start typing your business address...',
+                            // --- FIX 1 START: Style overrides for dropdown visibility ---
+                            // These styles ensure that the dropdown text is visible
+                            // against the background, fixing the white-on-white issue.
+                            styles: {
+                              input: (provided) => ({
+                                ...provided,
+                                width: '100%',
+                                padding: '0.375rem 0.75rem',
+                                border: 'none',
+                                boxShadow: 'none',
+                                color: '#212529', // CoreUI dark text color
+                              }),
+                              option: (provided, state) => ({
+                                ...provided,
+                                color: state.isFocused ? '#212529' : '#495057', // CoreUI text colors
+                                backgroundColor: state.isFocused ? '#f8f9fa' : 'white', // CoreUI background colors
+                              }),
+                              singleValue: (provided) => ({
+                                ...provided,
+                                color: '#212529', // Ensure selected value text is visible
+                              }),
+                              menu: (provided) => ({ ...provided, zIndex: 9999 }),
+                            },
+                            // --- FIX 1 END ---
+                          }}
+                          autocompletionRequest={{
+                            componentRestrictions: {
+                              country: ['in'],
+                            },
+                          }}
+                        />
+                      ) : (
+                        <CFormInput placeholder="Loading address search..." disabled />
+                      )}
+                    </div>
                   </CInputGroup>
 
                   <CInputGroup className="mb-3">
@@ -684,12 +680,6 @@ const Register = () => {
                       autoComplete="off"
                     />
                   </CInputGroup>
-
-                  {!googleMapsLoaded && (
-                    <CFormText className="mb-2 text-warning">
-                      Address autocomplete is loading...
-                    </CFormText>
-                  )}
 
                   <CInputGroup className="mb-3">
                     <CInputGroupText>
@@ -728,15 +718,10 @@ const Register = () => {
                         variant="outline"
                         onClick={() => {
                           setLocationStatus('')
-                          setBusinessAddress('')
+                          setBusinessAddress(null)
                           setBusinessPincode('')
                           setLatitude(null)
                           setLongitude(null)
-                          setPlaceDetails(null)
-                          if (addressInputRef.current) {
-                            addressInputRef.current.value = ''
-                            addressInputRef.current.focus()
-                          }
                         }}
                         className="mb-2 mb-md-0"
                       >
@@ -1121,11 +1106,7 @@ const Register = () => {
                   </CInputGroup>
 
                   <div className="d-grid">
-                    <CButton
-                      color="primary"
-                      onClick={handleSignUp}
-                      disabled={isLoading || !googleMapsLoaded}
-                    >
+                    <CButton color="primary" onClick={handleSignUp} disabled={isLoading}>
                       {isLoading ? (
                         <>
                           <CSpinner size="sm" className="me-2" />
