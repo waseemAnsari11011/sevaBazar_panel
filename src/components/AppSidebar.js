@@ -10,22 +10,22 @@ import {
 } from '@coreui/react'
 import { AppSidebarNav } from './AppSidebarNav'
 import Navigation from '../_nav'
-import logo from '../assets/brand/logo_long_white.png'; // adjust the path to your logo image
+import logo from '../assets/brand/logo_long_white.png' // adjust the path to your logo image
 
 const AppSidebar = () => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state) => state.app.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.app.sidebarShow)
-  const neworderCount = useSelector(state => state.orders.neworderCount)
-  const newChatOrderCount = useSelector(state => state.newChatOrders.newChatOrderCount)
+  const neworderCount = useSelector((state) => state.orders.neworderCount)
+  const newChatOrderCount = useSelector((state) => state.newChatOrders.newChatOrderCount)
 
-  const [navItems, setNavItems] = useState(Navigation(neworderCount, newChatOrderCount));
+  const [navItems, setNavItems] = useState(Navigation(neworderCount, newChatOrderCount))
 
   useEffect(() => {
-    setNavItems(Navigation(neworderCount, newChatOrderCount));
-  }, [neworderCount, newChatOrderCount]);
+    setNavItems(Navigation(neworderCount, newChatOrderCount))
+  }, [neworderCount, newChatOrderCount])
 
-console.log("navItems-->", navItems)
+  console.log('navItems-->', navItems)
 
   return (
     <CSidebar
