@@ -1,6 +1,12 @@
 import axiosInstance from '../../utils/axiosConfig'
 
 export const getVendorById = async (vendorId) => {
-  const response = await axiosInstance.get(`/vendors/${vendorId}`)
+  const token = localStorage.getItem('token')
+  const response = await axiosInstance.get(`/vendors/${vendorId}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
   return response.data
 }

@@ -44,6 +44,7 @@ import GooglePlacesAutocomplete, {
   geocodeByAddress,
   getLatLng,
 } from 'react-google-places-autocomplete'
+import { compressImageFile } from '../../../utils/imageCompression'
 
 const Register = () => {
   const navigate = useNavigate()
@@ -272,29 +273,53 @@ const Register = () => {
     }
   }
 
-  const handleFileUpload = (file, setFile, setPreview) => {
+  const handleFileUpload = async (file, setFile, setPreview) => {
+    // <--- ADD async
     if (file) {
+      // 2. COMPRESS THE FILE HERE
+      const compressedFile = await compressImageFile(file) // <--- NEW COMPRESSION LOGIC
+
+      // If the file is still too large after compression (e.g., a massive PDF), notify the user.
+      if (compressedFile.size > 5 * 1024 * 1024) {
+        showError(
+          'The file size is still greater than 5MB even after compression. Please upload a smaller file.',
+        )
+        return
+      }
+
       const reader = new FileReader()
       reader.onload = (e) => {
         setPreview(e.target.result)
       }
-      reader.readAsDataURL(file)
-      setFile(file)
+      reader.readAsDataURL(compressedFile) // Read the compressed file for preview
+      setFile(compressedFile) // Set the compressed file
     }
   }
 
-  const handleShopPhotoUpload = (e) => {
+  const handleShopPhotoUpload = async (e) => {
+    // <--- ADD async
     const files = Array.from(e.target.files)
     if (files.length > 0) {
-      if (files.some((file) => file.size > 5 * 1024 * 1024)) {
-        showError('Each shop photo size should be less than 5MB.')
-        return
-      }
-      const newPhotos = [...shopPhotos, ...files]
+      // 3. COMPRESS EACH SHOP PHOTO BEFORE ADDING TO STATE
+      const compressedFiles = await Promise.all(files.map((file) => compressImageFile(file)))
+
+      // Filter out files that are still too large (if compression failed or it's a huge non-image file)
+      const validFiles = compressedFiles.filter((file) => {
+        if (file.size > 5 * 1024 * 1024) {
+          showError(
+            `File '${file.name}' is still too large (>5MB) even after compression and will be ignored.`,
+          )
+          return false
+        }
+        return true
+      })
+
+      const newPhotos = [...shopPhotos, ...validFiles]
       setShopPhotos(newPhotos)
 
       const newPreviews = [...shopPhotoPreviews]
-      files.forEach((file) => {
+      validFiles.forEach((file) => {
+        // Use validFiles for previews
         const reader = new FileReader()
         reader.onload = (e) => {
           newPreviews.push(e.target.result)
@@ -316,47 +341,19 @@ const Register = () => {
   }
 
   const handleAadharFrontUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showError('Aadhar document size should be less than 5MB.')
-        return
-      }
-      handleFileUpload(file, setAadharFrontDocument, setAadharFrontDocumentPreview)
-    }
+    handleFileUpload(e.target.files[0], setAadharFrontDocument, setAadharFrontDocumentPreview)
   }
 
   const handleAadharBackUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showError('Aadhar document size should be less than 5MB.')
-        return
-      }
-      handleFileUpload(file, setAadharBackDocument, setAadharBackDocumentPreview)
-    }
+    handleFileUpload(e.target.files[0], setAadharBackDocument, setAadharBackDocumentPreview)
   }
 
   const handlePanCardUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showError('PAN card document size should be less than 5MB.')
-        return
-      }
-      handleFileUpload(file, setPanCardDocument, setPanCardDocumentPreview)
-    }
+    handleFileUpload(e.target.files[0], setPanCardDocument, setPanCardDocumentPreview)
   }
 
   const handleSelfieUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showError('Selfie photo size should be less than 5MB.')
-        return
-      }
-      handleFileUpload(file, setSelfiePhoto, setSelfiePhotoPreview)
-    }
+    handleFileUpload(e.target.files[0], setSelfiePhoto, setSelfiePhotoPreview)
   }
 
   const startCamera = async () => {
@@ -508,14 +505,7 @@ const Register = () => {
   }
 
   const handleQrCodeUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showError('QR Code image size should be less than 5MB.')
-        return
-      }
-      handleFileUpload(file, setQrCode, setQrCodePreview)
-    }
+    handleFileUpload(e.target.files[0], setQrCode, setQrCodePreview)
   }
 
   return (
