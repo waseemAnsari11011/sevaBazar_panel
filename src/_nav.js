@@ -19,6 +19,7 @@ import {
   cilPhone,
   cilLocationPin,
   cilSpeech,
+  cilSettings,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle, CBadge } from '@coreui/react'
 
@@ -148,6 +149,19 @@ const Navigation = (neworderCount, newChatOrderCount) => {
       name: 'Contact',
       to: '/contact',
       icon: <CIcon icon={cilPhone} customClassName="nav-icon" />,
+    },
+    {
+      component: CNavGroup,
+      name: 'Settings',
+      to: '/settings',
+      icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
+      items: [
+        {
+          component: CNavItem,
+          name: 'Vendor Visibility',
+          to: '/settings/distance',
+        },
+      ],
     },
   ]
 

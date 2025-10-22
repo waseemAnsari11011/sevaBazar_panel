@@ -22,7 +22,10 @@ import CIcon from '@coreui/icons-react'
 import { useDropzone } from 'react-dropzone'
 import { cilPencil, cilTrash, cilCloudUpload } from '@coreui/icons'
 import './Banner.css'
-import axiosInstance, { baseURL } from '../../utils/axiosConfig'
+// --- CHANGED ---
+// Removed baseURL, it's no longer needed for S3 URLs
+import axiosInstance from '../../utils/axiosConfig'
+// --- END CHANGE ---
 import getBannerById from '../../api/banner/bannerapi'
 import deleteBanner from '../../api/banner/deleteBanner'
 // import getAllBanner from '../../api/banner/getAllBanner'
@@ -40,10 +43,10 @@ const Banner = ({ banner }) => {
   const [modal, setModal] = useState(false)
   const [editingBanner, setEditingBanner] = useState(null)
   const [form, setForm] = useState({ name: '', images: [] })
-  const [isActive, setIsActive] = useState(false);
-  const [labelId, setLabelId] = useState('formSwitchCheckDefault');
+  const [isActive, setIsActive] = useState(false)
+  const [labelId, setLabelId] = useState('formSwitchCheckDefault')
 
-  console.log("banners--->", banners)
+  console.log('banners--->', banners)
 
   useEffect(() => {
     fetchBanners()
@@ -90,10 +93,10 @@ const Banner = ({ banner }) => {
   const getactionapi = async (id, isActive, setLabelId) => {
     try {
       // dispatch(startLoading());
-      const response = await activebannerapi(id, isActive);
-      console.log(response);
+      const response = await activebannerapi(id, isActive)
+      console.log(response)
       if (isActive) {
-        console.log("true");
+        console.log('true')
         // setLabelId('formSwitchCheckActive');
         // dispatch(stopLoading());
       } else {
@@ -102,9 +105,9 @@ const Banner = ({ banner }) => {
       }
     } catch (error) {
       // dispatch(stopLoading());
-      console.log('error', error);
+      console.log('error', error)
     }
-  };
+  }
 
   const handleDelete = async (id) => {
     try {
@@ -159,7 +162,7 @@ const Banner = ({ banner }) => {
       dispatch(startLoading())
       const response = await axiosInstance.get('/banner')
       if (response.status === 200) {
-        const fetchedBanners = response.data.banners.map(banner => ({
+        const fetchedBanners = response.data.banners.map((banner) => ({
           ...banner,
           isActive: banner.isActive || false,
         }))
@@ -195,10 +198,10 @@ const Banner = ({ banner }) => {
   const handleSwitchToggle = async (bannerId) => {
     try {
       const updatedBanners = banners.map((banner) =>
-        banner._id === bannerId ? { ...banner, isActive: !banner.isActive } : banner
+        banner._id === bannerId ? { ...banner, isActive: !banner.isActive } : banner,
       )
       setBanners(updatedBanners)
-      await getactionapi(bannerId, !banners.find(b => b._id === bannerId).isActive)
+      await getactionapi(bannerId, !banners.find((b) => b._id === bannerId).isActive)
     } catch (error) {
       console.error('Failed to toggle switch:', error)
     }
@@ -232,7 +235,10 @@ const Banner = ({ banner }) => {
                   {banner.images.map((file, imgIndex) => (
                     <img
                       key={imgIndex}
-                      src={`${baseURL}/${file}`}
+                      // --- CHANGED ---
+                      // Use the full S3 URL directly
+                      src={file}
+                      // --- END CHANGE ---
                       alt={`Category Image ${imgIndex + 1}`}
                       className="table-img"
                     />
@@ -282,9 +288,10 @@ const Banner = ({ banner }) => {
                 <div key={index} className="image-wrapper">
                   <img
                     className="img"
-                    src={
-                      typeof file === 'string' ? `${baseURL}/${file}` : URL.createObjectURL(file)
-                    }
+                    // --- CHANGED ---
+                    // Use S3 URL if string, or createObjectUrl if new File
+                    src={typeof file === 'string' ? file : URL.createObjectURL(file)}
+                    // --- END CHANGE ---
                     alt={`Category Image ${index + 1}`}
                   />
                   <button type="button" className="close-button" onClick={() => removeImage(index)}>

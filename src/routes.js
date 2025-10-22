@@ -79,6 +79,8 @@ const VendorDetails = React.lazy(() => import('./views/vendors/vendorDetails/Ven
 
 const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/ForgotPassword'))
 const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
+// Settings (New Addition)
+const DistanceSettings = React.lazy(() => import('./views/settings/DistanceSettings'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -140,6 +142,9 @@ const routes = [
   { path: '/profile', name: 'Profile', element: Profile },
   { path: '/forgot-password', name: 'Forgot Password', element: ForgotPassword },
   { path: '/reset-password/', name: 'Reset Password', element: ResetPassword },
+  // New Route for Settings page
+  { path: '/settings', name: 'Settings', exact: true },
+  { path: '/settings/distance', name: 'Vendor Visibility', element: DistanceSettings },
 ]
 
 export default routes

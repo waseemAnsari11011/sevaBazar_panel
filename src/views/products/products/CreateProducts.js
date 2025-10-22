@@ -1,4 +1,6 @@
-import { useCallback, useState, useEffect } from 'react'
+// ui/products/CreateProducts.js
+
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   CButton,
   CModal,
@@ -16,420 +18,267 @@ import {
   CTableDataCell,
   CFormSelect,
   CSpinner,
-  CBadge,
-  CRow,
-  CCol,
-  CFormCheck,
   CAlert,
   CFormSwitch,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPencil, cilTrash, cilCloudUpload } from '@coreui/icons'
-import '../Products.css' // Import custom CSS file
-import { useDropzone } from 'react-dropzone'
-import getAllCategories from '../../../api/category/getAllCategory'
-import createProduct from '../../../api/product/createProduct'
-import getAllProducts from '../../../api/product/getAllProduct'
-import { baseURL } from '../../../utils/axiosConfig'
-import getProductById from '../../../api/product/getSingleProduct'
-import updateProduct from '../../../api/product/updateProduct'
-import deleteProduct from '../../../api/product/deleteProduct'
-import { useDispatch, useSelector } from 'react-redux'
-// import { startLoading, stopLoading } from '../../../store';
+import { cilPencil } from '@coreui/icons'
+import { useSelector, useDispatch } from 'react-redux'
 
+// API Imports
+import getAllCategories from '../../../api/category/getAllCategory'
+import getAllProducts from '../../../api/product/getAllProduct'
+import getProductById from '../../../api/product/getSingleProduct'
+import createProduct from '../../../api/product/createProduct'
+import updateProductDetails from '../../../api/product/updateProductDetails'
+import updateVariation from '../../../api/product/updateVariation'
+import addVariationApi from '../../../api/product/addVariationApi'
+import toggleVisibilityApi from '../../../api/product/toggleProductVisibility'
+// import deleteVariation from '../../../api/product/deleteVariation'; // Keep for future use
+
+// Component Imports
 import VariationsComponent from './VariationsComponent'
 import { Tags } from './tags'
 import SearchComponent from '../../components/Search'
 import { startLoading, stopLoading } from '../../../redux/actions/defaultActions'
-import toggleVisibilityApi from '../../../api/product/toggleProductVisibility'
 
 const Products = () => {
   const dispatch = useDispatch()
   const isLoading = useSelector((state) => state.app.loading)
   const user = useSelector((state) => state.app.user)
-  const vendor = user._id
+  const vendor = user?._id
 
+  // Component State
   const [products, setProducts] = useState([])
   const [filteredProducts, setFilteredProducts] = useState([])
-
   const [modal, setModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    images: [],
-    category: '',
-    vendor,
-    availableLocalities: [],
-    tags: [],
-    isReturnAllowed: false,
-  })
   const [categories, setCategories] = useState([])
-  const [pincode, setPincode] = useState('')
-  const [pincodes, setPincodes] = useState([])
-  const [isAllSelected, setIsAllSelected] = useState(false)
-  const [variations, setVariations] = useState([
-    {
-      attributes: { selected: '', value: '' },
-      price: '',
-      discount: '',
-      quantity: '',
-      images: [],
-      parentVariation: null,
-    },
-  ])
-  const [alertMessage, setAlertMessage] = useState('')
-  const [alertVisible, setAlertVisible] = useState(false)
-  const [tag, setTag] = useState('')
+  const [alert, setAlert] = useState({ visible: false, message: '', color: 'success' })
+
+  // Form State
+  const [form, setForm] = useState({})
+  const [variations, setVariations] = useState([])
+  const [initialVariations, setInitialVariations] = useState([]) // For tracking changes
   const [tags, setTags] = useState([])
 
-  useEffect(() => {
-    let timeout
-    if (alertVisible) {
-      timeout = setTimeout(() => {
-        setAlertVisible(false)
-      }, 3000) // Hide alert after 5 seconds (adjust as needed)
-    }
-    return () => clearTimeout(timeout)
-  }, [alertVisible])
+  // Resets the entire form and modal state
+  const resetFormState = useCallback(() => {
+    setForm({
+      name: '',
+      description: '',
+      category: '',
+      vendor,
+      tags: [],
+      isReturnAllowed: false,
+      isVisible: true,
+      arrivalDuration: '',
+    })
+    // **CORRECTED:** Initializes variations with the correct nested attribute structure
+    setVariations([
+      { attributes: [{ name: '', value: '' }], price: '', discount: '', quantity: '', images: [] },
+    ])
+    setTags([])
+    setEditingProduct(null)
+    setInitialVariations([])
+  }, [vendor])
 
-  //pincode
-  const handleAddPincode = () => {
-    if (pincode && !pincodes.includes(pincode)) {
-      setPincodes([...pincodes, pincode])
-      setPincode('')
-      setForm({ ...form, availableLocalities: [...pincodes, pincode] })
-    }
-  }
-
-  const handleRemovePincode = (code) => {
-    setPincodes(pincodes.filter((p) => p !== code))
-    setForm({ ...form, availableLocalities: form.availableLocalities.filter((p) => p !== code) })
-  }
-
-  const handleAllChange = () => {
-    setIsAllSelected(!isAllSelected)
-    if (!isAllSelected) {
-      setPincodes(['all']) // Clear pincodes if "all" is selected
-      setForm({ ...form, availableLocalities: ['all'] })
-    }
-  }
-
-  const handleProductVisibility = async (id) => {
-    await toggleVisibilityApi(id)
-    const productsData = await getAllProducts(vendor)
-    setProducts(productsData)
-    setFilteredProducts(productsData)
-  }
-
-  // Fetch categories
-  const fetchCategories = async () => {
+  // Fetches initial products and categories
+  const fetchData = useCallback(async () => {
+    if (!vendor) return
+    dispatch(startLoading())
     try {
-      dispatch(startLoading())
-      const categoriesData = await getAllCategories()
-      setCategories(categoriesData)
-      dispatch(stopLoading())
-    } catch (error) {
-      dispatch(stopLoading())
-      console.error('Failed to fetch categories:', error)
-    }
-  }
-  // Fetch products
-  const fetchProducts = async () => {
-    try {
-      dispatch(startLoading())
-      const productsData = await getAllProducts(vendor)
+      const [productsData, categoriesData] = await Promise.all([
+        getAllProducts(vendor),
+        getAllCategories(),
+      ])
       setProducts(productsData)
       setFilteredProducts(productsData)
-      dispatch(stopLoading())
+      setCategories(categoriesData)
     } catch (error) {
+      console.error('Failed to fetch data:', error)
+      setAlert({ visible: true, message: 'Failed to load data.', color: 'danger' })
+    } finally {
       dispatch(stopLoading())
-      console.error('Failed to fetch categories:', error)
     }
-  }
+  }, [vendor, dispatch])
 
   useEffect(() => {
-    fetchProducts()
-    fetchCategories()
-  }, [])
+    fetchData()
+  }, [fetchData])
 
+  // Handles auto-hiding of alerts
+  useEffect(() => {
+    if (alert.visible) {
+      const timer = setTimeout(() => setAlert({ ...alert, visible: false }), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [alert])
+
+  // Toggles the main Add/Edit modal
   const toggleModal = () => {
-    if (editingProduct !== null) {
-      setForm({
-        _id: '',
-        name: '',
-        quantity: '',
-        price: '',
-        images: [],
-        description: '',
-        discount: '',
-        category: '',
-        vendor,
-        availableLocalities: [],
-        tags: [],
-        isReturnAllowed: false,
-      })
-      setVariations([
-        {
-          attributes: { selected: '', value: '' },
-          price: '',
-          discount: '',
-          quantity: '',
-          parentVariation: null,
-        },
-      ])
-      setPincodes([])
-      setTags([])
-      setIsAllSelected(false)
-      setEditingProduct(null)
-    }
     setModal(!modal)
-  }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm({ ...form, [name]: value })
-  }
-
-  const toggleReturn = () => {
-    setForm({ ...form, isReturnAllowed: !form.isReturnAllowed })
-  }
-
-  const onDropProductImages = useCallback(
-    (acceptedFiles) => {
-      // Update form state with the uploaded images
-      setForm({ ...form, images: form.images.concat(acceptedFiles) })
-    },
-    [form],
-  )
-
-  const { getRootProps: getRootPropsProduct, getInputProps: getInputPropsProduct } = useDropzone({
-    onDrop: onDropProductImages,
-    accept: 'image/*',
-    multiple: true,
-  })
-
-  const handleSubmit = async (id) => {
-    try {
-      dispatch(startLoading())
-
-      const productData = {
-        ...form,
-        variations,
-      }
-      form
-      console.log('productData form-->>', form)
-      console.log('productData id-->>', id)
-
-      if (editingProduct !== null) {
-        let res = await updateProduct(id, productData)
-        setAlertMessage(res?.message)
-        setAlertVisible(true)
-        await fetchProducts()
-        dispatch(stopLoading())
-      } else {
-        let res = await createProduct(productData)
-        console.log('res-->>', res)
-        // alert(res?.message)
-        setAlertMessage(res?.message)
-        setAlertVisible(true)
-        await fetchProducts()
-        dispatch(stopLoading())
-      }
-
-      // Reset form fields and state after successful operation
-      setForm({
-        _id: '',
-        name: '',
-        quantity: '',
-        price: '',
-        images: [],
-        description: '',
-        discount: '',
-        category: '',
-        vendor,
-        availableLocalities: [],
-        tags: [],
-        isReturnAllowed: false,
-      })
-      setVariations([
-        {
-          attributes: { selected: '', value: '' },
-          price: '',
-          discount: '',
-          quantity: '',
-          parentVariation: null,
-        },
-      ])
-      setPincodes([])
-      setTags([])
-      setIsAllSelected(false)
-      setEditingProduct(null)
-      toggleModal()
-    } catch (error) {
-      dispatch(stopLoading())
-      console.log('error-->>', error)
-      alert(error?.response?.data?.message)
+    if (modal) {
+      resetFormState()
     }
   }
 
-  const handleEdit = async (index, id) => {
+  // Handles changes in main product form fields
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target
+    setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
+  }
+
+  // Prepares the form for editing an existing product
+  const handleEdit = async (id) => {
+    dispatch(startLoading())
     try {
-      let singProduct = await getProductById(id)
-      console.log('singProduct--->>', singProduct)
-      setEditingProduct(index)
-
-      // Set form state with product details
+      const { product } = await getProductById(id)
+      setEditingProduct(product)
       setForm({
-        _id: singProduct.product._id,
-        name: singProduct.product.name,
-        description: singProduct.product.description,
-        images: singProduct.product.images,
-        category: singProduct.product.category,
-        vendor: singProduct.product.vendor,
-        availableLocalities: singProduct.product.availableLocalities,
-        tags: singProduct.product.tags,
-        isReturnAllowed: singProduct.product.isReturnAllowed,
+        name: product.name,
+        description: product.description,
+        category: product.category._id,
+        vendor: product.vendor,
+        tags: product.tags,
+        isReturnAllowed: product.isReturnAllowed,
+        isVisible: product.isVisible,
+        arrivalDuration: product.arrivalDuration || '',
       })
+      setTags(product.tags)
 
-      // Set variations state with product variations
-      setVariations(singProduct.product.variations)
+      // **CORRECTED:** Ensures fetched variations have a valid attributes array for the UI
+      const formattedVariations = product.variations.map((v) => ({
+        ...v,
+        attributes:
+          v.attributes && v.attributes.length > 0 ? v.attributes : [{ name: '', value: '' }],
+      }))
 
-      setTags(singProduct.product.tags)
-
-      // Check if all locations are selected
-      if (
-        singProduct.product.availableLocalities?.includes('all') &&
-        !singProduct.product.availableLocalities.some((locality) => /\d/.test(locality))
-      ) {
-        setIsAllSelected(true)
-      } else {
-        setPincodes(singProduct.product.availableLocalities)
-      }
-
-      toggleModal()
+      setVariations(formattedVariations)
+      setInitialVariations(formattedVariations)
+      setModal(true)
     } catch (error) {
       console.error('Failed to fetch product details:', error)
+      setAlert({ visible: true, message: 'Could not fetch product details.', color: 'danger' })
+    } finally {
+      dispatch(stopLoading())
     }
   }
 
-  const removeImage = (index) => {
-    setForm({
-      ...form,
-      images: form.images.filter((_, i) => i !== index),
-    })
-  }
-
-  const handleCategoryChange = (e) => {
-    setForm({
-      ...form,
-      category: e.target.value,
-    })
-  }
-
-  const handleDelete = async (id) => {
+  // Handles form submission for both creating and updating products
+  const handleSubmit = async () => {
+    dispatch(startLoading())
     try {
-      await deleteProduct(id)
-      fetchProducts()
+      if (editingProduct) {
+        // --- UPDATE LOGIC ---
+        await updateProductDetails(editingProduct._id, { ...form, tags })
+
+        const initialVarIds = new Set(initialVariations.map((v) => v._id))
+        const addedVariations = variations.filter((v) => !v._id)
+        const updatedVariations = variations.filter((v) => v._id && initialVarIds.has(v._id))
+        // Add logic for deleted variations if needed in the future
+
+        const promises = [
+          ...addedVariations.map((v) => addVariationApi(editingProduct._id, v)),
+          ...updatedVariations.map((v) => updateVariation(editingProduct._id, v._id, v)),
+        ]
+
+        await Promise.all(promises)
+        setAlert({ visible: true, message: 'Product updated successfully!', color: 'success' })
+      } else {
+        // --- CREATE LOGIC ---
+        const productData = { ...form, variations, tags }
+        await createProduct(productData)
+        setAlert({ visible: true, message: 'Product created successfully!', color: 'success' })
+      }
+
+      toggleModal()
+      await fetchData() // Refresh data in the table
     } catch (error) {
-      console.error('Failed to delete category:', error)
+      console.error('Form submission error:', error)
+      const errorMessage = error.response?.data?.message || 'An error occurred. Please try again.'
+      setAlert({ visible: true, message: errorMessage, color: 'danger' })
+    } finally {
+      dispatch(stopLoading())
     }
   }
 
-  const getProductVariants = (variations) => {
-    return variations
-      ?.map((variation) => `${variation.attributes.selected}: "${variation.attributes.value}"`)
-      .join('\n')
+  // Toggles product visibility directly from the table
+  const handleProductVisibility = async (id, currentVisibility) => {
+    try {
+      await toggleVisibilityApi(id, !currentVisibility)
+      await fetchData() // Refresh to show the new state
+    } catch (error) {
+      console.error('Failed to toggle visibility:', error)
+      setAlert({ visible: true, message: 'Could not update visibility.', color: 'danger' })
+    }
   }
 
-  console.log('getProductVariants[0]-->>', getProductVariants(products[0]?.variations))
-
-  const getVariantsPrice = (variations) => {
-    return variations?.map((variation) => `₹${variation.price}, `).join('\n')
-  }
-
-  const getVariantsQuantity = (variations) => {
-    return variations?.map((variation) => `${variation.quantity}, `).join('\n')
-  }
-
-  const getVariantsDiscount = (variations) => {
-    return variations?.map((variation) => `${variation.discount}, `).join('\n')
-  }
-
+  // Main component render
   return (
     <div>
-      {alertVisible && (
-        <CAlert color={'success'} onClose={() => setAlertVisible(false)} dismissible>
-          {alertMessage}
+      {alert.visible && (
+        <CAlert
+          color={alert.color}
+          dismissible
+          onClose={() => setAlert({ ...alert, visible: false })}
+        >
+          {alert.message}
         </CAlert>
       )}
-      <h2>Manage Products</h2>
-      <div className="mb-4">
-        <CButton color="primary" onClick={toggleModal}>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Products</h2>
+        <CButton color="primary" onClick={resetFormState}>
           Add Product
         </CButton>
       </div>
       <SearchComponent items={products} searchKey="name" onFilteredItems={setFilteredProducts} />
-      {isLoading ? (
-        <div className="spinner-container">
-          <CSpinner size="sm" color="blue" />
+
+      {isLoading && !modal ? (
+        <div className="text-center p-5">
+          <CSpinner />
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
-          <CTable striped>
+          <CTable striped hover>
             <CTableHead>
               <CTableRow>
                 <CTableHeaderCell>Photo</CTableHeaderCell>
                 <CTableHeaderCell>Name</CTableHeaderCell>
-                <CTableHeaderCell>Variants</CTableHeaderCell>
-                <CTableHeaderCell>Price</CTableHeaderCell>
-                <CTableHeaderCell>Quantity</CTableHeaderCell>
-                <CTableHeaderCell>Discount</CTableHeaderCell>
-                <CTableHeaderCell>Actions</CTableHeaderCell>
+                <CTableHeaderCell>Category</CTableHeaderCell>
+                <CTableHeaderCell>Base Price</CTableHeaderCell>
+                <CTableHeaderCell>Total Stock</CTableHeaderCell>
                 <CTableHeaderCell>Visibility</CTableHeaderCell>
+                <CTableHeaderCell>Actions</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {filteredProducts.map((product, index) => (
-                <CTableRow key={index}>
+              {filteredProducts.map((product) => (
+                <CTableRow key={product._id}>
                   <CTableDataCell>
-                    {product.images?.slice(0, 2).map((imageUrl, imgIndex) => (
-                      <img
-                        key={imgIndex}
-                        src={imageUrl} // S3 URLs can be used directly
-                        alt={`Product Image ${imgIndex + 1}`}
-                        className="table-img"
-                        onError={(e) => {
-                          console.error('Failed to load image:', imageUrl)
-                          e.target.style.display = 'none' // Hide broken images
-                        }}
-                      />
-                    ))}
+                    <img
+                      src={product.variations[0]?.images[0]}
+                      alt={product.name}
+                      className="table-img"
+                      onError={(e) => (e.target.src = 'https://via.placeholder.com/50')}
+                    />
                   </CTableDataCell>
                   <CTableDataCell>{product.name}</CTableDataCell>
-                  <CTableDataCell>{getProductVariants(product.variations)}</CTableDataCell>
-                  <CTableDataCell>{getVariantsPrice(product.variations)}</CTableDataCell>
-                  <CTableDataCell>{getVariantsQuantity(product.variations)}</CTableDataCell>
-                  <CTableDataCell>{getVariantsDiscount(product.variations)}</CTableDataCell>
+                  <CTableDataCell>{product.category?.name}</CTableDataCell>
+                  <CTableDataCell>₹{product.variations[0]?.price || 'N/A'}</CTableDataCell>
                   <CTableDataCell>
-                    <div className="actions-cell">
-                      <CButton color="warning" onClick={() => handleEdit(index, product._id)}>
-                        <CIcon icon={cilPencil} />
-                      </CButton>{' '}
-                      <CButton color="danger" onClick={() => handleDelete(product?._id)}>
-                        <CIcon icon={cilTrash} />
-                      </CButton>
-                    </div>
+                    {product.variations.reduce((sum, v) => sum + (v.quantity || 0), 0)}
                   </CTableDataCell>
                   <CTableDataCell>
-                    <div className="actions-cell">
-                      <CFormSwitch
-                        label=""
-                        id={`formSwitch-${product._id}`}
-                        checked={product.isVisible}
-                        onChange={() => handleProductVisibility(product._id)}
-                      />
-                    </div>
+                    <CFormSwitch
+                      checked={product.isVisible}
+                      onChange={() => handleProductVisibility(product._id, product.isVisible)}
+                    />
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <CButton color="warning" size="sm" onClick={() => handleEdit(product._id)}>
+                      <CIcon icon={cilPencil} />
+                    </CButton>
                   </CTableDataCell>
                 </CTableRow>
               ))}
@@ -438,153 +287,75 @@ const Products = () => {
         </div>
       )}
 
-      <CModal visible={modal} onClose={toggleModal} className="custom-modal">
+      {/* Add/Edit Product Modal */}
+      <CModal visible={modal} onClose={toggleModal} size="lg">
         <CModalHeader>
-          <CModalTitle>{editingProduct !== null ? 'Edit Product' : 'Add Product'}</CModalTitle>
+          <CModalTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
             <CFormInput
+              className="mb-3"
+              label="Product Name"
               name="name"
-              // label="Product Name"
-              placeholder="Product Name"
-              value={form.name}
+              value={form.name || ''}
               onChange={handleChange}
             />
-
-            <Tags
-              tag={tag}
-              tags={tags}
-              setForm={setForm}
-              setTag={setTag}
-              setTags={setTags}
-              form={form}
-            />
-            <div style={{ marginBottom: '1rem' }}>
-              <CFormSwitch
-                label="Hand-to-Hand Return"
-                // id={`formSwitch-${form.name}`}
-                name="isReturnAllowed"
-                value={form.isReturnAllowed}
-                checked={form.isReturnAllowed}
-                onChange={toggleReturn}
-              />
-            </div>
-
             <CFormInput
+              className="mb-3"
+              label="Product Description"
               name="description"
-              // label="Product Description"
-              placeholder="Product Description"
-              value={form.description}
+              as="textarea"
+              rows={3}
+              value={form.description || ''}
               onChange={handleChange}
             />
-
-            {/* Dropzone for multi-image upload */}
-            <div {...getRootPropsProduct()} className="upload-container">
-              <input {...getInputPropsProduct()} />
-              <CButton color="primary" variant="outline">
-                <CIcon icon={cilCloudUpload} size="lg" className="me-2" />
-                Upload Images
-              </CButton>
-            </div>
-            {/* Display uploaded images */}
-            <div className="actions-cell">
-              {form?.images?.map((file, index) => (
-                <div key={index} className="image-wrapper">
-                  <img
-                    className="img"
-                    src={typeof file === 'string' ? file : URL.createObjectURL(file)}
-                    alt={`Product Image ${index + 1}`}
-                    onError={(e) => {
-                      console.error('Failed to load image:', file)
-                      e.target.style.display = 'none'
-                    }}
-                  />
-                  <button type="button" className="close-button" onClick={() => removeImage(index)}>
-                    ✖
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div>
-              <CFormCheck
-                type="checkbox"
-                id="selectAll"
-                label="All Locations"
-                checked={isAllSelected}
-                onChange={handleAllChange}
-              />
-
-              {!isAllSelected && (
-                <>
-                  <CRow>
-                    <CCol xs={8}>
-                      <CFormInput
-                        type="text"
-                        value={pincode}
-                        onChange={(e) => setPincode(e.target.value)}
-                        placeholder="Enter pincode"
-                        disabled={isAllSelected}
-                      />
-                    </CCol>
-                    <CCol xs={4}>
-                      <CButton color="primary" onClick={handleAddPincode} disabled={isAllSelected}>
-                        Add Pincode
-                      </CButton>
-                    </CCol>
-                  </CRow>
-
-                  <div style={{ marginTop: '1rem' }}>
-                    {pincodes.map((code, index) => (
-                      <CBadge key={index} color="secondary" className="pincode-badge">
-                        {code}
-                        <CButton
-                          color="danger"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleRemovePincode(code)}
-                          style={{ marginLeft: '0.5rem' }}
-                        >
-                          &times;
-                        </CButton>
-                      </CBadge>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-            {/* Dropdown to select category */}
             <CFormSelect
-              name="category"
+              className="mb-3"
               label="Category"
-              value={form?.category}
-              onChange={handleCategoryChange}
+              name="category"
+              value={form.category || ''}
+              onChange={handleChange}
             >
-              <option value="" disabled>
-                Select Category
-              </option>
-              {categories.map((category) => (
-                <option key={category._id} value={category._id}>
-                  {category.name}
+              <option value="">Select Category</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
                 </option>
               ))}
             </CFormSelect>
-            {/* // Add input fields for variations */}
+            <Tags tags={tags} setTags={setTags} />
+            <CFormInput
+              className="mb-3"
+              label="Estimated Arrival Duration (e.g., 5-7 days)"
+              name="arrivalDuration"
+              value={form.arrivalDuration || ''}
+              onChange={handleChange}
+            />
+            <CFormSwitch
+              className="my-3"
+              label="Hand-to-Hand Return Allowed"
+              name="isReturnAllowed"
+              checked={form.isReturnAllowed || false}
+              onChange={handleChange}
+            />
+            <CFormSwitch
+              className="mb-3"
+              label="Visible to Customers"
+              name="isVisible"
+              checked={form.isVisible || false}
+              onChange={handleChange}
+            />
             <VariationsComponent variations={variations} setVariations={setVariations} />
           </CForm>
         </CModalBody>
         <CModalFooter>
-          {isLoading ? (
-            <CButton color="primary">
-              {editingProduct !== null ? 'Updating Product' : 'Creating Product'}{' '}
-              <CSpinner size="sm" color="white" />
-            </CButton>
-          ) : (
-            <CButton color="primary" onClick={() => handleSubmit(form._id)}>
-              {editingProduct !== null ? 'Save Changes' : 'Add Product'}
-            </CButton>
-          )}
+          <CButton color="secondary" onClick={toggleModal}>
+            Cancel
+          </CButton>
+          <CButton color="primary" onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? <CSpinner size="sm" /> : editingProduct ? 'Save Changes' : 'Add Product'}
+          </CButton>
         </CModalFooter>
       </CModal>
     </div>
