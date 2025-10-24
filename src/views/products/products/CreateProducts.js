@@ -123,6 +123,12 @@ const Products = () => {
     }
   }
 
+  // ✅ HANDLER FOR ADD PRODUCT BUTTON
+  const handleAddNewProduct = () => {
+    resetFormState()
+    setModal(true)
+  }
+
   // Handles changes in main product form fields
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -228,7 +234,8 @@ const Products = () => {
       )}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Manage Products</h2>
-        <CButton color="primary" onClick={resetFormState}>
+        {/* ✅ CORRECTED ONCLICK HANDLER */}
+        <CButton color="primary" onClick={handleAddNewProduct}>
           Add Product
         </CButton>
       </div>
