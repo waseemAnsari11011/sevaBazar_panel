@@ -4,7 +4,7 @@ import axiosInstance from '../../utils/axiosConfig'
 const getAllVendors = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await axiosInstance.get('/vendors/getAllVendorsAdmin', {
+    const response = await axiosInstance.get('/vendors/admin/', {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,

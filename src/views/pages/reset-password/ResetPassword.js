@@ -28,7 +28,9 @@ const ResetPassword = () => {
     setIsLoading(true)
     setAlert({ show: false, color: '', message: '' })
     try {
-      const response = await axiosInstance.post(`/vendors/reset-password/${token}`, { password })
+      const response = await axiosInstance.post(`/vendors/auth/reset-password/${token}`, {
+        password,
+      })
       setAlert({ show: true, color: 'success', message: response.data.message })
     } catch (error) {
       setAlert({

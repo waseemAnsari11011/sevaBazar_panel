@@ -480,7 +480,7 @@ const Register = () => {
         formData.append('panCardDocument', panCardDocument)
       }
 
-      const response = await axiosInstance.post('/vendors/signup', formData, {
+      const response = await axiosInstance.post('/vendors/auth/signup', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 

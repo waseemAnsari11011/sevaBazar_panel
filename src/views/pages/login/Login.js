@@ -47,7 +47,7 @@ const Login = () => {
   const handleLogin = async () => {
     setIsLoading(true) // Set loading to true when login starts
     try {
-      const response = await axiosInstance.post('/vendors/login', {
+      const response = await axiosInstance.post('/vendors/auth/login', {
         emailOrPhone,
         password,
       })

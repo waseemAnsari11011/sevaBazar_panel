@@ -27,7 +27,7 @@ const ForgotPassword = () => {
     setIsLoading(true)
     setAlert({ show: false, color: '', message: '' })
     try {
-      const response = await axiosInstance.post('/vendors/forgot-password', { email })
+      const response = await axiosInstance.post('/vendors/auth/forgot-password', { email })
       setAlert({ show: true, color: 'success', message: response.data.message })
     } catch (error) {
       setAlert({
