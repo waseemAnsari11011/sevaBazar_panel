@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { CButton, CForm, CFormInput, CFormLabel, CCol, CRow, CSpinner, CAlert } from '@coreui/react'
 import { updateProfile } from '../../api/vendor/updateProfile' // Import your new API call
 import { useDispatch } from 'react-redux'
-
+import { setUser } from '../../redux/actions/defaultActions' // <-- ADD THIS
 const UpdateBusinessInfo = ({ user }) => {
   const dispatch = useDispatch()
   const [formData, setFormData] = useState({
@@ -37,7 +37,7 @@ const UpdateBusinessInfo = ({ user }) => {
       const response = await updateProfile(payload)
 
       // Update the user in Redux state (you might need to adjust this)
-      dispatch({ type: 'SET_USER', payload: response.vendor })
+      dispatch(setUser(response.vendor))
 
       setSuccess('Business info updated successfully!')
     } catch (err) {
@@ -81,7 +81,7 @@ const UpdateBusinessInfo = ({ user }) => {
       </CRow>
 
       <CButton type="submit" color="primary" disabled={loading}>
-        {loading ? <CSpinner size="sm" /> : 'Save Changes'}
+        {loading ? <CSpinner size="sm" /> : 'Save Changes..'}
       </CButton>
     </CForm>
   )

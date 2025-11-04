@@ -5,7 +5,6 @@ import { updateVendorAddress } from 'src/api/vendor/updateVendorAddress'
 import CIcon from '@coreui/icons-react'
 import { cilLocationPin } from '@coreui/icons'
 import PincodeInput from '../pages/register/PincodeInput' // Correctly importing the existing component
-
 const UpdateAddress = ({ user }) => {
   const dispatch = useDispatch()
   const addressInputRef = useRef(null)

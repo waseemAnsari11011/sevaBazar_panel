@@ -5,7 +5,7 @@ import { SET_USER } from 'src/redux/actions/types' // 1. Import SET_USER
 export const updateVendorAddress = (vendorId, data) => async (dispatch) => {
   try {
     // The backend returns the updated vendor object in the response
-    const res = await axiosInstance.put(`/vendors/admin/${vendorId}`, data)
+    const res = await axiosInstance.put(`/vendors/me/profile`, data)
 
     if (res.data && res.data.vendor) {
       // 2. Dispatch the SET_USER action with the updated vendor data

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { CButton, CForm, CFormInput, CFormLabel, CCol, CRow, CSpinner, CAlert } from '@coreui/react'
 import { updateProfile } from '../../api/vendor/updateProfile'
 import { useDispatch } from 'react-redux'
-
+import { setUser } from '../../redux/actions/defaultActions'
 const UpdateBankDetails = ({ user }) => {
   const dispatch = useDispatch()
   const [formData, setFormData] = useState({
@@ -47,8 +47,7 @@ const UpdateBankDetails = ({ user }) => {
       const response = await updateProfile(payload)
 
       // Update the user in Redux state
-      dispatch({ type: 'SET_USER', payload: response.vendor })
-
+      dispatch(setUser(response.vendor))
       setSuccess('Bank details updated successfully!')
     } catch (err) {
       setError(err.message || 'Failed to update bank details.')
