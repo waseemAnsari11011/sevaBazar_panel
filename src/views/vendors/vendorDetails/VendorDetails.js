@@ -1,3 +1,4 @@
+//vendors/vendorDetails/VendorDetails.js
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
@@ -11,24 +12,24 @@ import {
   CAlert,
   CBadge,
   CButton,
-  CForm, // Import Form elements
+  CForm,
   CFormInput,
   CFormLabel,
   CFormSelect,
   CFormSwitch,
 } from '@coreui/react'
 import { getVendorById } from '../../../api/vendor/getVendorById'
-import { updateVendorAsAdmin } from '../../../api/vendor/updateVendorAsAdmin' // <-- Import new API
+import { updateVendorAsAdmin } from '../../../api/vendor/updateVendorAsAdmin'
 import CIcon from '@coreui/icons-react'
-import { cilArrowLeft, cilPencil } from '@coreui/icons'
-
+import { cilPencil, cilCloudUpload, cilCheckCircle, cilCloudDownload } from '@coreui/icons'
+import { generateVendorPDF } from './GeneratePdf'
 const VendorDetails = () => {
   const { vendorId } = useParams()
   const navigate = useNavigate()
 
   // State for data
-  const [vendor, setVendor] = useState(null) // Stores the original, read-only data
-  const [formData, setFormData] = useState(null) // Stores the data for the form fields
+  const [vendor, setVendor] = useState(null)
+  const [formData, setFormData] = useState(null)
 
   // State for UI
   const [loading, setLoading] = useState(true)
@@ -37,10 +38,44 @@ const VendorDetails = () => {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // --- Data Fetching and Role Check ---
+  // NEW: State for document actions
+  const [documentActions, setDocumentActions] = useState({
+    shopPhoto: 'keep',
+    selfiePhoto: 'keep',
+    aadharFrontDocument: 'keep',
+    aadharBackDocument: 'keep',
+    panCardDocument: 'keep',
+    gstCertificate: 'keep',
+    fssaiCertificate: 'keep',
+  })
+  const [qrCodeAction, setQrCodeAction] = useState('keep')
 
+  // State for file uploads
+  const [documentFiles, setDocumentFiles] = useState({
+    shopPhoto: null,
+    selfiePhoto: null,
+    aadharFrontDocument: null,
+    aadharBackDocument: null,
+    panCardDocument: null,
+    gstCertificate: null,
+    fssaiCertificate: null,
+  })
+  const [qrCodeFile, setQrCodeFile] = useState(null)
+
+  // State for image previews
+  const [documentPreviews, setDocumentPreviews] = useState({
+    shopPhoto: [],
+    selfiePhoto: null,
+    aadharFrontDocument: null,
+    aadharBackDocument: null,
+    panCardDocument: null,
+    gstCertificate: null,
+    fssaiCertificate: null,
+  })
+  const [qrCodePreview, setQrCodePreview] = useState(null)
+
+  // --- Data Fetching and Role Check ---
   useEffect(() => {
-    // Check admin role from localStorage
     try {
       const localUser = JSON.parse(localStorage.getItem('user'))
       if (localUser && localUser.role) {
@@ -50,14 +85,13 @@ const VendorDetails = () => {
       console.error('Failed to parse user data from localStorage', error)
     }
 
-    // Fetch vendor details
     const fetchVendorDetails = async () => {
       try {
         setLoading(true)
         const response = await getVendorById(vendorId)
         if (response && response.vendor) {
           setVendor(response.vendor)
-          setFormData(response.vendor) // IMPORTANT: Initialize form data
+          setFormData(response.vendor)
         } else {
           setError('Vendor not found.')
         }
@@ -72,15 +106,12 @@ const VendorDetails = () => {
     fetchVendorDetails()
   }, [vendorId])
 
-  // --- Change Handlers for Nested State ---
-
-  // For top-level fields like 'name', 'email'
+  // --- Change Handlers ---
   const handleSimpleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  // For fields inside 'vendorInfo', 'bankDetails', 'upiDetails'
   const handleNestedChange = (e, parentKey) => {
     const { name, value } = e.target
     setFormData((prev) => ({
@@ -92,7 +123,6 @@ const VendorDetails = () => {
     }))
   }
 
-  // For fields inside 'location.address'
   const handleAddressChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({
@@ -107,51 +137,242 @@ const VendorDetails = () => {
     }))
   }
 
-  // For switch/checkbox fields
   const handleSwitchChange = (e, name) => {
     setFormData((prev) => ({ ...prev, [name]: e.target.checked }))
   }
 
-  // --- Form Submission ---
+  // NEW: Handle action changes
+  const handleDocumentActionChange = (docType, action) => {
+    setDocumentActions((prev) => ({ ...prev, [docType]: action }))
 
+    // Reset files and previews when changing to 'keep'
+    if (action === 'keep') {
+      setDocumentFiles((prev) => ({ ...prev, [docType]: null }))
+      if (docType === 'shopPhoto') {
+        setDocumentPreviews((prev) => ({ ...prev, [docType]: [] }))
+      } else {
+        setDocumentPreviews((prev) => ({ ...prev, [docType]: null }))
+      }
+    }
+  }
+
+  const handleQrCodeActionChange = (action) => {
+    setQrCodeAction(action)
+    if (action === 'keep') {
+      setQrCodeFile(null)
+      setQrCodePreview(null)
+    }
+  }
+
+  // Handle file input changes for documents
+  const handleDocumentFileChange = (e, docType) => {
+    if (docType === 'shopPhoto') {
+      const files = Array.from(e.target.files)
+      if (files.length > 0) {
+        setDocumentFiles((prev) => ({ ...prev, [docType]: files }))
+        const previews = files.map((file) => URL.createObjectURL(file))
+        setDocumentPreviews((prev) => ({ ...prev, [docType]: previews }))
+      }
+    } else {
+      const file = e.target.files[0]
+      if (file) {
+        setDocumentFiles((prev) => ({ ...prev, [docType]: file }))
+        const preview = URL.createObjectURL(file)
+        setDocumentPreviews((prev) => ({ ...prev, [docType]: preview }))
+      }
+    }
+  }
+
+  // Handle QR code file change
+  const handleQrCodeFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setQrCodeFile(file)
+      const preview = URL.createObjectURL(file)
+      setQrCodePreview(preview)
+    }
+  }
+
+  // --- Form Submission ---
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSaving(true)
     setError('')
     try {
-      // We don't want to send the entire vendor object, especially not 'documents'
-      // The backend 'allowedUpdates' will filter, but it's good practice.
-      const updatePayload = {
-        name: formData.name,
-        email: formData.email,
-        vendorInfo: formData.vendorInfo,
-        location: formData.location,
-        bankDetails: formData.bankDetails,
-        upiDetails: formData.upiDetails,
-        isOnline: formData.isOnline,
-        status: formData.status,
-        // category: formData.category, // Add this if you make it editable
+      // Check if we have any file uploads or non-keep actions
+      const hasFileUploads =
+        Object.values(documentFiles).some((file) => file !== null) || qrCodeFile !== null
+      const hasActions =
+        Object.values(documentActions).some((action) => action !== 'keep') ||
+        qrCodeAction !== 'keep'
+
+      if (hasFileUploads || hasActions) {
+        const formDataToSend = new FormData()
+
+        // Add basic fields
+        formDataToSend.append('name', formData.name)
+        formDataToSend.append('email', formData.email)
+        formDataToSend.append('isOnline', formData.isOnline)
+        formDataToSend.append('status', formData.status)
+
+        // Add nested objects as JSON strings
+        formDataToSend.append('vendorInfo', JSON.stringify(formData.vendorInfo))
+        formDataToSend.append('location', JSON.stringify(formData.location))
+        formDataToSend.append('bankDetails', JSON.stringify(formData.bankDetails))
+
+        // For UPI details, only include qrCode if not uploading file
+        const upiDetailsToSend = { ...formData.upiDetails }
+        if (qrCodeFile) {
+          delete upiDetailsToSend.qrCode
+        }
+        formDataToSend.append('upiDetails', JSON.stringify(upiDetailsToSend))
+
+        // Add document actions
+        formDataToSend.append(
+          'documentActions',
+          JSON.stringify({
+            ...documentActions,
+            qrCode: qrCodeAction,
+          }),
+        )
+
+        // Add document files if they exist
+        Object.keys(documentFiles).forEach((key) => {
+          if (documentFiles[key]) {
+            if (key === 'shopPhoto' && Array.isArray(documentFiles[key])) {
+              documentFiles[key].forEach((file) => {
+                formDataToSend.append('shopPhoto', file)
+              })
+            } else {
+              formDataToSend.append(key, documentFiles[key])
+            }
+          }
+        })
+
+        // Add QR code file if it exists
+        if (qrCodeFile) {
+          formDataToSend.append('qrCode', qrCodeFile)
+        }
+
+        const updatedVendor = await updateVendorAsAdmin(vendorId, formDataToSend)
+        setVendor(updatedVendor)
+        setFormData(updatedVendor)
+      } else {
+        // No files or actions, send as regular JSON
+        const updatePayload = {
+          name: formData.name,
+          email: formData.email,
+          vendorInfo: formData.vendorInfo,
+          location: formData.location,
+          bankDetails: formData.bankDetails,
+          upiDetails: formData.upiDetails,
+          isOnline: formData.isOnline,
+          status: formData.status,
+        }
+
+        const updatedVendor = await updateVendorAsAdmin(vendorId, updatePayload)
+        setVendor(updatedVendor)
+        setFormData(updatedVendor)
       }
 
-      const updatedVendor = await updateVendorAsAdmin(vendorId, updatePayload)
-      setVendor(updatedVendor) // Update the read-only view
-      setFormData(updatedVendor) // Update the form data
       setIsEditing(false)
+
+      // Reset everything
+      setDocumentFiles({
+        shopPhoto: null,
+        selfiePhoto: null,
+        aadharFrontDocument: null,
+        aadharBackDocument: null,
+        panCardDocument: null,
+        gstCertificate: null,
+        fssaiCertificate: null,
+      })
+      setQrCodeFile(null)
+      setDocumentActions({
+        shopPhoto: 'keep',
+        selfiePhoto: 'keep',
+        aadharFrontDocument: 'keep',
+        aadharBackDocument: 'keep',
+        panCardDocument: 'keep',
+        gstCertificate: 'keep',
+        fssaiCertificate: 'keep',
+      })
+      setQrCodeAction('keep')
+
+      // Clean up preview URLs
+      Object.values(documentPreviews).forEach((preview) => {
+        if (Array.isArray(preview)) {
+          preview.forEach((url) => URL.revokeObjectURL(url))
+        } else if (preview) {
+          URL.revokeObjectURL(preview)
+        }
+      })
+      if (qrCodePreview) {
+        URL.revokeObjectURL(qrCodePreview)
+      }
+
+      setDocumentPreviews({
+        shopPhoto: [],
+        selfiePhoto: null,
+        aadharFrontDocument: null,
+        aadharBackDocument: null,
+        panCardDocument: null,
+        gstCertificate: null,
+        fssaiCertificate: null,
+      })
+      setQrCodePreview(null)
     } catch (err) {
       setError('Failed to save changes. Please try again.')
+      console.error('Submit error:', err)
     } finally {
       setIsSaving(false)
     }
   }
 
   // --- Helper Functions ---
-
-  const renderDocumentImage = (url, altText) => {
+  const renderDocumentImage = (url, altText, willBeDeleted = false) => {
     if (!url) return <p className="text-muted">Not Provided</p>
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer">
-        <CImage thumbnail src={url} alt={altText} width={150} height={150} className="mb-2 me-2" />
-      </a>
+      <div className="position-relative d-inline-block">
+        <a href={url} target="_blank" rel="noopener noreferrer">
+          <CImage
+            thumbnail
+            src={url}
+            alt={altText}
+            width={150}
+            height={150}
+            className={`mb-2 me-2 ${willBeDeleted ? 'opacity-50 border border-danger border-2' : ''}`}
+          />
+        </a>
+        {willBeDeleted && (
+          <CBadge
+            color="danger"
+            className="position-absolute"
+            style={{ top: '5px', right: '10px' }}
+          >
+            Will Delete
+          </CBadge>
+        )}
+      </div>
+    )
+  }
+
+  const renderPreviewImage = (url, altText) => {
+    if (!url) return null
+    return (
+      <div className="position-relative d-inline-block">
+        <CImage
+          thumbnail
+          src={url}
+          alt={altText}
+          width={150}
+          height={150}
+          className="mb-2 me-2 border border-success border-3"
+        />
+        <CBadge color="success" className="position-absolute" style={{ top: '5px', right: '10px' }}>
+          New
+        </CBadge>
+      </div>
     )
   }
 
@@ -160,47 +381,150 @@ const VendorDetails = () => {
     return new Date(dateString).toLocaleString()
   }
 
-  // --- Render Logic ---
+  // Editable document field component with action buttons
+  const EditableDocumentField = ({ label, docType, url, isArray = false }) => {
+    const action = documentActions[docType]
+    const hasNewUpload = isArray
+      ? documentPreviews[docType]?.length > 0
+      : documentPreviews[docType] !== null
 
-  if (loading) {
     return (
-      <CRow className="justify-content-center align-items-center" style={{ minHeight: '200px' }}>
-        <CSpinner color="primary" />
-      </CRow>
+      <div className="mb-4 p-3 border rounded">
+        <CFormLabel className="fw-bold fs-6 mb-3">{label}</CFormLabel>
+
+        {isEditing && (
+          <>
+            {/* Action Selector */}
+            <div className="mb-3 bg-light p-2 rounded">
+              <small className="text-muted d-block mb-2">Choose action:</small>
+              <div className="d-flex gap-2 flex-wrap">
+                <CButton
+                  color={action === 'keep' ? 'success' : 'outline-secondary'}
+                  size="sm"
+                  onClick={() => handleDocumentActionChange(docType, 'keep')}
+                >
+                  ✓ Keep Existing
+                </CButton>
+                <CButton
+                  color={action === 'replace' ? 'warning' : 'outline-secondary'}
+                  size="sm"
+                  onClick={() => handleDocumentActionChange(docType, 'replace')}
+                >
+                  🔄 Replace
+                </CButton>
+                {isArray && (
+                  <CButton
+                    color={action === 'add' ? 'primary' : 'outline-secondary'}
+                    size="sm"
+                    onClick={() => handleDocumentActionChange(docType, 'add')}
+                  >
+                    + Add More
+                  </CButton>
+                )}
+              </div>
+            </div>
+
+            {/* File Upload (shown when replace or add is selected) */}
+            {(action === 'replace' || action === 'add') && (
+              <div className="mb-3">
+                <CFormInput
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => handleDocumentFileChange(e, docType)}
+                  className="mb-2"
+                  multiple={isArray && action === 'add'}
+                />
+                <small className="text-muted d-block">
+                  {action === 'replace'
+                    ? '⚠️ Old image(s) will be deleted and replaced'
+                    : '➕ New images will be added to existing ones'}
+                </small>
+                {hasNewUpload && (
+                  <CAlert color="success" className="mt-2 py-1 px-2 small mb-0">
+                    ✓ {isArray ? `${documentPreviews[docType].length} file(s)` : '1 file'} ready to
+                    upload
+                  </CAlert>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Preview Section */}
+        <div className="mt-3">
+          {/* Show new uploads */}
+          {hasNewUpload && (
+            <div className="mb-3">
+              <small className="text-success fw-bold d-block mb-2">
+                {action === 'replace' ? '🔄 Will Replace With:' : '➕ Will Add:'}
+              </small>
+              <div className="d-flex gap-2 flex-wrap">
+                {isArray
+                  ? documentPreviews[docType].map((preview, idx) => (
+                      <div key={idx}>
+                        {renderPreviewImage(preview, `${label} ${idx + 1} (New)`)}
+                      </div>
+                    ))
+                  : renderPreviewImage(documentPreviews[docType], `${label} (New)`)}
+              </div>
+            </div>
+          )}
+
+          {/* Show current documents */}
+          <div>
+            <small className="text-muted fw-bold d-block mb-2">
+              {action === 'replace'
+                ? '❌ Will Be Deleted:'
+                : action === 'add'
+                  ? '✓ Will Be Kept:'
+                  : 'Current Document(s):'}
+            </small>
+            <div className="d-flex gap-2 flex-wrap">
+              {isArray ? (
+                url && url.length > 0 ? (
+                  url.map((photoUrl, idx) => (
+                    <div key={idx}>
+                      {renderDocumentImage(photoUrl, `${label} ${idx + 1}`, action === 'replace')}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted">Not Provided</p>
+                )
+              ) : (
+                renderDocumentImage(url, label, action === 'replace')
+              )}
+            </div>
+          </div>
+
+          {/* Summary Alert */}
+          {action !== 'keep' && (
+            <CAlert
+              color={action === 'replace' ? 'warning' : 'info'}
+              className="mt-3 py-2 px-3 small mb-0"
+            >
+              <strong>Summary:</strong>{' '}
+              {action === 'replace'
+                ? 'Old image(s) will be permanently deleted from S3 and replaced with new upload(s)'
+                : 'New image(s) will be added while keeping all existing images'}
+            </CAlert>
+          )}
+        </div>
+      </div>
     )
   }
 
-  if (error && !isEditing) {
-    // Only show critical errors if not in edit mode
-    return <CAlert color="danger">{error}</CAlert>
-  }
-
-  if (!vendor || !formData) {
-    return <CAlert color="warning">No vendor data available.</CAlert>
-  }
-
-  const fullAddress = [
-    vendor.location?.address?.addressLine1,
-    vendor.location?.address?.addressLine2,
-    // ...
-  ]
-    .filter(Boolean)
-    .join(', ')
-
-  // This component dynamically renders either text or an input
   const EditableField = ({
     label,
     value,
     name,
-    onChange,
     isEditing,
     type = 'text',
-    parentKey, // e.g., 'vendorInfo'
-    grandparentKey, // e.g., 'location'
+    parentKey,
+    grandparentKey,
   }) => {
     let changeHandler = handleSimpleChange
     if (grandparentKey) {
-      changeHandler = handleAddressChange // Assumes grandparent is 'location'
+      changeHandler = handleAddressChange
     } else if (parentKey) {
       changeHandler = (e) => handleNestedChange(e, parentKey)
     }
@@ -225,15 +549,47 @@ const VendorDetails = () => {
     )
   }
 
+  // --- Render Logic ---
+  if (loading) {
+    return (
+      <CRow className="justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+        <CSpinner color="primary" />
+      </CRow>
+    )
+  }
+
+  if (error && !isEditing) {
+    return <CAlert color="danger">{error}</CAlert>
+  }
+
+  if (!vendor || !formData) {
+    return <CAlert color="warning">No vendor data available.</CAlert>
+  }
+
+  const fullAddress = [
+    vendor.location?.address?.addressLine1,
+    vendor.location?.address?.addressLine2,
+    vendor.location?.address?.landmark,
+    vendor.location?.address?.city,
+    vendor.location?.address?.state,
+    vendor.location?.address?.postalCode,
+  ]
+    .filter(Boolean)
+    .join(', ')
+
   return (
     <CForm onSubmit={handleSubmit}>
       <CRow>
         <CCol xs={12}>
+          {/* Main Vendor Details Card */}
           <CCard className="mb-4">
             <CCardHeader className="d-flex justify-content-between align-items-center">
               <strong>Vendor Registration Details</strong>
               <div>
-                {/* --- Admin Edit/Save Buttons --- */}
+                <CButton color="info" onClick={() => generateVendorPDF(vendor)} className="me-2">
+                  <CIcon icon={cilCloudDownload} className="me-2" />
+                  Download PDF
+                </CButton>
                 {userRole === 'admin' && !isEditing && (
                   <CButton color="primary" onClick={() => setIsEditing(true)}>
                     <CIcon icon={cilPencil} className="me-2" />
@@ -246,8 +602,53 @@ const VendorDetails = () => {
                       color="secondary"
                       onClick={() => {
                         setIsEditing(false)
-                        setFormData(vendor) // Reset form to original data
+                        setFormData(vendor)
                         setError('')
+
+                        // Reset everything
+                        setDocumentFiles({
+                          shopPhoto: null,
+                          selfiePhoto: null,
+                          aadharFrontDocument: null,
+                          aadharBackDocument: null,
+                          panCardDocument: null,
+                          gstCertificate: null,
+                          fssaiCertificate: null,
+                        })
+                        setQrCodeFile(null)
+                        setDocumentActions({
+                          shopPhoto: 'keep',
+                          selfiePhoto: 'keep',
+                          aadharFrontDocument: 'keep',
+                          aadharBackDocument: 'keep',
+                          panCardDocument: 'keep',
+                          gstCertificate: 'keep',
+                          fssaiCertificate: 'keep',
+                        })
+                        setQrCodeAction('keep')
+
+                        // Clean up preview URLs
+                        Object.values(documentPreviews).forEach((preview) => {
+                          if (Array.isArray(preview)) {
+                            preview.forEach((url) => URL.revokeObjectURL(url))
+                          } else if (preview) {
+                            URL.revokeObjectURL(preview)
+                          }
+                        })
+                        if (qrCodePreview) {
+                          URL.revokeObjectURL(qrCodePreview)
+                        }
+
+                        setDocumentPreviews({
+                          shopPhoto: [],
+                          selfiePhoto: null,
+                          aadharFrontDocument: null,
+                          aadharBackDocument: null,
+                          panCardDocument: null,
+                          gstCertificate: null,
+                          fssaiCertificate: null,
+                        })
+                        setQrCodePreview(null)
                       }}
                       className="me-2"
                       disabled={isSaving}
@@ -263,6 +664,46 @@ const VendorDetails = () => {
             </CCardHeader>
             <CCardBody>
               {isEditing && error && <CAlert color="danger">{error}</CAlert>}
+
+              {/* Show action summary */}
+              {isEditing &&
+                (Object.values(documentFiles).some((f) => f !== null) || qrCodeFile) && (
+                  <CAlert color="info" className="d-flex align-items-center">
+                    <CIcon icon={cilCloudUpload} className="me-2" size="lg" />
+                    <div className="flex-grow-1">
+                      <strong>Pending Changes:</strong>
+                      <ul className="mb-0 mt-1">
+                        {Object.entries(documentFiles).map(([key, file]) => {
+                          if (!file) return null
+                          const action = documentActions[key]
+                          if (Array.isArray(file)) {
+                            return (
+                              <li key={key}>
+                                {key}: {action === 'add' ? 'Add' : 'Replace'} {file.length} file(s)
+                              </li>
+                            )
+                          }
+                          return (
+                            <li key={key}>
+                              {key}: Replace with {file.name}
+                            </li>
+                          )
+                        })}
+                        {qrCodeFile && (
+                          <li>QR Code: {qrCodeAction === 'replace' ? 'Replace' : 'Update'}</li>
+                        )}
+                      </ul>
+                    </div>
+                  </CAlert>
+                )}
+
+              {/* Show success message */}
+              {!isEditing && !loading && !error && (
+                <CAlert color="success" className="d-flex align-items-center mb-3">
+                  <CIcon icon={cilCheckCircle} className="me-2" size="lg" />
+                  <span>Vendor details are up to date</span>
+                </CAlert>
+              )}
 
               {/* Personal and Business Information */}
               <CRow className="mb-4">
@@ -310,7 +751,6 @@ const VendorDetails = () => {
                   />
                   <p>
                     <strong>Category:</strong> {vendor.category?.name || 'N/A'}
-                    {/* Note: Editing category (an object) is complex. Leave as read-only for now unless you use a dropdown. */}
                   </p>
                 </CCol>
               </CRow>
@@ -334,14 +774,40 @@ const VendorDetails = () => {
                     isEditing={isEditing}
                     grandparentKey="location"
                   />
-                  {/* ... Add more editable fields for landmark, city, postalCode, etc. ... */}
+                  <EditableField
+                    label="Landmark"
+                    value={formData.location?.address?.landmark}
+                    name="landmark"
+                    isEditing={isEditing}
+                    grandparentKey="location"
+                  />
+                  <EditableField
+                    label="City"
+                    value={formData.location?.address?.city}
+                    name="city"
+                    isEditing={isEditing}
+                    grandparentKey="location"
+                  />
+                  <EditableField
+                    label="State"
+                    value={formData.location?.address?.state}
+                    name="state"
+                    isEditing={isEditing}
+                    grandparentKey="location"
+                  />
+                  <EditableField
+                    label="Postal Code"
+                    value={formData.location?.address?.postalCode}
+                    name="postalCode"
+                    isEditing={isEditing}
+                    grandparentKey="location"
+                  />
                   <p>
-                    <strong>Full Address (Read-Only):</strong> {fullAddress || 'N/A'}
+                    <strong>Full Address:</strong> {fullAddress || 'N/A'}
                   </p>
                   <p>
-                    <strong>Serviceable Pincodes (Read-Only):</strong>{' '}
+                    <strong>Serviceable Pincodes:</strong>{' '}
                     {vendor.location?.address?.postalCodes?.join(', ') || 'N/A'}
-                    {/* Editing an array is complex, leave as read-only for this step. */}
                   </p>
                 </CCol>
               </CRow>
@@ -402,33 +868,88 @@ const VendorDetails = () => {
                     ) : (
                       <CBadge color="success">No</CBadge>
                     )}
-                    <br />
-                    <small>(Restriction is handled from the Vendor List)</small>
                   </p>
                 </CCol>
               </CRow>
               <hr />
 
-              {/* Documents - READ ONLY */}
-              <CRow className="mb-4">
-                <CCol>
-                  <h5>Uploaded Documents (Read-Only)</h5>
-                  {/* Document editing (file upload) is complex and should be a separate feature. */}
-                  {/* ... (document rendering code) ... */}
-                </CCol>
-              </CRow>
-              <hr />
-
-              {/* Timestamps - READ ONLY */}
+              {/* Timestamps */}
               <CRow>
                 <CCol>
-                  <h5>Timestamps (Read-Only)</h5>
+                  <h5>Timestamps</h5>
                   <p>
                     <strong>Created At:</strong> {formatDate(vendor.createdAt)}
                   </p>
                   <p>
                     <strong>Last Updated At:</strong> {formatDate(vendor.updatedAt)}
                   </p>
+                </CCol>
+              </CRow>
+            </CCardBody>
+          </CCard>
+
+          {/* Documents Card */}
+          <CCard className="mb-4">
+            <CCardHeader>
+              <strong>Uploaded Documents</strong>
+            </CCardHeader>
+            <CCardBody>
+              <CRow>
+                <CCol md={6}>
+                  <EditableDocumentField
+                    label="Shop Photos"
+                    docType="shopPhoto"
+                    url={formData.documents?.shopPhoto}
+                    isArray={true}
+                  />
+                </CCol>
+                <CCol md={6}>
+                  <EditableDocumentField
+                    label="Selfie Photo"
+                    docType="selfiePhoto"
+                    url={formData.documents?.selfiePhoto}
+                  />
+                </CCol>
+              </CRow>
+              <CRow>
+                <CCol md={6}>
+                  <EditableDocumentField
+                    label="Aadhar Front"
+                    docType="aadharFrontDocument"
+                    url={formData.documents?.aadharFrontDocument}
+                  />
+                </CCol>
+                <CCol md={6}>
+                  <EditableDocumentField
+                    label="Aadhar Back"
+                    docType="aadharBackDocument"
+                    url={formData.documents?.aadharBackDocument}
+                  />
+                </CCol>
+              </CRow>
+              <CRow>
+                <CCol md={6}>
+                  <EditableDocumentField
+                    label="PAN Card"
+                    docType="panCardDocument"
+                    url={formData.documents?.panCardDocument}
+                  />
+                </CCol>
+                <CCol md={6}>
+                  <EditableDocumentField
+                    label="GST Certificate"
+                    docType="gstCertificate"
+                    url={formData.documents?.gstCertificate}
+                  />
+                </CCol>
+              </CRow>
+              <CRow>
+                <CCol md={6}>
+                  <EditableDocumentField
+                    label="FSSAI Certificate"
+                    docType="fssaiCertificate"
+                    url={formData.documents?.fssaiCertificate}
+                  />
                 </CCol>
               </CRow>
             </CCardBody>
@@ -441,51 +962,142 @@ const VendorDetails = () => {
             </CCardHeader>
             <CCardBody>
               <h5>Bank Details</h5>
-              <EditableField
-                label="Account Holder Name"
-                value={formData.bankDetails?.accountHolderName}
-                name="accountHolderName"
-                isEditing={isEditing}
-                parentKey="bankDetails"
-              />
-              <EditableField
-                label="Account Number"
-                value={formData.bankDetails?.accountNumber}
-                name="accountNumber"
-                isEditing={isEditing}
-                parentKey="bankDetails"
-              />
-              <EditableField
-                label="IFSC Code"
-                value={formData.bankDetails?.ifscCode}
-                name="ifscCode"
-                isEditing={isEditing}
-                parentKey="bankDetails"
-              />
-              <EditableField
-                label="Bank Name"
-                value={formData.bankDetails?.bankName}
-                name="bankName"
-                isEditing={isEditing}
-                parentKey="bankDetails"
-              />
+              <CRow>
+                <CCol md={6}>
+                  <EditableField
+                    label="Account Holder Name"
+                    value={formData.bankDetails?.accountHolderName}
+                    name="accountHolderName"
+                    isEditing={isEditing}
+                    parentKey="bankDetails"
+                  />
+                  <EditableField
+                    label="Account Number"
+                    value={formData.bankDetails?.accountNumber}
+                    name="accountNumber"
+                    isEditing={isEditing}
+                    parentKey="bankDetails"
+                  />
+                </CCol>
+                <CCol md={6}>
+                  <EditableField
+                    label="IFSC Code"
+                    value={formData.bankDetails?.ifscCode}
+                    name="ifscCode"
+                    isEditing={isEditing}
+                    parentKey="bankDetails"
+                  />
+                  <EditableField
+                    label="Bank Name"
+                    value={formData.bankDetails?.bankName}
+                    name="bankName"
+                    isEditing={isEditing}
+                    parentKey="bankDetails"
+                  />
+                </CCol>
+              </CRow>
               <hr />
               <h5>UPI Details</h5>
-              <EditableField
-                label="UPI ID"
-                value={formData.upiDetails?.upiId}
-                name="upiId"
-                isEditing={isEditing}
-                parentKey="upiDetails"
-              />
-              <EditableField
-                label="UPI Phone Number"
-                value={formData.upiDetails?.upiPhoneNumber}
-                name="upiPhoneNumber"
-                isEditing={isEditing}
-                parentKey="upiDetails"
-              />
-              {/* QR Code is read-only */}
+              <CRow>
+                <CCol md={6}>
+                  <EditableField
+                    label="UPI ID"
+                    value={formData.upiDetails?.upiId}
+                    name="upiId"
+                    isEditing={isEditing}
+                    parentKey="upiDetails"
+                  />
+                  <EditableField
+                    label="UPI Phone Number"
+                    value={formData.upiDetails?.upiPhoneNumber}
+                    name="upiPhoneNumber"
+                    isEditing={isEditing}
+                    parentKey="upiDetails"
+                  />
+                </CCol>
+                <CCol md={6}>
+                  <div className="mb-4 p-3 border rounded">
+                    <CFormLabel className="fw-bold fs-6 mb-3">UPI QR Code</CFormLabel>
+
+                    {isEditing && (
+                      <>
+                        {/* Action Selector */}
+                        <div className="mb-3 bg-light p-2 rounded">
+                          <small className="text-muted d-block mb-2">Choose action:</small>
+                          <div className="d-flex gap-2 flex-wrap">
+                            <CButton
+                              color={qrCodeAction === 'keep' ? 'success' : 'outline-secondary'}
+                              size="sm"
+                              onClick={() => handleQrCodeActionChange('keep')}
+                            >
+                              ✓ Keep Existing
+                            </CButton>
+                            <CButton
+                              color={qrCodeAction === 'replace' ? 'warning' : 'outline-secondary'}
+                              size="sm"
+                              onClick={() => handleQrCodeActionChange('replace')}
+                            >
+                              🔄 Replace
+                            </CButton>
+                          </div>
+                        </div>
+
+                        {/* File Upload */}
+                        {qrCodeAction === 'replace' && (
+                          <div className="mb-3">
+                            <CFormInput
+                              type="file"
+                              accept="image/*"
+                              onChange={handleQrCodeFileChange}
+                              className="mb-2"
+                            />
+                            <small className="text-muted d-block">
+                              ⚠️ Old QR code will be deleted and replaced
+                            </small>
+                            {qrCodePreview && (
+                              <CAlert color="success" className="mt-2 py-1 px-2 small mb-0">
+                                ✓ New QR code ready to upload
+                              </CAlert>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    <div className="mt-3">
+                      {/* Show new QR code preview */}
+                      {qrCodePreview && (
+                        <div className="mb-3">
+                          <small className="text-success fw-bold d-block mb-2">
+                            🔄 Will Replace With:
+                          </small>
+                          {renderPreviewImage(qrCodePreview, 'UPI QR Code (New)')}
+                        </div>
+                      )}
+
+                      {/* Show current QR code */}
+                      <div>
+                        <small className="text-muted fw-bold d-block mb-2">
+                          {qrCodeAction === 'replace' ? '❌ Will Be Deleted:' : 'Current QR Code:'}
+                        </small>
+                        {renderDocumentImage(
+                          formData.upiDetails?.qrCode,
+                          'UPI QR Code',
+                          qrCodeAction === 'replace',
+                        )}
+                      </div>
+
+                      {/* Summary Alert */}
+                      {qrCodeAction === 'replace' && (
+                        <CAlert color="warning" className="mt-3 py-2 px-3 small mb-0">
+                          <strong>Summary:</strong> Old QR code will be permanently deleted from S3
+                          and replaced with new upload
+                        </CAlert>
+                      )}
+                    </div>
+                  </div>
+                </CCol>
+              </CRow>
             </CCardBody>
           </CCard>
         </CCol>
