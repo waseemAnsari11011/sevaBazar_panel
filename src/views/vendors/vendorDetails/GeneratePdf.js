@@ -99,33 +99,30 @@ const loadCompanyLogo = async () => {
 const addHeader = (doc, title, logoData) => {
   const pageWidth = doc.internal.pageSize.width
 
-  // Header background
-  doc.setFillColor(41, 128, 185)
-  doc.rect(0, 0, pageWidth, 35, 'F')
+  // Header background - white background with bottom border
+  doc.setFillColor(255, 255, 255)
+  doc.rect(0, 0, pageWidth, 30, 'F')
 
-  // Add logo if available (left side)
+  // Add subtle bottom border
+  doc.setDrawColor(230, 230, 230)
+  doc.setLineWidth(0.5)
+  doc.line(0, 30, pageWidth, 30)
+
+  // Title on the left side
+  doc.setTextColor(0, 0, 0)
+  doc.setFontSize(18)
+  doc.setFont(undefined, 'bold')
+  doc.text(title, 14, 19)
+
+  // Add logo on the right side if available
   if (logoData) {
     try {
-      // Logo positioned on the left with better size
-      doc.addImage(logoData, 'PNG', 10, 8, 55, 20)
+      // Logo positioned on the right side
+      doc.addImage(logoData, 'PNG', pageWidth - 65, 8, 55, 16)
     } catch (error) {
       console.error('Error adding logo to header:', error)
     }
   }
-
-  // Title - positioned more to the left of center to balance with contact info
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(16)
-  doc.setFont(undefined, 'bold')
-  const titleX = logoData ? 75 : pageWidth / 2
-  doc.text(title, titleX, 20, { align: logoData ? 'left' : 'center' })
-
-  // Company contact info on the right - more compact
-  doc.setFontSize(7)
-  doc.setFont(undefined, 'normal')
-  doc.text('Phone: +91 XXX-XXX-XXXX', pageWidth - 10, 14, { align: 'right' })
-  doc.text('Address: Your Company Address', pageWidth - 10, 19, { align: 'right' })
-  doc.text('City, State - Pincode', pageWidth - 10, 24, { align: 'right' })
 
   // Reset colors
   doc.setTextColor(0, 0, 0)
@@ -140,14 +137,28 @@ const addHeader = (doc, title, logoData) => {
 const addFooter = (doc, pageNumber) => {
   const pageHeight = doc.internal.pageSize.height
   const pageWidth = doc.internal.pageSize.width
+
+  // Footer background - light gray
+  doc.setFillColor(220, 220, 220)
+  doc.rect(0, pageHeight - 20, pageWidth, 20, 'F')
+
+  // Footer text - centered, three lines
   doc.setFontSize(8)
-  doc.setTextColor(128, 128, 128)
-  doc.text(
-    `Generated on ${new Date().toLocaleString()} | Page ${pageNumber}`,
-    pageWidth / 2,
-    pageHeight - 10,
-    { align: 'center' },
-  )
+  doc.setTextColor(60, 60, 60)
+
+  // Line 1: Phone
+  doc.text('Phone : 8116341826', pageWidth / 2, pageHeight - 14, { align: 'center' })
+
+  // Line 2: Email
+  doc.text('Email : sevabazar.com@gmail.com', pageWidth / 2, pageHeight - 10, { align: 'center' })
+
+  // Line 3: Copyright
+  doc.text('All Copyright Reserved © 2024 Seva Bazar', pageWidth / 2, pageHeight - 6, {
+    align: 'center',
+  })
+
+  // Reset color
+  doc.setTextColor(0, 0, 0)
 }
 
 /**
@@ -203,12 +214,13 @@ const addKeyValue = (doc, key, value, x, y, maxWidth = 85) => {
  */
 const checkPageBreak = (doc, currentY, requiredSpace, pageNumber, logoData) => {
   const pageHeight = doc.internal.pageSize.height
-  if (currentY + requiredSpace > pageHeight - 20) {
+  if (currentY + requiredSpace > pageHeight - 25) {
+    // Changed from -20 to -25 to account for footer
     doc.addPage()
     pageNumber++
     addHeader(doc, 'Vendor Registration Details', logoData)
     addFooter(doc, pageNumber)
-    return { y: 40, pageNumber } // Start at 40 because header is 35px tall
+    return { y: 38, pageNumber } // Start at 38 below the 30px header
   }
   return { y: currentY, pageNumber }
 }
@@ -289,7 +301,7 @@ export const generateVendorPDF = async (vendor) => {
     }
 
     const doc = new jsPDF()
-    let yPos = 40 // Start lower because header is now 35px tall
+    let yPos = 38 // Start below header (30px) with some spacing
     let pageNumber = 1
 
     // Add header with logo
@@ -298,18 +310,42 @@ export const generateVendorPDF = async (vendor) => {
 
     // ========== BASIC INFORMATION ==========
     showProgress('Adding basic information...')
+
+    // Load selfie photo first for basic information section
+    showProgress('Loading selfie photo...')
+    const documents = vendor.documents || {}
+    let selfiePhotoData = null
+    if (documents.selfiePhoto) {
+      try {
+        selfiePhotoData = await getImageBase64(documents.selfiePhoto)
+      } catch (error) {
+        console.error('Failed to load selfie photo:', error)
+      }
+    }
+
     yPos = addSectionTitle(doc, 'Basic Information', yPos)
 
-    let leftHeight = addKeyValue(doc, 'Vendor ID', vendor._id, 14, yPos, 85)
-    addKeyValue(doc, 'Name', vendor.name, 105, yPos, 85)
+    // Add selfie photo on the right side
+    if (selfiePhotoData) {
+      addImage(doc, selfiePhotoData, 'Selfie Photo', 155, yPos, 40, 50)
+    }
+
+    let leftHeight = addKeyValue(doc, 'Vendor ID', vendor.vendorId, 14, yPos, 85)
+    yPos += Math.max(leftHeight, 6) + 2
+
+    leftHeight = addKeyValue(doc, 'Name', vendor.name, 14, yPos, 85)
     yPos += Math.max(leftHeight, 6) + 2
 
     leftHeight = addKeyValue(doc, 'Email', vendor.email, 14, yPos, 85)
-    addKeyValue(doc, 'Role', vendor.role, 105, yPos, 85)
+    yPos += Math.max(leftHeight, 6) + 2
+
+    leftHeight = addKeyValue(doc, 'Role', vendor.role, 14, yPos, 85)
     yPos += Math.max(leftHeight, 6) + 2
 
     leftHeight = addKeyValue(doc, 'Business Name', vendor.vendorInfo?.businessName, 14, yPos, 85)
-    addKeyValue(doc, 'Contact Number', vendor.vendorInfo?.contactNumber, 105, yPos, 85)
+    yPos += Math.max(leftHeight, 6) + 2
+
+    leftHeight = addKeyValue(doc, 'Contact Number', vendor.vendorInfo?.contactNumber, 14, yPos, 85)
     yPos += Math.max(leftHeight, 6) + 2
 
     leftHeight = addKeyValue(
@@ -320,8 +356,13 @@ export const generateVendorPDF = async (vendor) => {
       yPos,
       85,
     )
-    addKeyValue(doc, 'Category', vendor.category?.name, 105, yPos, 85)
+    yPos += Math.max(leftHeight, 6) + 2
+
+    leftHeight = addKeyValue(doc, 'Category', vendor.category?.name, 14, yPos, 85)
     yPos += Math.max(leftHeight, 6) + 4
+
+    // Ensure we're past the selfie photo before continuing
+    yPos = Math.max(yPos, addSectionTitle(doc, 'Basic Information', 38) + 58)
 
     // ========== LOCATION INFORMATION ==========
     const checkResult = checkPageBreak(doc, yPos, 40, pageNumber, logoData)
@@ -357,17 +398,6 @@ export const generateVendorPDF = async (vendor) => {
 
     yPos = addSectionTitle(doc, 'Account Status', yPos)
 
-    leftHeight = addKeyValue(
-      doc,
-      'Online Status',
-      vendor.isOnline ? 'Online' : 'Offline',
-      14,
-      yPos,
-      85,
-    )
-    addKeyValue(doc, 'Account Status', vendor.status, 105, yPos, 85)
-    yPos += Math.max(leftHeight, 6) + 2
-
     leftHeight = addKeyValue(doc, 'Restricted', vendor.isRestricted ? 'Yes' : 'No', 14, yPos, 85)
     addKeyValue(doc, 'Created At', new Date(vendor.createdAt).toLocaleString(), 105, yPos, 85)
     yPos += Math.max(leftHeight, 6) + 2
@@ -394,33 +424,24 @@ export const generateVendorPDF = async (vendor) => {
     }
     yPos += 2
 
-    // ========== UPI DETAILS ==========
-    const checkResult4 = checkPageBreak(doc, yPos, 25, pageNumber, logoData)
-    yPos = checkResult4.y
-    pageNumber = checkResult4.pageNumber
-
-    yPos = addSectionTitle(doc, 'UPI Details', yPos)
-
-    const upiDetails = vendor.upiDetails
-    if (upiDetails) {
-      leftHeight = addKeyValue(doc, 'UPI ID', upiDetails.upiId, 14, yPos, 85)
-      addKeyValue(doc, 'UPI Phone', upiDetails.upiPhoneNumber, 105, yPos, 85)
-      yPos += Math.max(leftHeight, 6) + 4
-    }
-
     // ========== DOCUMENTS WITH IMAGES ==========
+    // Add new page for documents
+    showProgress('Adding documents to PDF...')
+    doc.addPage()
+    pageNumber++
+    yPos = 38 // Start at 38 for new page
+    addHeader(doc, 'Vendor Registration Details', logoData)
+    addFooter(doc, pageNumber)
+
     showProgress('Loading images... This may take a moment.')
 
-    // Load all images with progress tracking
-    const documents = vendor.documents || {}
+    // Load all images with progress tracking (excluding selfie photo and UPI QR which are already loaded)
     const imageUrls = {
-      selfiePhoto: documents.selfiePhoto,
       aadharFront: documents.aadharFrontDocument,
       aadharBack: documents.aadharBackDocument,
       panCard: documents.panCardDocument,
       gstCert: documents.gstCertificate,
       fssaiCert: documents.fssaiCertificate,
-      qrCode: upiDetails?.qrCode,
     }
 
     // Load images with error handling
@@ -452,14 +473,6 @@ export const generateVendorPDF = async (vendor) => {
         }
       }
     }
-
-    // Add new page for documents
-    showProgress('Adding documents to PDF...')
-    doc.addPage()
-    pageNumber++
-    yPos = 40 // Start at 40 for new page
-    addHeader(doc, 'Vendor Registration Details', logoData)
-    addFooter(doc, pageNumber)
 
     yPos = addSectionTitle(doc, 'Uploaded Documents', yPos)
     yPos += 5
@@ -501,27 +514,19 @@ export const generateVendorPDF = async (vendor) => {
     doc.setFont(undefined, 'normal')
     yPos += 5
 
-    // Selfie Photo
+    // Aadhar Front and Back (selfie photo now in basic information)
     const checkResult8 = checkPageBreak(doc, yPos, 50, pageNumber, logoData)
     yPos = checkResult8.y
     pageNumber = checkResult8.pageNumber
-
-    addImage(doc, images.selfiePhoto, 'Selfie Photo', 14, yPos, 45, 40)
-    yPos += 48
-
-    // Aadhar Front and Back
-    const checkResult9 = checkPageBreak(doc, yPos, 50, pageNumber, logoData)
-    yPos = checkResult9.y
-    pageNumber = checkResult9.pageNumber
 
     addImage(doc, images.aadharFront, 'Aadhar Front', 14, yPos, 45, 40)
     addImage(doc, images.aadharBack, 'Aadhar Back', 105, yPos, 45, 40)
     yPos += 48
 
     // Business Documents
-    const checkResult10 = checkPageBreak(doc, yPos, 50, pageNumber, logoData)
-    yPos = checkResult10.y
-    pageNumber = checkResult10.pageNumber
+    const checkResult9 = checkPageBreak(doc, yPos, 50, pageNumber, logoData)
+    yPos = checkResult9.y
+    pageNumber = checkResult9.pageNumber
 
     doc.setFontSize(10)
     doc.setFont(undefined, 'bold')
@@ -530,35 +535,58 @@ export const generateVendorPDF = async (vendor) => {
     yPos += 5
 
     // PAN Card
-    const checkResult11 = checkPageBreak(doc, yPos, 50, pageNumber, logoData)
-    yPos = checkResult11.y
-    pageNumber = checkResult11.pageNumber
+    const checkResult10 = checkPageBreak(doc, yPos, 50, pageNumber, logoData)
+    yPos = checkResult10.y
+    pageNumber = checkResult10.pageNumber
 
     addImage(doc, images.panCard, 'PAN Card', 14, yPos, 45, 40)
     yPos += 48
 
     // GST and FSSAI
-    const checkResult12 = checkPageBreak(doc, yPos, 50, pageNumber, logoData)
-    yPos = checkResult12.y
-    pageNumber = checkResult12.pageNumber
+    const checkResult11 = checkPageBreak(doc, yPos, 50, pageNumber, logoData)
+    yPos = checkResult11.y
+    pageNumber = checkResult11.pageNumber
 
     addImage(doc, images.gstCert, 'GST Certificate', 14, yPos, 45, 40)
     addImage(doc, images.fssaiCert, 'FSSAI Certificate', 105, yPos, 45, 40)
     yPos += 48
 
-    // UPI QR Code
-    if (images.qrCode) {
-      const checkResult13 = checkPageBreak(doc, yPos, 50, pageNumber, logoData)
-      yPos = checkResult13.y
-      pageNumber = checkResult13.pageNumber
+    // ========== UPI DETAILS ==========
+    const checkResult12 = checkPageBreak(doc, yPos, 60, pageNumber, logoData)
+    yPos = checkResult12.y
+    pageNumber = checkResult12.pageNumber
 
-      doc.setFontSize(10)
-      doc.setFont(undefined, 'bold')
-      doc.text('UPI QR Code:', 14, yPos)
-      doc.setFont(undefined, 'normal')
-      yPos += 5
+    yPos = addSectionTitle(doc, 'UPI Details', yPos)
 
-      addImage(doc, images.qrCode, 'UPI QR Code', 14, yPos, 45, 40)
+    const upiDetails = vendor.upiDetails
+
+    // Load UPI QR Code for this section
+    showProgress('Loading UPI QR Code...')
+    let upiQrCodeData = null
+    if (upiDetails?.qrCode) {
+      try {
+        upiQrCodeData = await getImageBase64(upiDetails.qrCode)
+      } catch (error) {
+        console.error('Failed to load UPI QR Code:', error)
+      }
+    }
+
+    if (upiDetails) {
+      // Add UPI QR Code on the right side
+      if (upiQrCodeData) {
+        addImage(doc, upiQrCodeData, 'UPI QR Code', 140, yPos, 50, 50)
+      }
+
+      leftHeight = addKeyValue(doc, 'UPI ID', upiDetails.upiId, 14, yPos, 85)
+      yPos += Math.max(leftHeight, 6) + 2
+
+      leftHeight = addKeyValue(doc, 'UPI Phone', upiDetails.upiPhoneNumber, 14, yPos, 85)
+      yPos += Math.max(leftHeight, 6) + 4
+
+      // Ensure we're past the QR code before continuing
+      if (upiQrCodeData) {
+        yPos = Math.max(yPos, addSectionTitle(doc, 'UPI Details', checkResult12.y) + 58)
+      }
     }
 
     // Save the PDF
