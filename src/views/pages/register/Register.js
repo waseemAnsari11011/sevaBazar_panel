@@ -58,6 +58,7 @@ const Register = () => {
   const panCardInputRef = useRef(null)
   const selfiePhotoInputRef = useRef(null)
   const qrCodeInputRef = useRef(null)
+  const shopVideoInputRef = useRef(null) // <-- ADD THIS
   // --- NEW REFS ---
   const gstCertificateInputRef = useRef(null)
   const fssaiCertificateInputRef = useRef(null)
@@ -87,6 +88,8 @@ const Register = () => {
   // Change shopPhoto state to handle multiple files
   const [shopPhotos, setShopPhotos] = useState([])
   const [shopPhotoPreviews, setShopPhotoPreviews] = useState([])
+  const [shopVideos, setShopVideos] = useState([])
+  const [shopVideoPreviews, setShopVideoPreviews] = useState([])
   const [selfiePhoto, setSelfiePhoto] = useState(null)
   const [selfiePhotoPreview, setSelfiePhotoPreview] = useState(null)
   const [aadharFrontDocument, setAadharFrontDocument] = useState(null)
@@ -193,6 +196,13 @@ const Register = () => {
       showError('Could not get details for the selected address.')
     }
   }
+
+  useEffect(() => {
+    // Cleanup object URLs on component unmount
+    return () => {
+      shopVideoPreviews.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [])
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -336,6 +346,49 @@ const Register = () => {
     const newPreviews = [...shopPhotoPreviews]
     newPreviews.splice(index, 1)
     setShopPhotoPreviews(newPreviews)
+  }
+
+  const handleShopVideoUpload = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+
+    const newVideos = []
+    const newPreviews = []
+    const maxSize = 50 * 1024 * 1024 // 50MB limit per video (adjust as needed)
+
+    files.forEach((file) => {
+      if (!file.type.startsWith('video/')) {
+        showError(`File '${file.name}' is not a video and will be ignored.`)
+        return
+      }
+      if (file.size > maxSize) {
+        showError(`Video '${file.name}' is too large (>50MB) and will be ignored.`)
+        return
+      }
+      newVideos.push(file)
+      // Use createObjectURL for efficient video previews
+      newPreviews.push(URL.createObjectURL(file))
+    })
+
+    setShopVideos((prev) => [...prev, ...newVideos])
+    setShopVideoPreviews((prev) => [...prev, ...newPreviews])
+
+    if (shopVideoInputRef.current) {
+      shopVideoInputRef.current.value = ''
+    }
+  }
+
+  const removeShopVideo = (index) => {
+    // Revoke the object URL to free up memory
+    URL.revokeObjectURL(shopVideoPreviews[index])
+
+    const newVideos = [...shopVideos]
+    newVideos.splice(index, 1)
+    setShopVideos(newVideos)
+
+    const newPreviews = [...shopVideoPreviews]
+    newPreviews.splice(index, 1)
+    setShopVideoPreviews(newPreviews)
   }
 
   const handleAadharFrontUpload = (e) => {
@@ -515,6 +568,9 @@ const Register = () => {
         formData.append('placeId', businessAddress.value.place_id)
       shopPhotos.forEach((photo) => {
         formData.append('shopPhoto', photo)
+      })
+      shopVideos.forEach((video) => {
+        formData.append('shopVideo', video)
       })
       formData.append('selfiePhoto', selfiePhoto)
       if (documentType === 'aadhaar') {
@@ -922,6 +978,50 @@ const Register = () => {
                             color="danger"
                             size="sm"
                             onClick={() => removeShopPhoto(index)}
+                            style={{ position: 'absolute', top: '0', right: '0' }}
+                          >
+                            <CIcon icon={cilTrash} />
+                          </CButton>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/*shop video*/}
+                  <div className="mb-3">
+                    <CFormLabel>Shop Video (Optional)</CFormLabel>
+                    <div className="d-grid gap-2">
+                      <CButton
+                        color="primary"
+                        variant="outline"
+                        onClick={() => shopVideoInputRef.current?.click()}
+                      >
+                        <CIcon icon={cilCloudUpload} className="me-2" /> Upload Shop Videos
+                      </CButton>
+                      <CFormInput
+                        type="file"
+                        ref={shopVideoInputRef}
+                        accept="video/*"
+                        onChange={handleShopVideoUpload}
+                        style={{ display: 'none' }}
+                        multiple
+                      />
+                    </div>
+                    <CFormText className="text-muted">Max 50MB per video.</CFormText>
+                    <div className="mt-2 d-flex flex-wrap">
+                      {shopVideoPreviews.map((preview, index) => (
+                        <div key={index} className="m-1" style={{ position: 'relative' }}>
+                          <video
+                            src={preview}
+                            width="100"
+                            height="100"
+                            style={{ objectFit: 'cover', borderRadius: '5px' }}
+                            controls
+                          />
+                          <CButton
+                            color="danger"
+                            size="sm"
+                            onClick={() => removeShopVideo(index)}
                             style={{ position: 'absolute', top: '0', right: '0' }}
                           >
                             <CIcon icon={cilTrash} />

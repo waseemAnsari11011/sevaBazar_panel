@@ -147,7 +147,7 @@ const addFooter = (doc, pageNumber) => {
   doc.setTextColor(60, 60, 60)
 
   // Line 1: Phone
-  doc.text('Phone : 8116341826', pageWidth / 2, pageHeight - 14, { align: 'center' })
+  // doc.text('Phone : 8116341826', pageWidth / 2, pageHeight - 14, { align: 'center' })
 
   // Line 2: Email
   doc.text('Email : sevabazar.com@gmail.com', pageWidth / 2, pageHeight - 10, { align: 'center' })

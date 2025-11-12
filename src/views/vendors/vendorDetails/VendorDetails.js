@@ -41,6 +41,7 @@ const VendorDetails = () => {
   // NEW: State for document actions
   const [documentActions, setDocumentActions] = useState({
     shopPhoto: 'keep',
+    shopVideo: 'keep',
     selfiePhoto: 'keep',
     aadharFrontDocument: 'keep',
     aadharBackDocument: 'keep',
@@ -53,6 +54,7 @@ const VendorDetails = () => {
   // State for file uploads
   const [documentFiles, setDocumentFiles] = useState({
     shopPhoto: null,
+    shopVideo: null,
     selfiePhoto: null,
     aadharFrontDocument: null,
     aadharBackDocument: null,
@@ -65,6 +67,7 @@ const VendorDetails = () => {
   // State for image previews
   const [documentPreviews, setDocumentPreviews] = useState({
     shopPhoto: [],
+    shopVideo: [],
     selfiePhoto: null,
     aadharFrontDocument: null,
     aadharBackDocument: null,
@@ -166,7 +169,7 @@ const VendorDetails = () => {
 
   // Handle file input changes for documents
   const handleDocumentFileChange = (e, docType) => {
-    if (docType === 'shopPhoto') {
+    if (docType === 'shopPhoto' || docType === 'shopVideo') {
       const files = Array.from(e.target.files)
       if (files.length > 0) {
         setDocumentFiles((prev) => ({ ...prev, [docType]: files }))
@@ -240,10 +243,17 @@ const VendorDetails = () => {
         Object.keys(documentFiles).forEach((key) => {
           if (documentFiles[key]) {
             if (key === 'shopPhoto' && Array.isArray(documentFiles[key])) {
+              // Shop photos - append each with 'shopPhoto' fieldname
               documentFiles[key].forEach((file) => {
                 formDataToSend.append('shopPhoto', file)
               })
+            } else if (key === 'shopVideo' && Array.isArray(documentFiles[key])) {
+              // Shop videos - append each with 'shopVideo' fieldname
+              documentFiles[key].forEach((file) => {
+                formDataToSend.append('shopVideo', file)
+              })
             } else {
+              // Other single document files
               formDataToSend.append(key, documentFiles[key])
             }
           }
@@ -280,6 +290,7 @@ const VendorDetails = () => {
       // Reset everything
       setDocumentFiles({
         shopPhoto: null,
+        shopVideo: null,
         selfiePhoto: null,
         aadharFrontDocument: null,
         aadharBackDocument: null,
@@ -290,6 +301,7 @@ const VendorDetails = () => {
       setQrCodeFile(null)
       setDocumentActions({
         shopPhoto: 'keep',
+        shopVideo: 'keep',
         selfiePhoto: 'keep',
         aadharFrontDocument: 'keep',
         aadharBackDocument: 'keep',
@@ -313,6 +325,7 @@ const VendorDetails = () => {
 
       setDocumentPreviews({
         shopPhoto: [],
+        shopVideo: [],
         selfiePhoto: null,
         aadharFrontDocument: null,
         aadharBackDocument: null,
@@ -376,6 +389,50 @@ const VendorDetails = () => {
     )
   }
 
+  const renderDocumentVideo = (url, altText, willBeDeleted = false) => {
+    if (!url) return <p className="text-muted">Not Provided</p>
+    return (
+      <div className="position-relative d-inline-block">
+        <video
+          src={url}
+          alt={altText}
+          width={150}
+          height={150}
+          className={`mb-2 me-2 ${willBeDeleted ? 'opacity-50 border border-danger border-2' : ''}`}
+          controls
+        />
+        {willBeDeleted && (
+          <CBadge
+            color="danger"
+            className="position-absolute"
+            style={{ top: '5px', right: '10px' }}
+          >
+            Will Delete
+          </CBadge>
+        )}
+      </div>
+    )
+  }
+
+  const renderPreviewVideo = (url, altText) => {
+    if (!url) return null
+    return (
+      <div className="position-relative d-inline-block">
+        <video
+          src={url}
+          alt={altText}
+          width={150}
+          height={150}
+          className="mb-2 me-2 border border-success border-3"
+          controls
+        />
+        <CBadge color="success" className="position-absolute" style={{ top: '5px', right: '10px' }}>
+          New
+        </CBadge>
+      </div>
+    )
+  }
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
     return new Date(dateString).toLocaleString()
@@ -387,6 +444,8 @@ const VendorDetails = () => {
     const hasNewUpload = isArray
       ? documentPreviews[docType]?.length > 0
       : documentPreviews[docType] !== null
+
+    const isVideo = docType === 'shopVideo'
 
     return (
       <div className="mb-4 p-3 border rounded">
@@ -429,7 +488,7 @@ const VendorDetails = () => {
               <div className="mb-3">
                 <CFormInput
                   type="file"
-                  accept="image/*,application/pdf"
+                  accept={isVideo ? 'video/*' : 'image/*,application/pdf'}
                   onChange={(e) => handleDocumentFileChange(e, docType)}
                   className="mb-2"
                   multiple={isArray && action === 'add'}
@@ -462,10 +521,14 @@ const VendorDetails = () => {
                 {isArray
                   ? documentPreviews[docType].map((preview, idx) => (
                       <div key={idx}>
-                        {renderPreviewImage(preview, `${label} ${idx + 1} (New)`)}
+                        {isVideo
+                          ? renderPreviewVideo(preview, `${label} ${idx + 1} (New)`)
+                          : renderPreviewImage(preview, `${label} ${idx + 1} (New)`)}
                       </div>
                     ))
-                  : renderPreviewImage(documentPreviews[docType], `${label} (New)`)}
+                  : isVideo
+                    ? renderPreviewVideo(documentPreviews[docType], `${label} (New)`)
+                    : renderPreviewImage(documentPreviews[docType], `${label} (New)`)}
               </div>
             </div>
           )}
@@ -482,14 +545,18 @@ const VendorDetails = () => {
             <div className="d-flex gap-2 flex-wrap">
               {isArray ? (
                 url && url.length > 0 ? (
-                  url.map((photoUrl, idx) => (
+                  url.map((itemUrl, idx) => (
                     <div key={idx}>
-                      {renderDocumentImage(photoUrl, `${label} ${idx + 1}`, action === 'replace')}
+                      {isVideo
+                        ? renderDocumentVideo(itemUrl, `${label} ${idx + 1}`, action === 'replace')
+                        : renderDocumentImage(itemUrl, `${label} ${idx + 1}`, action === 'replace')}
                     </div>
                   ))
                 ) : (
                   <p className="text-muted">Not Provided</p>
                 )
+              ) : isVideo ? (
+                renderDocumentVideo(url, label, action === 'replace')
               ) : (
                 renderDocumentImage(url, label, action === 'replace')
               )}
@@ -608,6 +675,7 @@ const VendorDetails = () => {
                         // Reset everything
                         setDocumentFiles({
                           shopPhoto: null,
+                          shopVideo: null,
                           selfiePhoto: null,
                           aadharFrontDocument: null,
                           aadharBackDocument: null,
@@ -618,6 +686,7 @@ const VendorDetails = () => {
                         setQrCodeFile(null)
                         setDocumentActions({
                           shopPhoto: 'keep',
+                          shopVideo: 'keep',
                           selfiePhoto: 'keep',
                           aadharFrontDocument: 'keep',
                           aadharBackDocument: 'keep',
@@ -641,6 +710,7 @@ const VendorDetails = () => {
 
                         setDocumentPreviews({
                           shopPhoto: [],
+                          shopVideo: [],
                           selfiePhoto: null,
                           aadharFrontDocument: null,
                           aadharBackDocument: null,
@@ -900,6 +970,14 @@ const VendorDetails = () => {
                     label="Shop Photos"
                     docType="shopPhoto"
                     url={formData.documents?.shopPhoto}
+                    isArray={true}
+                  />
+                </CCol>
+                <CCol md={6}>
+                  <EditableDocumentField
+                    label="Shop Videos"
+                    docType="shopVideo"
+                    url={formData.documents?.shopVideo}
                     isArray={true}
                   />
                 </CCol>
