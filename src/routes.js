@@ -7,6 +7,7 @@ const Typography = React.lazy(() => import('./views/theme/typography/Typography'
 //products
 const Products = React.lazy(() => import('./views/products/products/CreateProducts'))
 const Categories = React.lazy(() => import('./views/products/categories/CreateCategories'))
+const VendorCategories = React.lazy(() => import('./views/products/vendorCategories/VendorCategories'))
 
 //order
 const ChatOrders = React.lazy(() => import('./views/orders/orders/chat/ChatOrders'))
@@ -129,6 +130,7 @@ const routes = [
   { path: '/widgets', name: 'Widgets', element: Widgets },
   { path: '/products/products-create', name: 'Create Products', element: Products },
   { path: '/products/categories-create', name: 'Create Categories', element: Categories },
+  { path: '/products/my-categories', name: 'My Categories', element: VendorCategories },
   { path: '/orders/all-orders', name: 'Orders', element: AllOrders },
   { path: '/orders/chat-orders', name: 'Orders', element: ChatOrders },
   { path: '/orders/refund', name: 'Refund', element: Refund },

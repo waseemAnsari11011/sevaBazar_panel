@@ -26,7 +26,6 @@ import { cilPencil } from '@coreui/icons'
 import { useSelector, useDispatch } from 'react-redux'
 
 // API Imports
-import getAllCategories from '../../../api/category/getAllCategory'
 import getAllProducts from '../../../api/product/getAllProduct'
 import getProductById from '../../../api/product/getSingleProduct'
 import createProduct from '../../../api/product/createProduct'
@@ -34,6 +33,7 @@ import updateProductDetails from '../../../api/product/updateProductDetails'
 import updateVariation from '../../../api/product/updateVariation'
 import addVariationApi from '../../../api/product/addVariationApi'
 import toggleVisibilityApi from '../../../api/product/toggleProductVisibility'
+import axiosInstance from '../../../utils/axiosConfig'
 // import deleteVariation from '../../../api/product/deleteVariation'; // Keep for future use
 
 // Component Imports
@@ -67,7 +67,7 @@ const Products = () => {
     setForm({
       name: '',
       description: '',
-      category: '',
+      vendorProductCategory: '',
       vendor,
       tags: [],
       isReturnAllowed: false,
@@ -88,13 +88,13 @@ const Products = () => {
     if (!vendor) return
     dispatch(startLoading())
     try {
-      const [productsData, categoriesData] = await Promise.all([
+      const [productsData, categoriesResponse] = await Promise.all([
         getAllProducts(vendor),
-        getAllCategories(),
+        axiosInstance.get(`/vendor-product-category/vendor/${vendor}`),
       ])
       setProducts(productsData)
       setFilteredProducts(productsData)
-      setCategories(categoriesData)
+      setCategories(categoriesResponse.data.categories)
     } catch (error) {
       console.error('Failed to fetch data:', error)
       setAlert({ visible: true, message: 'Failed to load data.', color: 'danger' })
@@ -144,7 +144,7 @@ const Products = () => {
       setForm({
         name: product.name,
         description: product.description,
-        category: product.category._id,
+        vendorProductCategory: product.vendorProductCategory?._id || '',
         vendor: product.vendor,
         tags: product.tags,
         isReturnAllowed: product.isReturnAllowed,
@@ -271,7 +271,7 @@ const Products = () => {
                     />
                   </CTableDataCell>
                   <CTableDataCell>{product.name}</CTableDataCell>
-                  <CTableDataCell>{product.category?.name}</CTableDataCell>
+                  <CTableDataCell>{product.vendorProductCategory?.name || 'Uncategorized'}</CTableDataCell>
                   <CTableDataCell>₹{product.variations[0]?.price || 'N/A'}</CTableDataCell>
                   <CTableDataCell>
                     {product.variations.reduce((sum, v) => sum + (v.quantity || 0), 0)}
@@ -319,9 +319,9 @@ const Products = () => {
             />
             <CFormSelect
               className="mb-3"
-              label="Category"
-              name="category"
-              value={form.category || ''}
+              label="Product Category"
+              name="vendorProductCategory"
+              value={form.vendorProductCategory || ''}
               onChange={handleChange}
             >
               <option value="">Select Category</option>

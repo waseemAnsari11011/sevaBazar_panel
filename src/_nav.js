@@ -23,7 +23,7 @@ import {
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle, CBadge } from '@coreui/react'
 
-const Navigation = (neworderCount, newChatOrderCount) => {
+const Navigation = (neworderCount, newChatOrderCount, userRole) => {
   const _nav = [
     {
       component: CNavItem,
@@ -46,10 +46,19 @@ const Navigation = (neworderCount, newChatOrderCount) => {
           name: 'Products',
           to: '/products/products-create',
         },
+        ...(userRole === 'admin'
+          ? [
+              {
+                component: CNavItem,
+                name: 'Categories',
+                to: '/products/categories-create',
+              },
+            ]
+          : []),
         {
           component: CNavItem,
-          name: 'Categories',
-          to: '/products/categories-create',
+          name: 'My Categories',
+          to: '/products/my-categories',
         },
       ],
     },

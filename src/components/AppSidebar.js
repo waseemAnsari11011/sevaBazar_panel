@@ -18,12 +18,14 @@ const AppSidebar = () => {
   const sidebarShow = useSelector((state) => state.app.sidebarShow)
   const neworderCount = useSelector((state) => state.orders.neworderCount)
   const newChatOrderCount = useSelector((state) => state.newChatOrders.newChatOrderCount)
+  const user = useSelector((state) => state.app.user)
+  const userRole = user ? user.role : null
 
-  const [navItems, setNavItems] = useState(Navigation(neworderCount, newChatOrderCount))
+  const [navItems, setNavItems] = useState(Navigation(neworderCount, newChatOrderCount, userRole))
 
   useEffect(() => {
-    setNavItems(Navigation(neworderCount, newChatOrderCount))
-  }, [neworderCount, newChatOrderCount])
+    setNavItems(Navigation(neworderCount, newChatOrderCount, userRole))
+  }, [neworderCount, newChatOrderCount, userRole])
 
   console.log('navItems-->', navItems)
 
