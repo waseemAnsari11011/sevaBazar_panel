@@ -156,7 +156,7 @@ const AllOrders = () => {
                   <CTableHeaderCell style={{ minWidth: '50px' }}>Customer</CTableHeaderCell>
                   <CTableHeaderCell style={{ minWidth: '120px' }}>Number</CTableHeaderCell>
                   <CTableHeaderCell style={{ minWidth: '200px' }}>Shipping Address</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '130px' }}>Products</CTableHeaderCell>
+                  <CTableHeaderCell style={{ minWidth: '300px' }}>Products</CTableHeaderCell>
                   <CTableHeaderCell style={{ minWidth: '300px' }}>Vendor</CTableHeaderCell>
                   <CTableHeaderCell style={{ minWidth: '200px' }}>Breakdown</CTableHeaderCell>
                   <CTableHeaderCell style={{ minWidth: '120px' }}>Total</CTableHeaderCell>
@@ -174,16 +174,36 @@ const AllOrders = () => {
                     <CTableDataCell>{order.shippingAddress.phone ? `${order.shippingAddress.phone}, ${order.customer.contactNumber}` : order.customer.contactNumber}</CTableDataCell>
                     <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
                     <CTableDataCell>
-                      {order.vendors.products.map((product, idx) => (
-                        <div key={idx}>
-                          {product.product.name}
-                          {product.orderedVariations?.map((variation, varIdx) => (
-                            <div key={varIdx}>
-                              {variation.attributes.selected} : {variation.attributes.value}
-                            </div>
-                          ))}
+                      {order.vendors.products.map((product, idx) => {
+                         // Try to get image from the first ordered variation, fallback to product image (if available in future)
+                         // Note: The current Order model structure might not have populated product images directly in the 'product' field 
+                         // if it's just an ObjectId reference, but 'getOrdersByVendor' likely populates it.
+                         // Assuming 'product.product' is populated and might have images, or 'product.orderedVariations' has images.
+                         const variationImage = product.orderedVariations?.[0]?.images?.[0];
+                         // Fallback placeholder if no image found
+                         const imageUrl = variationImage || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSM4sEG5g9GFcy4SUxbzWNzUTf1jMISTDZrTw&s";
+
+                        return (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '12px' }}>
+                          <img 
+                            src={imageUrl} 
+                            alt={product.product.name} 
+                            style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', marginRight: '12px', border: '1px solid #eee' }} 
+                          />
+                          <div>
+                            <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{product.product.name}</div>
+                            {product.orderedVariations?.map((variation, varIdx) => (
+                              <div key={varIdx} style={{ fontSize: '13px' }}>
+                                {variation.attributes?.map((attr, attrIdx) => (
+                                  <div key={attrIdx} style={{ marginBottom: '2px' }}>
+                                    <span style={{ opacity: 0.7, textTransform: 'capitalize', fontWeight: '500' }}>{attr.name}:</span> <span style={{ fontWeight: '500' }}>{attr.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
+                      )})}
                     </CTableDataCell>
                     <CTableDataCell>
                       <div>
