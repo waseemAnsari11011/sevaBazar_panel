@@ -19,13 +19,19 @@ const createProduct = async (productData) => {
   // REFACTORED: Variation handling remains, but is now the only source of images
   const variationsForJson = []
   productData.variations?.forEach((variation, variationIndex) => {
-    const { images, ...variationWithoutImages } = variation
+    const { images, videos, ...variationWithoutImages } = variation
     variationsForJson.push(variationWithoutImages)
 
     images?.forEach((image, imageIndex) => {
       // New images are File objects
       if (image instanceof File) {
         formData.append(`variationImage_${variationIndex}_${imageIndex}`, image)
+      }
+    })
+
+    videos?.forEach((video, videoIndex) => {
+      if (video instanceof File) {
+        formData.append(`variationVideo_${variationIndex}_${videoIndex}`, video)
       }
     })
   })

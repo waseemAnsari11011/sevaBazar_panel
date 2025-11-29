@@ -21,6 +21,18 @@ const updateVariation = async (productId, variationId, variationData) => {
 
   formData.append('existingImages', JSON.stringify(existingImages))
 
+  // Separate existing video URLs from new video files
+  const existingVideos = []
+  variationData.videos?.forEach((video) => {
+    if (typeof video === 'string') {
+      existingVideos.push(video)
+    } else {
+      formData.append('newVideos', video)
+    }
+  })
+
+  formData.append('existingVideos', JSON.stringify(existingVideos))
+
   try {
     const response = await axiosInstance.put(
       `/products/${productId}/variations/${variationId}`,

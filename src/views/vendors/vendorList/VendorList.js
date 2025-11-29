@@ -14,8 +14,9 @@ import {
   CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilBan, cilLockUnlocked, cilNotes } from '@coreui/icons'
+import { cilBan, cilLockUnlocked, cilNotes, cilTrash } from '@coreui/icons'
 import { restrictVendor, unRestrictVendor } from '../../../api/vendor/restrictUnrestrict'
+import deleteVendor from '../../../api/vendor/deleteVendor'
 import { startLoading, stopLoading } from '../../../redux/actions/defaultActions'
 
 const VendorList = () => {
@@ -85,6 +86,19 @@ const VendorList = () => {
     }
   }
 
+  const handleDelete = async (vendorId) => {
+    try {
+      await deleteVendor(vendorId)
+      setAlertMessage('Vendor Deleted Successfully')
+      setAlertVisible(true)
+      fetchVendors()
+    } catch (error) {
+      console.error(error)
+      setAlertMessage('Failed to delete vendor')
+      setAlertVisible(true)
+    }
+  }
+
   return (
     <div style={{ overflowX: 'auto' }}>
       {alertVisible && (
@@ -126,6 +140,7 @@ const VendorList = () => {
                       size="sm"
                       onClick={() => handleRestrict(vendor._id)}
                       title="Restrict Vendor"
+                      className="me-2"
                     >
                       <CIcon icon={cilBan} />
                     </CButton>
@@ -135,8 +150,23 @@ const VendorList = () => {
                       size="sm"
                       onClick={() => handleUnRestrict(vendor._id)}
                       title="Un-restrict Vendor"
+                      className="me-2"
                     >
                       <CIcon icon={cilLockUnlocked} />
+                    </CButton>
+                  )}
+                  {userRole === 'admin' && (
+                    <CButton
+                      color="danger"
+                      size="sm"
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this vendor?')) {
+                          handleDelete(vendor._id)
+                        }
+                      }}
+                      title="Delete Vendor"
+                    >
+                      <CIcon icon={cilTrash} />
                     </CButton>
                   )}
                 </div>

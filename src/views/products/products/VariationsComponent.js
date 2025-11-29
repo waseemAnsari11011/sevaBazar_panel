@@ -7,10 +7,10 @@ import CIcon from '@coreui/icons-react'
 import { cilCloudUpload, cilPlus, cilTrash } from '@coreui/icons'
 
 // Dropzone component remains the same
-const Dropzone = ({ onDrop }) => {
+const Dropzone = ({ onDrop, accept, label }) => {
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: { 'image/*': [] },
+    accept: accept || { 'image/*': [] },
     multiple: true,
   })
   return (
@@ -18,7 +18,7 @@ const Dropzone = ({ onDrop }) => {
       <input {...getInputProps()} />
       <CButton color="primary" variant="outline">
         <CIcon icon={cilCloudUpload} size="lg" className="me-2" />
-        Upload Images
+        {label || 'Upload Images'}
       </CButton>
     </div>
   )
@@ -75,6 +75,25 @@ const VariationsComponent = ({ variations, setVariations }) => {
     [setVariations],
   )
 
+  const handleDropVariationVideos = useCallback(
+    (index, acceptedFiles) => {
+      setVariations((prev) =>
+        prev.map((v, i) => (i === index ? { ...v, videos: [...(v.videos || []), ...acceptedFiles] } : v)),
+      )
+    },
+    [setVariations],
+  )
+
+  const removeVideoVariation = (variationIndex, videoIndex) => {
+    setVariations((prev) =>
+      prev.map((v, i) =>
+        i === variationIndex
+          ? { ...v, videos: v.videos.filter((_, vidIdx) => vidIdx !== videoIndex) }
+          : v,
+      ),
+    )
+  }
+
   const removeImageVariation = (variationIndex, imageIndex) => {
     setVariations((prev) =>
       prev.map((v, i) =>
@@ -89,7 +108,7 @@ const VariationsComponent = ({ variations, setVariations }) => {
   const addVariation = () => {
     setVariations((prev) => [
       ...prev,
-      { attributes: [{ name: '', value: '' }], price: '', discount: '', quantity: '', images: [] },
+      { attributes: [{ name: '', value: '' }], price: '', discount: '', quantity: '', images: [], videos: [] },
     ])
   }
 
@@ -192,6 +211,33 @@ const VariationsComponent = ({ variations, setVariations }) => {
                   type="button"
                   className="close-button"
                   onClick={() => removeImageVariation(vIndex, imgIndex)}
+                >
+                  ✖
+                </button>
+              </div>
+            ))}
+          </div>
+
+
+          <label className="form-label mt-3">Variation Videos (Max 2)</label>
+          <Dropzone
+            onDrop={(files) => handleDropVariationVideos(vIndex, files)}
+            accept={{ 'video/*': [] }}
+            label="Upload Videos"
+          />
+          <div className="actions-cell mt-2">
+            {variation.videos?.map((file, vidIndex) => (
+              <div key={vidIndex} className="image-wrapper" style={{ width: '150px', height: '100px' }}>
+                <video
+                  className="img"
+                  src={typeof file === 'string' ? file : URL.createObjectURL(file)}
+                  controls
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={() => removeVideoVariation(vIndex, vidIndex)}
                 >
                   ✖
                 </button>

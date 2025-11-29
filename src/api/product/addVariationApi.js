@@ -26,6 +26,15 @@ const addVariationApi = async (productId, variationData) => {
     })
   }
 
+  // Append new video files.
+  if (variationData.videos && variationData.videos.length > 0) {
+    variationData.videos.forEach((video) => {
+      if (video instanceof File) {
+        formData.append('newVideos', video)
+      }
+    })
+  }
+
   try {
     // Use axiosInstance, which has the base URL and auth headers pre-configured.
     const response = await axiosInstance.post(`/products/${productId}/variations`, formData, {

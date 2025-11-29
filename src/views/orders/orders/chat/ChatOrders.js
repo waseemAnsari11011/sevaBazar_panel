@@ -74,9 +74,21 @@ const ChatOrders = () => {
     }
   };
 
+  const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
-    setFilteredOrders(orders);
-  }, [orders]);
+    if (!searchTerm) {
+      setFilteredOrders(orders);
+    } else {
+      const lowerCaseTerm = searchTerm.toLowerCase();
+      const filtered = orders.filter(order => 
+        (order.customer?.name && order.customer.name.toLowerCase().includes(lowerCaseTerm)) ||
+        (order.shortId && order.shortId.toLowerCase().includes(lowerCaseTerm)) ||
+        (order.orderId && order.orderId.toLowerCase().includes(lowerCaseTerm))
+      );
+      setFilteredOrders(filtered);
+    }
+  }, [searchTerm, orders]);
 
   useEffect(() => {
     fetchOrders();
@@ -136,6 +148,21 @@ const ChatOrders = () => {
       )}
       <div>
         <DateTimeFilter orders={orders} setFilteredOrders={setFilteredOrders} />
+        <div style={{ margin: '10px 0' }}>
+          <input
+            type="text"
+            placeholder="Search by Customer Name or Order ID"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              padding: '8px',
+              width: '100%',
+              maxWidth: '300px',
+              borderRadius: '4px',
+              border: '1px solid #ccc'
+            }}
+          />
+        </div>
       </div>
       <div style={{ position: 'relative', overflowX: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: "14px", }}>

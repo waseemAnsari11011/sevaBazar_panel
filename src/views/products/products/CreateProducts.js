@@ -22,7 +22,7 @@ import {
   CFormSwitch,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPencil } from '@coreui/icons'
+import { cilPencil, cilTrash } from '@coreui/icons'
 import { useSelector, useDispatch } from 'react-redux'
 
 // API Imports
@@ -34,6 +34,7 @@ import updateVariation from '../../../api/product/updateVariation'
 import addVariationApi from '../../../api/product/addVariationApi'
 import toggleVisibilityApi from '../../../api/product/toggleProductVisibility'
 import axiosInstance from '../../../utils/axiosConfig'
+import deleteProduct from '../../../api/product/deleteProduct'
 // import deleteVariation from '../../../api/product/deleteVariation'; // Keep for future use
 
 // Component Imports
@@ -220,6 +221,23 @@ const Products = () => {
     }
   }
 
+  // Handle product deletion
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      dispatch(startLoading())
+      try {
+        await deleteProduct(id)
+        setAlert({ visible: true, message: 'Product deleted successfully!', color: 'success' })
+        await fetchData() // Refresh the list
+      } catch (error) {
+        console.error('Failed to delete product:', error)
+        setAlert({ visible: true, message: 'Failed to delete product.', color: 'danger' })
+      } finally {
+        dispatch(stopLoading())
+      }
+    }
+  }
+
   // Main component render
   return (
     <div>
@@ -283,8 +301,11 @@ const Products = () => {
                     />
                   </CTableDataCell>
                   <CTableDataCell>
-                    <CButton color="warning" size="sm" onClick={() => handleEdit(product._id)}>
+                    <CButton color="warning" size="sm" onClick={() => handleEdit(product._id)} className="me-2">
                       <CIcon icon={cilPencil} />
+                    </CButton>
+                    <CButton color="danger" size="sm" onClick={() => handleDelete(product._id)}>
+                      <CIcon icon={cilTrash} />
                     </CButton>
                   </CTableDataCell>
                 </CTableRow>
