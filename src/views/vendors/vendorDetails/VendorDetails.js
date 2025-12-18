@@ -17,9 +17,11 @@ import {
   CFormLabel,
   CFormSelect,
   CFormSwitch,
+  CFormText,
 } from '@coreui/react'
 import { getVendorById } from '../../../api/vendor/getVendorById'
 import { updateVendorAsAdmin } from '../../../api/vendor/updateVendorAsAdmin'
+import getAllCategories from '../../../api/category/getAllCategory'
 import CIcon from '@coreui/icons-react'
 import { cilPencil, cilCloudUpload, cilCheckCircle, cilCloudDownload } from '@coreui/icons'
 import { generateVendorPDF } from './GeneratePdf'
@@ -30,6 +32,7 @@ const VendorDetails = () => {
   // State for data
   const [vendor, setVendor] = useState(null)
   const [formData, setFormData] = useState(null)
+  const [categories, setCategories] = useState([])
 
   // State for UI
   const [loading, setLoading] = useState(true)
@@ -76,6 +79,9 @@ const VendorDetails = () => {
     fssaiCertificate: null,
   })
   const [qrCodePreview, setQrCodePreview] = useState(null)
+  
+  // NEW: Local state for Pincode input to allow free typing including commas
+  const [pincodeInput, setPincodeInput] = useState('')
 
   // --- Data Fetching and Role Check ---
   useEffect(() => {
@@ -95,6 +101,8 @@ const VendorDetails = () => {
         if (response && response.vendor) {
           setVendor(response.vendor)
           setFormData(response.vendor)
+          // Initialize pincode input
+          setPincodeInput(response.vendor.location?.address?.postalCodes?.join(', ') || '')
         } else {
           setError('Vendor not found.')
         }
@@ -106,7 +114,17 @@ const VendorDetails = () => {
       }
     }
 
+    const fetchCategories = async () => {
+      try {
+        const categoriesData = await getAllCategories()
+        setCategories(categoriesData)
+      } catch (err) {
+        console.error('Error fetching categories:', err)
+      }
+    }
+
     fetchVendorDetails()
+    fetchCategories()
   }, [vendorId])
 
   // --- Change Handlers ---
@@ -138,6 +156,25 @@ const VendorDetails = () => {
         },
       },
     }))
+  }
+
+  const handlePincodesChange = (e) => {
+    const { value } = e.target;
+    setPincodeInput(value); // Update local input state immediately
+
+    // Parse and update formData
+    const pincodesArray = value.split(',').map(p => p.trim()).filter(p => p !== '');
+    
+    setFormData((prev) => ({
+        ...prev,
+        location: {
+            ...prev.location,
+            address: {
+                ...prev.location.address,
+                postalCodes: pincodesArray
+            }
+        }
+    }));
   }
 
   const handleSwitchChange = (e, name) => {
@@ -217,6 +254,9 @@ const VendorDetails = () => {
         formDataToSend.append('email', formData.email)
         formDataToSend.append('isOnline', formData.isOnline)
         formDataToSend.append('status', formData.status)
+        if (formData.category) {
+          formDataToSend.append('category', formData.category._id || formData.category)
+        }
 
         // Add nested objects as JSON strings
         formDataToSend.append('vendorInfo', JSON.stringify(formData.vendorInfo))
@@ -278,6 +318,7 @@ const VendorDetails = () => {
           upiDetails: formData.upiDetails,
           isOnline: formData.isOnline,
           status: formData.status,
+          category: formData.category._id || formData.category,
         }
 
         const updatedVendor = await updateVendorAsAdmin(vendorId, updatePayload)
@@ -644,6 +685,8 @@ const VendorDetails = () => {
     .filter(Boolean)
     .join(', ')
 
+  const pincodesString = formData.location?.address?.postalCodes?.join(', ') || '';
+
   return (
     <CForm onSubmit={handleSubmit}>
       <CRow>
@@ -671,6 +714,8 @@ const VendorDetails = () => {
                         setIsEditing(false)
                         setFormData(vendor)
                         setError('')
+                        // Reset pincode input
+                        setPincodeInput(vendor.location?.address?.postalCodes?.join(', ') || '')
 
                         // Reset everything
                         setDocumentFiles({
@@ -819,9 +864,27 @@ const VendorDetails = () => {
                     isEditing={isEditing}
                     parentKey="vendorInfo"
                   />
-                  <p>
-                    <strong>Category:</strong> {vendor.category?.name || 'N/A'}
-                  </p>
+                  <div className="mb-3">
+                    <CFormLabel>
+                      <strong>Category</strong>
+                    </CFormLabel>
+                    {isEditing ? (
+                      <CFormSelect
+                        name="category"
+                        value={formData.category?._id || formData.category}
+                        onChange={handleSimpleChange}
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map((cat) => (
+                          <option key={cat._id} value={cat._id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </CFormSelect>
+                    ) : (
+                      <p>{vendor.category?.name || 'N/A'}</p>
+                    )}
+                  </div>
                 </CCol>
               </CRow>
               <hr />
@@ -858,6 +921,30 @@ const VendorDetails = () => {
                     isEditing={isEditing}
                     grandparentKey="location"
                   />
+                  <h5 className="mt-4">Location Details</h5>
+                  <div className="mb-3">
+                    <CFormLabel><strong>Full Address</strong></CFormLabel>
+                    <p>{fullAddress || 'N/A'}</p>
+                  </div>
+
+                  <div className="mb-3">
+                    <CFormLabel htmlFor="postalCodes"><strong>Serviceable Pincodes</strong></CFormLabel>
+                    {isEditing ? (
+                        <>
+                            <CFormInput
+                                type="text"
+                                id="postalCodes"
+                                value={pincodeInput}
+                                onChange={handlePincodesChange}
+                                placeholder="e.g. 110001, 110002"
+                            />
+                            <CFormText>Enter pincodes separated by commas.</CFormText>
+                        </>
+                    ) : (
+                        <p>{pincodesString || 'N/A'}</p>
+                    )}
+                  </div>
+
                   <EditableField
                     label="State"
                     value={formData.location?.address?.state}
@@ -874,10 +961,6 @@ const VendorDetails = () => {
                   />
                   <p>
                     <strong>Full Address:</strong> {fullAddress || 'N/A'}
-                  </p>
-                  <p>
-                    <strong>Serviceable Pincodes:</strong>{' '}
-                    {vendor.location?.address?.postalCodes?.join(', ') || 'N/A'}
                   </p>
                 </CCol>
               </CRow>

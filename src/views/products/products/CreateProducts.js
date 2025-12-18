@@ -35,7 +35,7 @@ import addVariationApi from '../../../api/product/addVariationApi'
 import toggleVisibilityApi from '../../../api/product/toggleProductVisibility'
 import axiosInstance from '../../../utils/axiosConfig'
 import deleteProduct from '../../../api/product/deleteProduct'
-// import deleteVariation from '../../../api/product/deleteVariation'; // Keep for future use
+import deleteVariation from '../../../api/product/deleteVariation';
 
 // Component Imports
 import VariationsComponent from './VariationsComponent'
@@ -72,8 +72,9 @@ const Products = () => {
       vendor,
       tags: [],
       isReturnAllowed: false,
+      isReturnAllowed: false,
       isVisible: true,
-      arrivalDuration: '',
+      isOffered: false,
     })
     // **CORRECTED:** Initializes variations with the correct nested attribute structure
     setVariations([
@@ -150,7 +151,9 @@ const Products = () => {
         tags: product.tags,
         isReturnAllowed: product.isReturnAllowed,
         isVisible: product.isVisible,
-        arrivalDuration: product.arrivalDuration || '',
+        isReturnAllowed: product.isReturnAllowed,
+        isVisible: product.isVisible,
+        isOffered: product.isOffered,
       })
       setTags(product.tags)
 
@@ -183,11 +186,15 @@ const Products = () => {
         const initialVarIds = new Set(initialVariations.map((v) => v._id))
         const addedVariations = variations.filter((v) => !v._id)
         const updatedVariations = variations.filter((v) => v._id && initialVarIds.has(v._id))
-        // Add logic for deleted variations if needed in the future
+        
+        // Identify deleted variations
+        const currentVarIds = new Set(variations.map((v) => v._id).filter(Boolean))
+        const deletedVariations = initialVariations.filter((v) => !currentVarIds.has(v._id))
 
         const promises = [
           ...addedVariations.map((v) => addVariationApi(editingProduct._id, v)),
           ...updatedVariations.map((v) => updateVariation(editingProduct._id, v._id, v)),
+          ...deletedVariations.map((v) => deleteVariation(editingProduct._id, v._id)),
         ]
 
         await Promise.all(promises)
@@ -353,13 +360,7 @@ const Products = () => {
               ))}
             </CFormSelect>
             <Tags tags={tags} setTags={setTags} />
-            <CFormInput
-              className="mb-3"
-              label="Estimated Arrival Duration (e.g., 5-7 days)"
-              name="arrivalDuration"
-              value={form.arrivalDuration || ''}
-              onChange={handleChange}
-            />
+            <Tags tags={tags} setTags={setTags} />
             <CFormSwitch
               className="my-3"
               label="Hand-to-Hand Return Allowed"
@@ -372,6 +373,13 @@ const Products = () => {
               label="Visible to Customers"
               name="isVisible"
               checked={form.isVisible || false}
+              onChange={handleChange}
+            />
+            <CFormSwitch
+              className="mb-3"
+              label="Add to Offers"
+              name="isOffered"
+              checked={form.isOffered || false}
               onChange={handleChange}
             />
             <VariationsComponent variations={variations} setVariations={setVariations} />

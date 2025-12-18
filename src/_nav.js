@@ -167,7 +167,7 @@ const Navigation = (neworderCount, newChatOrderCount, userRole) => {
       items: [
         {
           component: CNavItem,
-          name: 'Vendor Visibility',
+          name: 'Delivery Settings',
           to: '/settings/distance',
         },
       ],

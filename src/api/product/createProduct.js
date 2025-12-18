@@ -6,7 +6,7 @@ const createProduct = async (productData) => {
   // ADDED: Append core product details
   formData.append('name', productData.name)
   formData.append('description', productData.description)
-  formData.append('category', productData.category)
+  formData.append('vendorProductCategory', productData.vendorProductCategory)
   formData.append('vendor', productData.vendor)
   formData.append('isReturnAllowed', productData.isReturnAllowed)
   formData.append('isVisible', productData.isVisible) // ADDED
