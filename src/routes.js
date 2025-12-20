@@ -8,6 +8,7 @@ const Typography = React.lazy(() => import('./views/theme/typography/Typography'
 const Products = React.lazy(() => import('./views/products/products/CreateProducts'))
 const Categories = React.lazy(() => import('./views/products/categories/CreateCategories'))
 const VendorCategories = React.lazy(() => import('./views/products/vendorCategories/VendorCategories'))
+const ProductForm = React.lazy(() => import('./views/products/products/ProductForm'))
 
 //order
 const ChatOrders = React.lazy(() => import('./views/orders/orders/chat/ChatOrders'))
@@ -24,6 +25,7 @@ const VendorList = React.lazy(() => import('./views/vendors/vendorList/VendorLis
 //help-center
 const Faqs = React.lazy(() => import('./views/helpCenter/faqs/Faqs'))
 const ContactAdmin = React.lazy(() => import('./views/helpCenter/contactAdmin/ContactAdmin'))
+const Tickets = React.lazy(() => import('./views/helpCenter/tickets/Tickets'))
 
 //Banner
 const Banner = React.lazy(() => import('./views/banner/Banner'))
@@ -129,6 +131,8 @@ const routes = [
   { path: '/notifications/toasts', name: 'Toasts', element: Toasts },
   { path: '/widgets', name: 'Widgets', element: Widgets },
   { path: '/products/products-create', name: 'Create Products', element: Products },
+  { path: '/products/add-product', name: 'Add Product', element: ProductForm },
+  { path: '/products/edit-product/:id', name: 'Edit Product', element: ProductForm },
   { path: '/products/categories-create', name: 'Create Categories', element: Categories },
   { path: '/products/my-categories', name: 'My Categories', element: VendorCategories },
   { path: '/orders/all-orders', name: 'Orders', element: AllOrders },
@@ -138,6 +142,7 @@ const routes = [
   { path: '/customer/list', name: 'customer-list', element: CustomerList },
   { path: '/faqs', name: 'Help Center', element: Faqs },
   { path: '/contact', name: 'Contact', element: ContactAdmin },
+  { path: '/tickets', name: 'Support Tickets', element: Tickets },
   { path: '/vendor/list', name: 'vendors-list', element: VendorList },
   { path: '/vendors/details/:vendorId', name: 'Vendor Details', element: VendorDetails },
   { path: '/banner/add-banner', name: 'Add Banner', element: Banner },

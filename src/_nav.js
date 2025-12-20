@@ -149,6 +149,12 @@ const Navigation = (neworderCount, newChatOrderCount, userRole) => {
     },
     {
       component: CNavItem,
+      name: 'Support Tickets',
+      to: '/tickets',
+      icon: <CIcon icon={cilSpeech} customClassName="nav-icon" />,
+    },
+    {
+      component: CNavItem,
       name: 'Help Center',
       to: '/faqs',
       icon: <CIcon icon={cilInfo} customClassName="nav-icon" />,
