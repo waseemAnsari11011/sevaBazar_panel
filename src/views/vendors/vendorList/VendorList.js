@@ -110,6 +110,7 @@ const VendorList = () => {
         <CTableHead>
           <CTableRow>
             <CTableHeaderCell>Name</CTableHeaderCell>
+            <CTableHeaderCell>Dukaan Name</CTableHeaderCell>
             <CTableHeaderCell>Email</CTableHeaderCell>
             <CTableHeaderCell>Phone</CTableHeaderCell>
             <CTableHeaderCell>Serviceable Pincodes</CTableHeaderCell>
@@ -120,6 +121,7 @@ const VendorList = () => {
           {vendors.map((vendor) => (
             <CTableRow key={vendor._id}>
               <CTableDataCell>{vendor.name || 'N/A'}</CTableDataCell>
+              <CTableDataCell>{vendor.vendorInfo?.businessName || 'N/A'}</CTableDataCell>
               <CTableDataCell>{vendor.email}</CTableDataCell>
               <CTableDataCell>{vendor.vendorInfo.contactNumber}</CTableDataCell>
               <CTableDataCell>
