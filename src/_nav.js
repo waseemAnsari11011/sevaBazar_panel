@@ -48,12 +48,12 @@ const Navigation = (neworderCount, newChatOrderCount, userRole) => {
         },
         ...(userRole === 'admin'
           ? [
-              {
-                component: CNavItem,
-                name: 'Categories',
-                to: '/products/categories-create',
-              },
-            ]
+            {
+              component: CNavItem,
+              name: 'Categories',
+              to: '/products/categories-create',
+            },
+          ]
           : []),
         {
           component: CNavItem,
@@ -111,6 +111,16 @@ const Navigation = (neworderCount, newChatOrderCount, userRole) => {
         },
       ],
     },
+    ...(userRole === 'admin'
+      ? [
+        {
+          component: CNavItem,
+          name: 'Driver Management',
+          to: '/drivers',
+          icon: <CIcon icon={cilGroup} customClassName="nav-icon" />,
+        },
+      ]
+      : []),
     {
       component: CNavGroup,
       name: 'Customers',

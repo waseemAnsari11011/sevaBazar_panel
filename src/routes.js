@@ -21,6 +21,10 @@ const CustomerList = React.lazy(() => import('./views/customers/customerList/Cus
 
 //vendor
 const VendorList = React.lazy(() => import('./views/vendors/vendorList/VendorList'))
+const VendorDetails = React.lazy(() => import('./views/vendors/vendorDetails/VendorDetails'))
+
+//driver
+const DriverManagement = React.lazy(() => import('./views/drivers/DriverManagement'))
 
 //help-center
 const Faqs = React.lazy(() => import('./views/helpCenter/faqs/Faqs'))
@@ -77,8 +81,6 @@ const Modals = React.lazy(() => import('./views/notifications/modals/Modals'))
 const Toasts = React.lazy(() => import('./views/notifications/toasts/Toasts'))
 
 const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
-
-const VendorDetails = React.lazy(() => import('./views/vendors/vendorDetails/VendorDetails'))
 
 const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/ForgotPassword'))
 const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
@@ -145,6 +147,7 @@ const routes = [
   { path: '/tickets', name: 'Support Tickets', element: Tickets },
   { path: '/vendor/list', name: 'vendors-list', element: VendorList },
   { path: '/vendors/details/:vendorId', name: 'Vendor Details', element: VendorDetails },
+  { path: '/drivers', name: 'Driver Management', element: DriverManagement },
   { path: '/banner/add-banner', name: 'Add Banner', element: Banner },
   { path: '/profile', name: 'Profile', element: Profile },
   { path: '/forgot-password', name: 'Forgot Password', element: ForgotPassword },
