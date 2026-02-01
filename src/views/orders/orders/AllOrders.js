@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import './order.css' // Import custom CSS file
 
@@ -32,6 +33,7 @@ import { getFormattedDate, handleDownloadInvoice } from './utils';
 import { cilCloudDownload, cilChevronLeft, cilChevronRight, cilChevronCircleRightAlt } from '@coreui/icons';
 
 const AllOrders = () => {
+  const navigate = useNavigate();
   const tableContainerRef = useRef(null);
 
   const scrollLeft = () => {
@@ -151,18 +153,13 @@ const AllOrders = () => {
             <CTable striped hover>
               <CTableHead>
                 <CTableRow>
-                  <CTableHeaderCell style={{ minWidth: '100px' }}>Order ID</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '200px' }}>Date & Time</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '50px' }}>Customer</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '120px' }}>Number</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '200px' }}>Shipping Address</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '300px' }}>Products</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '300px' }}>Vendor</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '200px' }}>Breakdown</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '120px' }}>Total</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '150px' }}>Payment Status</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '170px' }}>Status</CTableHeaderCell>
-                  <CTableHeaderCell style={{ minWidth: '10px' }}>Invoice</CTableHeaderCell>
+                  <CTableHeaderCell>Order ID</CTableHeaderCell>
+                  <CTableHeaderCell>Date & Time</CTableHeaderCell>
+                  <CTableHeaderCell>Customer</CTableHeaderCell>
+                  <CTableHeaderCell>Driver</CTableHeaderCell>
+                  <CTableHeaderCell>Products</CTableHeaderCell>
+                  <CTableHeaderCell>Vendor</CTableHeaderCell>
+                  <CTableHeaderCell>Invoice</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
               <CTableBody>
@@ -170,40 +167,73 @@ const AllOrders = () => {
                   <CTableRow key={index}>
                     <CTableDataCell>{order.shortId}</CTableDataCell>
                     <CTableDataCell>{getFormattedDate(order.createdAt)}</CTableDataCell>
-                    <CTableDataCell>{order.shippingAddress.name ? order.shippingAddress.name : order.customer.name}</CTableDataCell>
-                    <CTableDataCell>{order.shippingAddress.phone ? `${order.shippingAddress.phone}, ${order.customer.contactNumber}` : order.customer.contactNumber}</CTableDataCell>
-                    <CTableDataCell>{order.shippingAddress.address}</CTableDataCell>
+
+                    {/* Customer Details */}
+                    <CTableDataCell>
+                      <div>
+                        <strong>Name:</strong> {order.shippingAddress.name || order.customer.name}
+                      </div>
+                      <div>
+                        <strong>Phone:</strong> {order.shippingAddress.phone || order.customer.contactNumber}
+                      </div>
+                      <div>
+                        <strong>Address:</strong> {order.shippingAddress.address}
+                      </div>
+                      <div>
+                        <strong>City:</strong> {order.shippingAddress.city}, {order.shippingAddress.postalCode}
+                      </div>
+                    </CTableDataCell>
+
+                    {/* Driver Details */}
+                    <CTableDataCell>
+                      {order.driver ? (
+                        <>
+                          <div>
+                            <strong>Name:</strong> {order.driver.personalDetails?.name}
+                          </div>
+                          <div>
+                            <strong>Phone:</strong> {order.driver.personalDetails?.phone}
+                          </div>
+                          <div>
+                            <strong>Vehicle:</strong> {order.driver.vehicleDetails?.plateNumber} ({order.driver.vehicleDetails?.type})
+                          </div>
+                        </>
+                      ) : (
+                        <span className="text-muted">Not Assigned</span>
+                      )}
+                    </CTableDataCell>
                     <CTableDataCell>
                       {order.vendors.products.map((product, idx) => {
-                         // Try to get image from the first ordered variation, fallback to product image (if available in future)
-                         // Note: The current Order model structure might not have populated product images directly in the 'product' field 
-                         // if it's just an ObjectId reference, but 'getOrdersByVendor' likely populates it.
-                         // Assuming 'product.product' is populated and might have images, or 'product.orderedVariations' has images.
-                         const variationImage = product.orderedVariations?.[0]?.images?.[0];
-                         // Fallback placeholder if no image found
-                         const imageUrl = variationImage || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSM4sEG5g9GFcy4SUxbzWNzUTf1jMISTDZrTw&s";
+                        // Try to get image from the first ordered variation, fallback to product image (if available in future)
+                        // Note: The current Order model structure might not have populated product images directly in the 'product' field 
+                        // if it's just an ObjectId reference, but 'getOrdersByVendor' likely populates it.
+                        // Assuming 'product.product' is populated and might have images, or 'product.orderedVariations' has images.
+                        const variationImage = product.orderedVariations?.[0]?.images?.[0];
+                        // Fallback placeholder if no image found
+                        const imageUrl = variationImage || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSM4sEG5g9GFcy4SUxbzWNzUTf1jMISTDZrTw&s";
 
                         return (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '12px' }}>
-                          <img 
-                            src={imageUrl} 
-                            alt={product.product.name} 
-                            style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', marginRight: '12px', border: '1px solid #eee' }} 
-                          />
-                          <div>
-                            <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{product.product.name}</div>
-                            {product.orderedVariations?.map((variation, varIdx) => (
-                              <div key={varIdx} style={{ fontSize: '13px' }}>
-                                {variation.attributes?.map((attr, attrIdx) => (
-                                  <div key={attrIdx} style={{ marginBottom: '2px' }}>
-                                    <span style={{ opacity: 0.7, textTransform: 'capitalize', fontWeight: '500' }}>{attr.name}:</span> <span style={{ fontWeight: '500' }}>{attr.value}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ))}
+                          <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '12px' }}>
+                            <img
+                              src={imageUrl}
+                              alt={product.product.name}
+                              style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', marginRight: '12px', border: '1px solid #eee' }}
+                            />
+                            <div>
+                              <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{product.product.name}</div>
+                              {product.orderedVariations?.map((variation, varIdx) => (
+                                <div key={varIdx} style={{ fontSize: '13px' }}>
+                                  {variation.attributes?.map((attr, attrIdx) => (
+                                    <div key={attrIdx} style={{ marginBottom: '2px' }}>
+                                      <span style={{ opacity: 0.7, textTransform: 'capitalize', fontWeight: '500' }}>{attr.name}:</span> <span style={{ fontWeight: '500' }}>{attr.value}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )})}
+                        )
+                      })}
                     </CTableDataCell>
                     <CTableDataCell>
                       <div>
@@ -223,62 +253,20 @@ const AllOrders = () => {
                       </div>
                     </CTableDataCell>
                     <CTableDataCell>
-                      {order.vendors.products.map((product, idx) => {
-                        const actualPrice = product.price;
-                        const discountPercentage = product.discount;
-                        const discountAmount = (actualPrice * discountPercentage) / 100;
-                        const discountedPrice = (actualPrice - discountAmount) * product.quantity;
-                        return (
-                          <div key={idx}>
-                            {product.quantity} x ₹{actualPrice.toFixed(2)} - {discountPercentage}% = ₹{discountedPrice.toFixed(2)}
-                          </div>
-                        );
-                      })}
-                    </CTableDataCell>
-                    <CTableDataCell>
-                      ₹{order.vendors.products.reduce((total, product) => {
-                        const totalAmount = product.totalAmount;
-                        return total + totalAmount;
-                      }, 0).toFixed(2)}+ ₹20
-                    </CTableDataCell>
-                    <CTableDataCell>
-                      {order.razorpay_payment_id ? (
-                        <CFormSelect
-                          value={order.paymentStatus}
-                          onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
-                          disabled
-                        >
-                          <option value="Paid">Paid</option>
-                          <option value="Unpaid">Unpaid</option>
-                        </CFormSelect>
-                      ) : (
-                        <CFormSelect
-                          value={order.paymentStatus}
-                          onChange={(e) => handlePaymentStatusChange(order.orderId, e.target.value)}
-                        >
-                          <option value="Paid">Paid</option>
-                          <option value="Unpaid">Unpaid</option>
-                        </CFormSelect>
-                      )}
-                    </CTableDataCell>
-                    <CTableDataCell>
-                      <CFormSelect
-                        value={order.vendors.orderStatus}
-                        onChange={(e) => handleStatusChange(order.orderId, order.vendors.vendor._id, e.target.value)}
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Processing">Processing</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Delivered">Delivered</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </CFormSelect>
-                    </CTableDataCell>
-                    <CTableDataCell>
                       <CButton
                         color="warning"
                         onClick={async () => await handleDownloadInvoice(order)}
                         style={{ cursor: 'pointer' }}
-                      >                        <CIcon icon={cilCloudDownload} />
+                      >
+                        <CIcon icon={cilCloudDownload} />
+                      </CButton>
+                      <CButton
+                        color="info"
+                        className="ms-2 text-white"
+                        onClick={() => navigate(`/orders/order-details/${order._id}`)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        View Detail
                       </CButton>
                     </CTableDataCell>
                   </CTableRow>
@@ -297,7 +285,7 @@ const AllOrders = () => {
 
 
 
-    </div>
+    </div >
   );
 };
 

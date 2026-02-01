@@ -13,6 +13,7 @@ const ProductForm = React.lazy(() => import('./views/products/products/ProductFo
 //order
 const ChatOrders = React.lazy(() => import('./views/orders/orders/chat/ChatOrders'))
 const AllOrders = React.lazy(() => import('./views/orders/orders/AllOrders'))
+const OrderDetails = React.lazy(() => import('./views/orders/orders/OrderDetails'))
 const Refund = React.lazy(() => import('./views/orders/refund/Refund'))
 
 //customer
@@ -138,6 +139,7 @@ const routes = [
   { path: '/products/categories-create', name: 'Create Categories', element: Categories },
   { path: '/products/my-categories', name: 'My Categories', element: VendorCategories },
   { path: '/orders/all-orders', name: 'Orders', element: AllOrders },
+  { path: '/orders/order-details/:orderId', name: 'Order Details', element: OrderDetails },
   { path: '/orders/chat-orders', name: 'Orders', element: ChatOrders },
   { path: '/orders/refund', name: 'Refund', element: Refund },
   { path: '/customer-inquiries', name: 'Inquires', element: CustomerInquiry },
