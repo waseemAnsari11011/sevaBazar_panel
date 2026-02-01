@@ -148,25 +148,24 @@ const OrderDetails = () => {
                 </CCardBody>
             </CCard>
 
-            {/* SECTION 3: DRIVER DETAILS (Visible to all, but content varies by role) */}
-            {order.driver ? (
-                <CCard className="mb-4">
-                    <CCardHeader><strong>Driver Details</strong></CCardHeader>
-                    <CCardBody>
-                        <CRow>
-                            <CCol md={6}>
-                                <p><strong>Name:</strong> {order.driver.personalDetails?.name}</p>
-                                <p><strong>Phone:</strong> {order.driver.personalDetails?.phone}</p>
-                                <p><strong>Vehicle:</strong> {order.driver.vehicleDetails?.plateNumber} ({order.driver.vehicleDetails?.type})</p>
-                            </CCol>
-                            <CCol md={6}>
-                                {/* Driver Earning */}
-                                <div className={isAdmin ? "mb-3 border-bottom pb-2" : "mb-3"}>
-                                    <h6>Driver Earning</h6>
-                                    <p><strong>Amount:</strong> ₹{order.driverDeliveryFee?.totalFee || 0}</p>
-                                    <p>Status: <CBadge color={getStatusColor(order.driverEarningStatus)}>{order.driverEarningStatus || 'Pending'}</CBadge></p>
-
-                                    {isAdmin && (
+            {/* SECTION 3: DRIVER DETAILS (Admin Only) */}
+            {isAdmin && (
+                order.driver ? (
+                    <CCard className="mb-4">
+                        <CCardHeader><strong>Driver Details</strong></CCardHeader>
+                        <CCardBody>
+                            <CRow>
+                                <CCol md={6}>
+                                    <p><strong>Name:</strong> {order.driver.personalDetails?.name}</p>
+                                    <p><strong>Phone:</strong> {order.driver.personalDetails?.phone}</p>
+                                    <p><strong>Vehicle:</strong> {order.driver.vehicleDetails?.plateNumber} ({order.driver.vehicleDetails?.type})</p>
+                                </CCol>
+                                <CCol md={6}>
+                                    {/* Driver Earning */}
+                                    <div className="mb-3 border-bottom pb-2">
+                                        <h6>Driver Earning</h6>
+                                        <p><strong>Amount:</strong> ₹{order.driverDeliveryFee?.totalFee || 0}</p>
+                                        <p>Status: <CBadge color={getStatusColor(order.driverEarningStatus)}>{order.driverEarningStatus || 'Pending'}</CBadge></p>
                                         <CFormSelect
                                             value={order.driverEarningStatus || 'Pending'}
                                             onChange={(e) => handlePaymentStatusChange('driverEarning', e.target.value)}
@@ -176,11 +175,9 @@ const OrderDetails = () => {
                                             <option value="Pending">Pending</option>
                                             <option value="Paid">Paid</option>
                                         </CFormSelect>
-                                    )}
-                                </div>
+                                    </div>
 
-                                {/* Floating Cash (Admin Only) */}
-                                {isAdmin && (
+                                    {/* Floating Cash */}
                                     <div>
                                         <h6>Floating Cash (COD Collected)</h6>
                                         <p><strong>Amount to Submit:</strong> ₹{order.floatingCashAmount || 0}</p>
@@ -198,13 +195,11 @@ const OrderDetails = () => {
                                             Marking this as 'Paid' will deduct ₹{order.floatingCashAmount || 0} from Driver's floating debt.
                                         </small>
                                     </div>
-                                )}
-                            </CCol>
-                        </CRow>
-                    </CCardBody>
-                </CCard>
-            ) : (
-                isAdmin && (
+                                </CCol>
+                            </CRow>
+                        </CCardBody>
+                    </CCard>
+                ) : (
                     <CCard className="mb-4">
                         <CCardHeader><strong>Driver Details</strong></CCardHeader>
                         <CCardBody>No Driver Assigned</CCardBody>
