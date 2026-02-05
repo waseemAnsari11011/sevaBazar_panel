@@ -61,7 +61,7 @@ export const updateChatOrderAmountAndStatus = (chatOrderId, totalAmount) => asyn
 export const updateChatOrderStatus = (chatOrderId, newStatus) => async (dispatch) => {
     dispatch(updateChatOrderRequest());
     try {
-        const response = await axiosInstance.put(`/chat-order/status/${chatOrderId}/vendor/`, {newStatus} );
+        const response = await axiosInstance.put(`/chat-order/status/${chatOrderId}/vendor/`, { newStatus });
         dispatch(updateChatOrderSuccess(response.data.data));
     } catch (error) {
         dispatch(updateChatOrderFailure(error.response.data.message));
@@ -72,7 +72,7 @@ export const updateChatPaymentStatusManually = (orderId, newStatus) => async (di
     console.log("updateChatPaymentStatusManually")
     dispatch(updateChatOrderRequest());
     try {
-        const response = await axiosInstance.post(`/chat-verify-payment`, {orderId, newStatus });
+        const response = await axiosInstance.post(`/chat-verify-payment`, { orderId, newStatus });
         dispatch(updateChatOrderSuccess(response.data.data));
     } catch (error) {
         dispatch(updateChatOrderFailure(error.response.data.message));

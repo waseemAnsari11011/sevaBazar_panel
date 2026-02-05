@@ -150,61 +150,68 @@ const OrderDetails = () => {
 
             {/* SECTION 3: DRIVER DETAILS (Admin Only) */}
             {isAdmin && (
-                order.driver ? (
-                    <CCard className="mb-4">
-                        <CCardHeader><strong>Driver Details</strong></CCardHeader>
-                        <CCardBody>
-                            <CRow>
-                                <CCol md={6}>
-                                    <p><strong>Name:</strong> {order.driver.personalDetails?.name}</p>
-                                    <p><strong>Phone:</strong> {order.driver.personalDetails?.phone}</p>
-                                    <p><strong>Vehicle:</strong> {order.driver.vehicleDetails?.plateNumber} ({order.driver.vehicleDetails?.type})</p>
-                                </CCol>
-                                <CCol md={6}>
-                                    {/* Driver Earning */}
-                                    <div className="mb-3 border-bottom pb-2">
-                                        <h6>Driver Earning</h6>
-                                        <p><strong>Amount:</strong> ₹{order.driverDeliveryFee?.totalFee || 0}</p>
-                                        <p>Status: <CBadge color={getStatusColor(order.driverEarningStatus)}>{order.driverEarningStatus || 'Pending'}</CBadge></p>
-                                        <CFormSelect
-                                            value={order.driverEarningStatus || 'Pending'}
-                                            onChange={(e) => handlePaymentStatusChange('driverEarning', e.target.value)}
-                                            size="sm"
-                                            style={{ maxWidth: 150 }}
-                                        >
-                                            <option value="Pending">Pending</option>
-                                            <option value="Paid">Paid</option>
-                                        </CFormSelect>
-                                    </div>
+                (() => {
+                    const driverObj = order.driverId || order.driver;
+                    return driverObj ? (
+                        <CCard className="mb-4">
+                            <CCardHeader><strong>Driver Details</strong></CCardHeader>
+                            <CCardBody>
+                                <CRow>
+                                    <CCol md={6}>
+                                        <p><strong>Name:</strong> {driverObj.personalDetails?.name}</p>
+                                        <p><strong>Phone:</strong> {driverObj.personalDetails?.phone}</p>
+                                        <p><strong>Vehicle:</strong> {driverObj.vehicleDetails?.plateNumber} ({driverObj.vehicleDetails?.type})</p>
+                                    </CCol>
+                                    <CCol md={6}>
+                                        {/* Driver Earning */}
+                                        <div className="mb-3 border-bottom pb-2">
+                                            <h6>Driver Earning</h6>
+                                            <p><strong>Amount:</strong> ₹{order.deliveredAt ? (order.driverDeliveryFee?.totalFee || 0) : 0}</p>
+                                            <p>Status: <CBadge color={order.deliveredAt ? getStatusColor(order.driverEarningStatus) : 'info'}>
+                                                {order.deliveredAt ? (order.driverEarningStatus || 'Pending') : 'Ongoing (Pending Delivery)'}
+                                            </CBadge></p>
+                                            <CFormSelect
+                                                value={order.driverEarningStatus || 'Pending'}
+                                                onChange={(e) => handlePaymentStatusChange('driverEarning', e.target.value)}
+                                                size="sm"
+                                                style={{ maxWidth: 150 }}
+                                            >
+                                                <option value="Pending">Pending</option>
+                                                <option value="Paid">Paid</option>
+                                            </CFormSelect>
+                                        </div>
 
-                                    {/* Floating Cash */}
-                                    <div>
-                                        <h6>Floating Cash (COD Collected)</h6>
-                                        <p><strong>Amount to Submit:</strong> ₹{order.floatingCashAmount || 0}</p>
-                                        <p>Status: <CBadge color={getStatusColor(order.floatingCashStatus)}>{order.floatingCashStatus || 'Pending'}</CBadge></p>
-                                        <CFormSelect
-                                            value={order.floatingCashStatus || 'Pending'}
-                                            onChange={(e) => handlePaymentStatusChange('floatingCash', e.target.value)}
-                                            size="sm"
-                                            style={{ maxWidth: 150 }}
-                                        >
-                                            <option value="Pending">Pending</option>
-                                            <option value="Paid">Paid</option>
-                                        </CFormSelect>
-                                        <small className="text-muted d-block mt-1">
-                                            Marking this as 'Paid' will deduct ₹{order.floatingCashAmount || 0} from Driver's floating debt.
-                                        </small>
-                                    </div>
-                                </CCol>
-                            </CRow>
-                        </CCardBody>
-                    </CCard>
-                ) : (
-                    <CCard className="mb-4">
-                        <CCardHeader><strong>Driver Details</strong></CCardHeader>
-                        <CCardBody>No Driver Assigned</CCardBody>
-                    </CCard>
-                )
+                                        {/* Floating Cash */}
+                                        <div>
+                                            <h6>Floating Cash (COD Collected)</h6>
+                                            <p><strong>Amount to Submit:</strong> ₹{order.floatingCashAmount || 0}</p>
+                                            <p>Status: <CBadge color={order.deliveredAt ? getStatusColor(order.floatingCashStatus) : 'info'}>
+                                                {order.deliveredAt ? (order.floatingCashStatus || 'Pending') : 'Awaiting Collection'}
+                                            </CBadge></p>
+                                            <CFormSelect
+                                                value={order.floatingCashStatus || 'Pending'}
+                                                onChange={(e) => handlePaymentStatusChange('floatingCash', e.target.value)}
+                                                size="sm"
+                                                style={{ maxWidth: 150 }}
+                                            >
+                                                <option value="Pending">Pending</option>
+                                                <option value="Paid">Paid</option>
+                                            </CFormSelect>
+                                            <small className="text-muted d-block mt-1">
+                                                Marking this as 'Paid' will deduct ₹{order.floatingCashAmount || 0} from Driver's floating debt.
+                                            </small>
+                                        </div>
+                                    </CCol>
+                                </CRow>
+                            </CCardBody>
+                        </CCard>
+                    ) : (
+                        <CCard className="mb-4">
+                            <CCardHeader><strong>Driver Details</strong></CCardHeader>
+                            <CCardBody>No Driver Assigned</CCardBody>
+                        </CCard>
+                    );
+                })()
             )}
 
         </div>
