@@ -1,1 +1,17 @@
 // Here you can add other styles
+.sidebar-nav {
+    .nav-group-items {
+
+        /* Standard highlight on hover */
+        .nav-link:hover {
+            background-color: var(--cui-sidebar-nav-link-hover-bg) !important;
+            color: var(--cui-sidebar-nav-link-hover-color) !important;
+        }
+
+        /* Let the active state show standard highlight */
+        .nav-link.active {
+            background-color: var(--cui-sidebar-nav-link-active-bg) !important;
+            color: var(--cui-sidebar-nav-link-active-color) !important;
+        }
+    }
+}

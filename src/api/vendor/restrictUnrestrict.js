@@ -42,3 +42,26 @@ export async function unRestrictVendor(vendorId) {
     console.error(error.response?.data?.message || 'Server error.')
   }
 }
+
+export async function unblockVendor(vendorId) {
+  const token = localStorage.getItem('token')
+
+  try {
+    const response = await axiosInstance.put(
+      `/vendors/admin/unblock/${vendorId}`,
+      {},
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    )
+
+    console.log('Vendor unblocked:', response.data)
+    return response.data
+  } catch (error) {
+    console.error(error.response?.data?.message || 'Server error.')
+    throw error
+  }
+}

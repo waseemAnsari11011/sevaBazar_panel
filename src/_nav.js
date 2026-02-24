@@ -109,15 +109,37 @@ const Navigation = (neworderCount, newChatOrderCount, userRole) => {
           name: 'Vendors List',
           to: '/vendor/list',
         },
+        {
+          component: CNavItem,
+          name: 'Vendor Earnings',
+          to: '/vendor/earnings',
+        },
       ],
     },
     ...(userRole === 'admin'
       ? [
         {
-          component: CNavItem,
-          name: 'Driver Management',
+          component: CNavGroup,
+          name: 'Drivers',
           to: '/drivers',
           icon: <CIcon icon={cilGroup} customClassName="nav-icon" />,
+          items: [
+            {
+              component: CNavItem,
+              name: 'Drivers List',
+              to: '/drivers/list',
+            },
+            {
+              component: CNavItem,
+              name: 'Add Driver',
+              to: '/drivers/create',
+            },
+            {
+              component: CNavItem,
+              name: 'Driver Earnings',
+              to: '/drivers/earnings',
+            },
+          ],
         },
       ]
       : []),
@@ -158,10 +180,26 @@ const Navigation = (neworderCount, newChatOrderCount, userRole) => {
       icon: <CIcon icon={cilSpeech} customClassName="nav-icon" />,
     },
     {
-      component: CNavItem,
+      component: CNavGroup,
       name: 'Support Tickets',
-      to: '/tickets',
       icon: <CIcon icon={cilSpeech} customClassName="nav-icon" />,
+      items: [
+        {
+          component: CNavItem,
+          name: 'Customer Tickets',
+          to: '/tickets/Customer',
+        },
+        {
+          component: CNavItem,
+          name: 'Vendor Tickets',
+          to: '/tickets/Vendor',
+        },
+        {
+          component: CNavItem,
+          name: 'Driver Tickets',
+          to: '/tickets/Driver',
+        },
+      ],
     },
     {
       component: CNavItem,

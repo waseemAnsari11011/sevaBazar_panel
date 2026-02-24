@@ -5,7 +5,7 @@ const createDriver = async (driverData) => {
         const token = localStorage.getItem('token')
         const response = await axiosInstance.post('/create-driver', driverData, {
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'multipart/form-data',
                 Authorization: `Bearer ${token}`,
             },
         })

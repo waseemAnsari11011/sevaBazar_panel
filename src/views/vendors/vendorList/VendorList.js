@@ -14,8 +14,8 @@ import {
   CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilBan, cilLockUnlocked, cilNotes, cilTrash } from '@coreui/icons'
-import { restrictVendor, unRestrictVendor } from '../../../api/vendor/restrictUnrestrict'
+import { cilBan, cilLockUnlocked, cilNotes, cilTrash, cilWarning } from '@coreui/icons'
+import { restrictVendor, unRestrictVendor, unblockVendor } from '../../../api/vendor/restrictUnrestrict'
 import deleteVendor from '../../../api/vendor/deleteVendor'
 import { startLoading, stopLoading } from '../../../redux/actions/defaultActions'
 
@@ -86,6 +86,19 @@ const VendorList = () => {
     }
   }
 
+  const handleUnblock = async (vendorId) => {
+    try {
+      await unblockVendor(vendorId)
+      setAlertMessage('Unblocked Successfully')
+      setAlertVisible(true)
+      fetchVendors()
+    } catch (error) {
+      console.error(error)
+      setAlertMessage('Failed to unblock vendor')
+      setAlertVisible(true)
+    }
+  }
+
   const handleDelete = async (vendorId) => {
     try {
       await deleteVendor(vendorId)
@@ -120,7 +133,10 @@ const VendorList = () => {
         <CTableBody>
           {vendors.map((vendor) => (
             <CTableRow key={vendor._id}>
-              <CTableDataCell>{vendor.name || 'N/A'}</CTableDataCell>
+              <CTableDataCell>
+                {vendor.name || 'N/A'}
+                {vendor.isBlocked && <span className="badge bg-danger ms-2">Blocked</span>}
+              </CTableDataCell>
               <CTableDataCell>{vendor.vendorInfo?.businessName || 'N/A'}</CTableDataCell>
               <CTableDataCell>{vendor.email}</CTableDataCell>
               <CTableDataCell>{vendor.vendorInfo.contactNumber}</CTableDataCell>
@@ -155,6 +171,17 @@ const VendorList = () => {
                       className="me-2"
                     >
                       <CIcon icon={cilLockUnlocked} />
+                    </CButton>
+                  )}
+                  {vendor.isBlocked && (
+                    <CButton
+                      color="warning"
+                      size="sm"
+                      onClick={() => handleUnblock(vendor._id)}
+                      title={`Unblock Vendor (${vendor.rejectionCount} rejections)`}
+                      className="me-2"
+                    >
+                      <CIcon icon={cilWarning} className="text-white" />
                     </CButton>
                   )}
                   {userRole === 'admin' && (

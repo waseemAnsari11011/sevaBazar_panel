@@ -23,9 +23,12 @@ const CustomerList = React.lazy(() => import('./views/customers/customerList/Cus
 //vendor
 const VendorList = React.lazy(() => import('./views/vendors/vendorList/VendorList'))
 const VendorDetails = React.lazy(() => import('./views/vendors/vendorDetails/VendorDetails'))
+const VendorEarnings = React.lazy(() => import('./views/vendors/vendorEarnings/VendorEarnings'))
 
 //driver
-const DriverManagement = React.lazy(() => import('./views/drivers/DriverManagement'))
+const DriverList = React.lazy(() => import('./views/drivers/driverList/DriverList'))
+const DriverCreate = React.lazy(() => import('./views/drivers/driverCreate/DriverCreate'))
+const DriverEarnings = React.lazy(() => import('./views/drivers/driverEarnings/DriverEarnings'))
 
 //help-center
 const Faqs = React.lazy(() => import('./views/helpCenter/faqs/Faqs'))
@@ -146,10 +149,13 @@ const routes = [
   { path: '/customer/list', name: 'customer-list', element: CustomerList },
   { path: '/faqs', name: 'Help Center', element: Faqs },
   { path: '/contact', name: 'Contact', element: ContactAdmin },
-  { path: '/tickets', name: 'Support Tickets', element: Tickets },
+  { path: '/tickets/:userType?', name: 'Support Tickets', element: Tickets },
   { path: '/vendor/list', name: 'vendors-list', element: VendorList },
+  { path: '/vendor/earnings', name: 'Vendor Earnings', element: VendorEarnings },
   { path: '/vendors/details/:vendorId', name: 'Vendor Details', element: VendorDetails },
-  { path: '/drivers', name: 'Driver Management', element: DriverManagement },
+  { path: '/drivers/list', name: 'Drivers List', element: DriverList },
+  { path: '/drivers/create', name: 'Add Driver', element: DriverCreate },
+  { path: '/drivers/earnings', name: 'Driver Earnings', element: DriverEarnings },
   { path: '/banner/add-banner', name: 'Add Banner', element: Banner },
   { path: '/profile', name: 'Profile', element: Profile },
   { path: '/forgot-password', name: 'Forgot Password', element: ForgotPassword },

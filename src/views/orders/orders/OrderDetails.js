@@ -8,7 +8,6 @@ import {
     CRow,
     CCol,
     CButton,
-    CFormSelect,
     CSpinner,
     CBadge
 } from '@coreui/react';
@@ -55,19 +54,6 @@ const OrderDetails = () => {
         fetchOrderDetails();
     }, [orderId]);
 
-    const handlePaymentStatusChange = async (type, status) => {
-        try {
-            // type: 'vendorPayment' | 'driverEarning' | 'floatingCash'
-            await api.put(`/admin-update-payment-status/${order._id}`, {
-                type,
-                status
-            });
-            fetchOrderDetails(); // Refresh data
-        } catch (err) {
-            console.error('Error updating status:', err);
-            setError('Failed to update status');
-        }
-    };
 
     if (loading) return <div className="text-center mt-5"><CSpinner /></div>;
     if (error) return <div className="text-center mt-5 text-danger">{error}</div>;
@@ -130,19 +116,6 @@ const OrderDetails = () => {
                             <p><strong>Total Product Price (Earning):</strong> ₹{order.totalAmount}</p>
                             <p><strong>Payment Status:</strong> <CBadge color={getStatusColor(order.vendorPaymentStatus)}>{order.vendorPaymentStatus || 'Pending'}</CBadge></p>
 
-                            {isAdmin && (
-                                <div className="mt-2">
-                                    <label>Update Payment Status:</label>
-                                    <CFormSelect
-                                        value={order.vendorPaymentStatus || 'Pending'}
-                                        onChange={(e) => handlePaymentStatusChange('vendorPayment', e.target.value)}
-                                        style={{ maxWidth: 200 }}
-                                    >
-                                        <option value="Pending">Pending</option>
-                                        <option value="Paid">Paid</option>
-                                    </CFormSelect>
-                                </div>
-                            )}
                         </CCol>
                     </CRow>
                 </CCardBody>
@@ -170,15 +143,6 @@ const OrderDetails = () => {
                                             <p>Status: <CBadge color={order.deliveredAt ? getStatusColor(order.driverEarningStatus) : 'info'}>
                                                 {order.deliveredAt ? (order.driverEarningStatus || 'Pending') : 'Ongoing (Pending Delivery)'}
                                             </CBadge></p>
-                                            <CFormSelect
-                                                value={order.driverEarningStatus || 'Pending'}
-                                                onChange={(e) => handlePaymentStatusChange('driverEarning', e.target.value)}
-                                                size="sm"
-                                                style={{ maxWidth: 150 }}
-                                            >
-                                                <option value="Pending">Pending</option>
-                                                <option value="Paid">Paid</option>
-                                            </CFormSelect>
                                         </div>
 
                                         {/* Floating Cash */}
@@ -188,18 +152,6 @@ const OrderDetails = () => {
                                             <p>Status: <CBadge color={order.deliveredAt ? getStatusColor(order.floatingCashStatus) : 'info'}>
                                                 {order.deliveredAt ? (order.floatingCashStatus || 'Pending') : 'Awaiting Collection'}
                                             </CBadge></p>
-                                            <CFormSelect
-                                                value={order.floatingCashStatus || 'Pending'}
-                                                onChange={(e) => handlePaymentStatusChange('floatingCash', e.target.value)}
-                                                size="sm"
-                                                style={{ maxWidth: 150 }}
-                                            >
-                                                <option value="Pending">Pending</option>
-                                                <option value="Paid">Paid</option>
-                                            </CFormSelect>
-                                            <small className="text-muted d-block mt-1">
-                                                Marking this as 'Paid' will deduct ₹{order.floatingCashAmount || 0} from Driver's floating debt.
-                                            </small>
                                         </div>
                                     </CCol>
                                 </CRow>

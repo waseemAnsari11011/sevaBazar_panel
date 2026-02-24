@@ -22,6 +22,11 @@ import {
     CModalTitle,
     CModalBody,
     CModalFooter,
+    CNav,
+    CNavItem,
+    CNavLink,
+    CTabContent,
+    CTabPane,
 } from '@coreui/react'
 import { useDispatch } from 'react-redux'
 import axiosInstance from '../../utils/axiosConfig'
@@ -42,6 +47,7 @@ const DriverManagement = () => {
     const [drivers, setDrivers] = useState([])
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
+    const [activeTab, setActiveTab] = useState(1)
 
     // Modal states for preview
     const [previewVisible, setPreviewVisible] = useState(false)
@@ -181,58 +187,146 @@ const DriverManagement = () => {
 
                         <hr className="my-4" />
 
-                        <h5>Registered Drivers</h5>
-                        <div style={{ overflowX: 'auto' }}>
-                            <CTable striped hover align="middle">
-                                <CTableHead>
-                                    <CTableRow>
-                                        <CTableHeaderCell>Name</CTableHeaderCell>
-                                        <CTableHeaderCell>Phone</CTableHeaderCell>
-                                        <CTableHeaderCell>Status</CTableHeaderCell>
-                                        <CTableHeaderCell>Vehicle</CTableHeaderCell>
-                                        <CTableHeaderCell>Actions</CTableHeaderCell>
-                                    </CTableRow>
-                                </CTableHead>
-                                <CTableBody>
-                                    {drivers.map((driver) => (
-                                        <CTableRow key={driver._id}>
-                                            <CTableDataCell>{driver.personalDetails?.name}</CTableDataCell>
-                                            <CTableDataCell>{driver.personalDetails?.phone}</CTableDataCell>
-                                            <CTableDataCell>
-                                                <span className={`badge bg-${driver.approvalStatus === 'approved' ? 'success' : 'danger'}`}>
-                                                    {driver.approvalStatus}
-                                                </span>
-                                            </CTableDataCell>
-                                            <CTableDataCell>
-                                                {driver.vehicleDetails?.type} ({driver.vehicleDetails?.plateNumber})
-                                            </CTableDataCell>
-                                            <CTableDataCell>
-                                                <div className="d-flex gap-2">
-                                                    {driver.documents?.length > 0 && (
-                                                        <CButton
-                                                            size="sm"
-                                                            color="info"
-                                                            className="text-white"
-                                                            onClick={() => handlePreview(driver.documents[0])}
-                                                        >
-                                                            Docs
-                                                        </CButton>
-                                                    )}
-                                                    <CButton
-                                                        size="sm"
-                                                        color={driver.approvalStatus === 'approved' ? 'danger' : 'success'}
-                                                        className="text-white"
-                                                        onClick={() => handleStatusToggle(driver._id, driver.approvalStatus)}
-                                                    >
-                                                        {driver.approvalStatus === 'approved' ? 'Suspend' : 'Approve'}
-                                                    </CButton>
-                                                </div>
-                                            </CTableDataCell>
-                                        </CTableRow>
-                                    ))}
-                                </CTableBody>
-                            </CTable>
-                        </div>
+                        <CNav variant="tabs" className="mb-3">
+                            <CNavItem>
+                                <CNavLink
+                                    active={activeTab === 1}
+                                    onClick={() => setActiveTab(1)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    Approved Drivers
+                                </CNavLink>
+                            </CNavItem>
+                            <CNavItem>
+                                <CNavLink
+                                    active={activeTab === 2}
+                                    onClick={() => setActiveTab(2)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    Pending / Suspended
+                                </CNavLink>
+                            </CNavItem>
+                        </CNav>
+
+                        <CTabContent>
+                            <CTabPane visible={activeTab === 1}>
+                                <div style={{ overflowX: 'auto' }}>
+                                    <CTable striped hover align="middle">
+                                        <CTableHead>
+                                            <CTableRow>
+                                                <CTableHeaderCell>Name</CTableHeaderCell>
+                                                <CTableHeaderCell>Phone</CTableHeaderCell>
+                                                <CTableHeaderCell>Status</CTableHeaderCell>
+                                                <CTableHeaderCell>Vehicle</CTableHeaderCell>
+                                                <CTableHeaderCell>Actions</CTableHeaderCell>
+                                            </CTableRow>
+                                        </CTableHead>
+                                        <CTableBody>
+                                            {drivers.filter(d => d.approvalStatus === 'approved').length > 0 ? (
+                                                drivers.filter(d => d.approvalStatus === 'approved').map((driver) => (
+                                                    <CTableRow key={driver._id}>
+                                                        <CTableDataCell>{driver.personalDetails?.name}</CTableDataCell>
+                                                        <CTableDataCell>{driver.personalDetails?.phone}</CTableDataCell>
+                                                        <CTableDataCell>
+                                                            <span className="badge bg-success">approved</span>
+                                                        </CTableDataCell>
+                                                        <CTableDataCell>
+                                                            {driver.vehicleDetails?.type} ({driver.vehicleDetails?.plateNumber})
+                                                        </CTableDataCell>
+                                                        <CTableDataCell>
+                                                            <div className="d-flex gap-2">
+                                                                {driver.documents?.length > 0 && (
+                                                                    <CButton
+                                                                        size="sm"
+                                                                        color="info"
+                                                                        className="text-white"
+                                                                        onClick={() => handlePreview(driver.documents[0])}
+                                                                    >
+                                                                        Docs
+                                                                    </CButton>
+                                                                )}
+                                                                <CButton
+                                                                    size="sm"
+                                                                    color="danger"
+                                                                    className="text-white"
+                                                                    onClick={() => handleStatusToggle(driver._id, driver.approvalStatus)}
+                                                                >
+                                                                    Suspend
+                                                                </CButton>
+                                                            </div>
+                                                        </CTableDataCell>
+                                                    </CTableRow>
+                                                ))
+                                            ) : (
+                                                <CTableRow>
+                                                    <CTableDataCell colSpan="5" className="text-center text-muted py-4">No approved drivers found.</CTableDataCell>
+                                                </CTableRow>
+                                            )}
+                                        </CTableBody>
+                                    </CTable>
+                                </div>
+                            </CTabPane>
+
+                            <CTabPane visible={activeTab === 2}>
+                                <div style={{ overflowX: 'auto' }}>
+                                    <CTable striped hover align="middle">
+                                        <CTableHead>
+                                            <CTableRow>
+                                                <CTableHeaderCell>Name</CTableHeaderCell>
+                                                <CTableHeaderCell>Phone</CTableHeaderCell>
+                                                <CTableHeaderCell>Status</CTableHeaderCell>
+                                                <CTableHeaderCell>Vehicle</CTableHeaderCell>
+                                                <CTableHeaderCell>Actions</CTableHeaderCell>
+                                            </CTableRow>
+                                        </CTableHead>
+                                        <CTableBody>
+                                            {drivers.filter(d => d.approvalStatus !== 'approved').length > 0 ? (
+                                                drivers.filter(d => d.approvalStatus !== 'approved').map((driver) => (
+                                                    <CTableRow key={driver._id}>
+                                                        <CTableDataCell>{driver.personalDetails?.name}</CTableDataCell>
+                                                        <CTableDataCell>{driver.personalDetails?.phone}</CTableDataCell>
+                                                        <CTableDataCell>
+                                                            <span className={`badge bg-${driver.approvalStatus === 'pending' ? 'warning' : 'danger'}`}>
+                                                                {driver.approvalStatus}
+                                                            </span>
+                                                        </CTableDataCell>
+                                                        <CTableDataCell>
+                                                            {driver.vehicleDetails?.type} ({driver.vehicleDetails?.plateNumber})
+                                                        </CTableDataCell>
+                                                        <CTableDataCell>
+                                                            <div className="d-flex gap-2">
+                                                                {driver.documents?.length > 0 && (
+                                                                    <CButton
+                                                                        size="sm"
+                                                                        color="info"
+                                                                        className="text-white"
+                                                                        onClick={() => handlePreview(driver.documents[0])}
+                                                                    >
+                                                                        Docs
+                                                                    </CButton>
+                                                                )}
+                                                                <CButton
+                                                                    size="sm"
+                                                                    color="success"
+                                                                    className="text-white"
+                                                                    onClick={() => handleStatusToggle(driver._id, driver.approvalStatus)}
+                                                                >
+                                                                    Approve
+                                                                </CButton>
+                                                            </div>
+                                                        </CTableDataCell>
+                                                    </CTableRow>
+                                                ))
+                                            ) : (
+                                                <CTableRow>
+                                                    <CTableDataCell colSpan="5" className="text-center text-muted py-4">No pending or suspended drivers found.</CTableDataCell>
+                                                </CTableRow>
+                                            )}
+                                        </CTableBody>
+                                    </CTable>
+                                </div>
+                            </CTabPane>
+                        </CTabContent>
                     </CCardBody>
                 </CCard>
             </CCol>

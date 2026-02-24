@@ -27,6 +27,7 @@ const DriverCreate = () => {
         plateNumber: '',
         type: 'bike',
     })
+    const [documents, setDocuments] = useState([])
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
 
@@ -35,27 +36,35 @@ const DriverCreate = () => {
         setFormData({ ...formData, [name]: value })
     }
 
+    const handleFileChange = (e) => {
+        setDocuments(Array.from(e.target.files))
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
         setSuccess('')
 
-        const payload = {
-            personalDetails: {
-                name: formData.name,
-                phone: formData.phone,
-                password: formData.password,
-            },
-            vehicleDetails: {
-                plateNumber: formData.plateNumber,
-                type: formData.type,
-            },
-            documents: [], // Optional for now
-        }
+        const data = new FormData()
+
+        data.append('personalDetails', JSON.stringify({
+            name: formData.name,
+            phone: formData.phone,
+            password: formData.password,
+        }))
+
+        data.append('vehicleDetails', JSON.stringify({
+            plateNumber: formData.plateNumber,
+            type: formData.type,
+        }))
+
+        documents.forEach((file) => {
+            data.append('documents', file)
+        })
 
         try {
             dispatch(startLoading())
-            await createDriver(payload)
+            await createDriver(data)
             setSuccess('Driver created successfully!')
             setTimeout(() => {
                 navigate('/drivers/list')
@@ -78,64 +87,80 @@ const DriverCreate = () => {
                         {error && <CAlert color="danger">{error}</CAlert>}
                         {success && <CAlert color="success">{success}</CAlert>}
                         <CForm onSubmit={handleSubmit}>
-                            <div className="mb-3">
-                                <CFormLabel htmlFor="name">Full Name</CFormLabel>
-                                <CFormInput
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    placeholder="Enter driver's name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <CFormLabel htmlFor="phone">Phone Number</CFormLabel>
-                                <CFormInput
-                                    type="text"
-                                    id="phone"
-                                    name="phone"
-                                    placeholder="Enter phone number"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <CFormLabel htmlFor="password">Login Password</CFormLabel>
-                                <CFormInput
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    placeholder="Enter password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
+                            <CRow>
+                                <CCol md={4} className="mb-3">
+                                    <CFormLabel htmlFor="name">Full Name</CFormLabel>
+                                    <CFormInput
+                                        type="text"
+                                        id="name"
+                                        name="name"
+                                        placeholder="Enter driver's name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </CCol>
+                                <CCol md={4} className="mb-3">
+                                    <CFormLabel htmlFor="phone">Phone Number</CFormLabel>
+                                    <CFormInput
+                                        type="text"
+                                        id="phone"
+                                        name="phone"
+                                        placeholder="Enter phone number"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </CCol>
+                                <CCol md={4} className="mb-3">
+                                    <CFormLabel htmlFor="password">Login Password</CFormLabel>
+                                    <CFormInput
+                                        type="password"
+                                        id="password"
+                                        name="password"
+                                        placeholder="Enter password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </CCol>
+                            </CRow>
                             <hr />
                             <h5>Vehicle Details</h5>
+                            <CRow>
+                                <CCol md={6} className="mb-3">
+                                    <CFormLabel htmlFor="plateNumber">Plate Number</CFormLabel>
+                                    <CFormInput
+                                        type="text"
+                                        id="plateNumber"
+                                        name="plateNumber"
+                                        placeholder="e.g. DL-1-JW-1234"
+                                        value={formData.plateNumber}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </CCol>
+                                <CCol md={6} className="mb-3">
+                                    <CFormLabel htmlFor="type">Vehicle Type</CFormLabel>
+                                    <CFormSelect id="type" name="type" value={formData.type} onChange={handleChange}>
+                                        <option value="bike">Bike</option>
+                                        <option value="scooter">Scooter</option>
+                                    </CFormSelect>
+                                </CCol>
+                            </CRow>
+                            <hr />
+                            <h5>Documents</h5>
                             <div className="mb-3">
-                                <CFormLabel htmlFor="plateNumber">Plate Number</CFormLabel>
+                                <CFormLabel htmlFor="documents">Upload License / ID Proof (Images or PDF)</CFormLabel>
                                 <CFormInput
-                                    type="text"
-                                    id="plateNumber"
-                                    name="plateNumber"
-                                    placeholder="e.g. DL-1-JW-1234"
-                                    value={formData.plateNumber}
-                                    onChange={handleChange}
-                                    required
+                                    type="file"
+                                    id="documents"
+                                    name="documents"
+                                    multiple
+                                    onChange={handleFileChange}
                                 />
                             </div>
-                            <div className="mb-3">
-                                <CFormLabel htmlFor="type">Vehicle Type</CFormLabel>
-                                <CFormSelect id="type" name="type" value={formData.type} onChange={handleChange}>
-                                    <option value="bike">Bike</option>
-                                    <option value="scooter">Scooter</option>
-                                </CFormSelect>
-                            </div>
-                            <div className="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <div className="d-grid gap-2 d-md-flex justify-content-md-end pt-3">
                                 <CButton color="secondary" className="me-md-2" onClick={() => navigate('/drivers/list')}>
                                     Cancel
                                 </CButton>
