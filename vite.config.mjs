@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
       outDir: 'build',
     },
     css: {
+      preprocessorOptions: {
+        scss: { api: 'modern' },
+      },
       postcss: {
         plugins: [
           autoprefixer({}), // add options if needed

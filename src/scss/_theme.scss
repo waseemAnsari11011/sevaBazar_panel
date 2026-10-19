@@ -1,13 +1,15 @@
+@use "@coreui/coreui/scss/coreui" as coreui;
+
 body {
   background-color: var(--cui-tertiary-bg);
 }
 
 .wrapper {
   width: 100%;
-  @include ltr-rtl("padding-left", var(--cui-sidebar-occupy-start, 0));
-  @include ltr-rtl("padding-right", var(--cui-sidebar-occupy-end, 0));
+  @include coreui.ltr-rtl("padding-left", var(--cui-sidebar-occupy-start, 0));
+  @include coreui.ltr-rtl("padding-right", var(--cui-sidebar-occupy-end, 0));
   will-change: auto;
-  @include transition(padding .15s);
+  @include coreui.transition(padding .15s);
 }
 
 .header > .container-fluid,
@@ -33,13 +35,13 @@ body {
 }
 
 .sidebar-toggler {
-  @include ltr-rtl("margin-left", auto);
+  @include coreui.ltr-rtl("margin-left", auto);
 }
 
 .sidebar-narrow,
 .sidebar-narrow-unfoldable:not(:hover) {
   .sidebar-toggler {
-    @include ltr-rtl("margin-right", auto);
+    @include coreui.ltr-rtl("margin-right", auto);
   }
 }
 
@@ -51,8 +53,8 @@ body {
   min-height: calc(3rem + 1px); // stylelint-disable-line function-disallowed-list
 }
 
-@if $enable-dark-mode {
-  @include color-mode(dark) {
+@if coreui.$enable-dark-mode {
+  @include coreui.color-mode(dark) {
     body {
       background-color: var(--cui-dark-bg-subtle);
     }

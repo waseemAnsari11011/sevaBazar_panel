@@ -1,15 +1,9 @@
-// If you want to override variables do it here
-@import "variables";
-
-// Import styles
-@import "@coreui/coreui/scss/coreui";
-@import "@coreui/chartjs/scss/coreui-chartjs";
-
-// Vendors
-@import "vendors/simplebar";
-
-// Custom styles for this theme
-@import "theme";
-
-// If you want to add custom CSS you can put it here
-@import "custom";
+// Configure CoreUI before loading modules that depend on it.
+@use "variables";
+@use "@coreui/coreui/scss/coreui" with (
+  $enable-deprecation-messages: variables.$enable-deprecation-messages
+);
+@use "@coreui/chartjs/scss/coreui-chartjs";
+@use "vendors/simplebar";
+@use "theme";
+@use "custom";
